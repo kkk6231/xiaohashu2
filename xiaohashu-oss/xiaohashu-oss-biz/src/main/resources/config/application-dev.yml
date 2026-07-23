@@ -1,0 +1,13 @@
+#=================================================================
+# 对象存储配置
+#=================================================================
+storage:
+  minio:
+    endpoint: http://127.0.0.1:9000
+    accessKey: quanxiaoha
+    secretKey: quanxiaoha
+  aliyun-oss:
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    accessKey: LTAIRRJPMGDccZrP
+    secretKey: cyfu4tjkuAAGuNvWCG9lNH7m6RN8pQ
+

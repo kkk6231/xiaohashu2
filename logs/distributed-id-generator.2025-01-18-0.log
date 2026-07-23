@@ -1,0 +1,51 @@
+2025-01-18 00:00:17.911 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-18 00:00:17.915 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737129617911] time[3] tag[updateCacheFromDb]
+2025-01-18 00:01:17.922 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-18 00:01:17.926 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737129677922] time[3] tag[updateCacheFromDb]
+2025-01-18 00:02:17.935 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-18 00:02:17.939 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737129737935] time[3] tag[updateCacheFromDb]
+2025-01-18 00:03:17.944 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-18 00:03:17.947 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737129797944] time[3] tag[updateCacheFromDb]
+2025-01-18 00:04:17.950 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-18 00:04:17.952 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737129857950] time[2] tag[updateCacheFromDb]
+2025-01-18 00:05:17.956 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-18 00:05:17.970 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737129917956] time[14] tag[updateCacheFromDb]
+2025-01-18 00:06:00.885 [main-SendThread(127.0.0.1:2181)] WARN  org.apache.zookeeper.ClientCnxn - Client session timed out, have not heard from server in 4000ms for session id 0x10011bf7f7d001d
+2025-01-18 00:06:00.885 [main-SendThread(127.0.0.1:2181)] WARN  org.apache.zookeeper.ClientCnxn - Session 0x10011bf7f7d001d for sever kubernetes.docker.internal/127.0.0.1:2181, Closing socket connection. Attempting reconnect except it is a SessionExpiredException.
+org.apache.zookeeper.ClientCnxn$SessionTimeoutException: Client session timed out, have not heard from server in 4000ms for session id 0x10011bf7f7d001d
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1230)
+2025-01-18 00:06:01.014 [main-EventThread] INFO  o.a.curator.framework.state.ConnectionStateManager - State change: SUSPENDED
+2025-01-18 00:06:01.025 [schedule-upload-time] INFO  c.q.x.d.i.g.b.c.snowflake.SnowflakeZookeeperHolder - update init data error path is /snowflake/com.sankuai.leaf.opensource.test/forever/192.168.1.3:2222-0000000000 error is {}
+org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /snowflake/com.sankuai.leaf.opensource.test/forever/192.168.1.3:2222-0000000000
+	at org.apache.zookeeper.KeeperException.create(KeeperException.java:102)
+	at org.apache.zookeeper.KeeperException.create(KeeperException.java:54)
+	at org.apache.zookeeper.ZooKeeper.setData(ZooKeeper.java:2551)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl$4.call(SetDataBuilderImpl.java:291)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl$4.call(SetDataBuilderImpl.java:287)
+	at org.apache.curator.RetryLoop.callWithRetry(RetryLoop.java:93)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl.pathInForeground(SetDataBuilderImpl.java:284)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl.forPath(SetDataBuilderImpl.java:270)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl.forPath(SetDataBuilderImpl.java:33)
+	at com.quanxiaoha.xiaohashu.distributed.id.generator.biz.core.snowflake.SnowflakeZookeeperHolder.updateNewData(SnowflakeZookeeperHolder.java:158)
+	at com.quanxiaoha.xiaohashu.distributed.id.generator.biz.core.snowflake.SnowflakeZookeeperHolder$1.run(SnowflakeZookeeperHolder.java:124)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+2025-01-18 00:06:02.478 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Opening socket connection to server kubernetes.docker.internal/127.0.0.1:2181.
+2025-01-18 00:06:02.478 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - SASL config status: Will not attempt to authenticate using SASL (unknown error)
+2025-01-18 00:06:02.480 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Socket connection established, initiating session, client: /127.0.0.1:62373, server: kubernetes.docker.internal/127.0.0.1:2181
+2025-01-18 02:30:41.411 [main-SendThread(127.0.0.1:2181)] WARN  org.apache.zookeeper.ClientCnxn - Client session timed out, have not heard from server in 8678951ms for session id 0x10011bf7f7d001d
+2025-01-18 02:30:41.411 [main-SendThread(127.0.0.1:2181)] WARN  org.apache.zookeeper.ClientCnxn - Session 0x10011bf7f7d001d for sever kubernetes.docker.internal/127.0.0.1:2181, Closing socket connection. Attempting reconnect except it is a SessionExpiredException.
+org.apache.zookeeper.ClientCnxn$SessionTimeoutException: Client session timed out, have not heard from server in 8678951ms for session id 0x10011bf7f7d001d
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1230)
+2025-01-18 02:30:42.793 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Opening socket connection to server kubernetes.docker.internal/127.0.0.1:2181.
+2025-01-18 02:30:42.793 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - SASL config status: Will not attempt to authenticate using SASL (unknown error)
+2025-01-18 02:30:42.794 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Socket connection established, initiating session, client: /127.0.0.1:63375, server: kubernetes.docker.internal/127.0.0.1:2181
+2025-01-18 02:30:42.965 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Session establishment complete on server kubernetes.docker.internal/127.0.0.1:2181, session id = 0x10011bf7f7d001d, negotiated timeout = 6000
+2025-01-18 02:30:42.965 [main-EventThread] INFO  o.a.curator.framework.state.ConnectionStateManager - State change: RECONNECTED
+2025-01-18 02:30:42.995 [main-EventThread] INFO  org.apache.curator.framework.imps.EnsembleTracker - New config event received: {}
+2025-01-18 02:30:55.605 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-18 02:30:55.627 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737138655605] time[21] tag[updateCacheFromDb]

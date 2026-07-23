@@ -1,0 +1,456 @@
+2025-01-16 16:31:33.928 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:31:33.963 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:31:34.244 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:31:34.254 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:31:34.255 [main] INFO  c.q.x.comment.biz.XiaohashuCommentBizApplication - The following 1 profile is active: "dev"
+2025-01-16 16:31:34.268 [main] WARN  o.s.core.annotation.AnnotationTypeMapping - Support for convention-based annotation attribute overrides is deprecated and will be removed in Spring Framework 6.1. Please annotate the following attributes in @org.springframework.retry.annotation.EnableRetry with appropriate @AliasFor declarations: [proxyTargetClass]
+2025-01-16 16:31:34.643 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-16 16:31:34.645 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-01-16 16:31:34.658 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-01-16 16:31:34.798 [main] INFO  o.springframework.cloud.context.scope.GenericScope - BeanFactory id=8855d4ec-0ae8-360e-97bd-71beab16ef9b
+2025-01-16 16:31:34.824 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.quanxiaoha.xiaohashu.kv.api.KeyValueFeignApi' of type [org.springframework.cloud.openfeign.FeignClientFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.826 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.quanxiaoha.xiaohashu.user.api.UserFeignApi' of type [org.springframework.cloud.openfeign.FeignClientFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.826 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.quanxiaoha.xiaohashu.distributed.id.generator.api.DistributedIdGeneratorFeignApi' of type [org.springframework.cloud.openfeign.FeignClientFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.965 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.994 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.995 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.springframework.cloud.commons.config.CommonsConfigAutoConfiguration' of type [org.springframework.cloud.commons.config.CommonsConfigAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.997 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.998 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'loadBalancerClientsDefaultsMappingsProvider' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration$$Lambda$724/0x00000172115240c0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:34.999 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'defaultsBindHandlerAdvisor' of type [org.springframework.cloud.commons.config.DefaultsBindHandlerAdvisor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:35.003 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:35.004 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:31:35.155 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8093 (http)
+2025-01-16 16:31:35.162 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-01-16 16:31:35.162 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.5]
+2025-01-16 16:31:35.218 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-01-16 16:31:35.218 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 948 ms
+2025-01-16 16:31:35.277 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2025-01-16 16:31:35.522 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2025-01-16 16:31:35.734 [main] INFO  o.s.cloud.openfeign.FeignClientFactoryBean - For 'xiaohashu-kv' URL not provided. Will try picking an instance via load-balancing.
+2025-01-16 16:31:35.777 [main] INFO  o.a.r.s.autoconfigure.RocketMQAutoConfiguration - a producer (xiaohashu_group) init on namesrv 127.0.0.1:9876
+2025-01-16 16:31:36.151 [main] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - running container: DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_CommentHeatUpdateTopic', namespace='', nameServer='127.0.0.1:9876', topic='CommentHeatUpdateTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 16:31:36.151 [main] INFO  o.a.r.s.a.ListenerContainerConfiguration - Register the listener to container, listenerBeanName:commentHeatUpdateConsumer, containerBeanName:org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_1
+2025-01-16 16:31:36.189 [main] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - running container: DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_first_reply_comment_idCountNoteCommentTopic', namespace='', nameServer='127.0.0.1:9876', topic='CountNoteCommentTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 16:31:36.189 [main] INFO  o.a.r.s.a.ListenerContainerConfiguration - Register the listener to container, listenerBeanName:oneLevelCommentFirstReplyCommentIdUpdateConsumer, containerBeanName:org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_2
+2025-01-16 16:31:36.233 [main] INFO  o.s.cloud.openfeign.FeignClientFactoryBean - For 'xiaohashu-distributed-id-generator' URL not provided. Will try picking an instance via load-balancing.
+2025-01-16 16:31:36.248 [main] INFO  o.s.cloud.openfeign.FeignClientFactoryBean - For 'xiaohashu-user' URL not provided. Will try picking an instance via load-balancing.
+2025-01-16 16:31:36.859 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port(s): 8093 (http) with context path ''
+2025-01-16 16:31:36.864 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:31:36.865 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from ans.namespace attribute : null
+2025-01-16 16:31:36.865 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from ALIBABA_ALIWARE_NAMESPACE attribute :null
+2025-01-16 16:31:36.866 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from namespace attribute :null
+2025-01-16 16:31:36.884 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - [settings] [req-serv] nacos-server port:8848
+2025-01-16 16:31:36.884 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - [settings] [http-client] connect timeout:1000
+2025-01-16 16:31:36.885 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - PER_TASK_CONFIG_SIZE: 3000.0
+2025-01-16 16:31:36.889 [main] INFO  c.a.n.p.auth.spi.client.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2025-01-16 16:31:36.889 [main] INFO  c.a.n.p.auth.spi.client.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2025-01-16 16:31:36.893 [main] INFO  c.a.n.client.auth.ram.identify.CredentialWatcher - null No credential found
+2025-01-16 16:31:36.902 [main] INFO  com.alibaba.nacos.common.remote.client - [RpcClientFactory] create a new rpc client of 3e1d70f0-9c79-4834-bf02-2d982134bc4a
+2025-01-16 16:31:36.914 [main] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] RpcClient init, ServerListFactory = com.alibaba.nacos.client.naming.core.ServerListManager
+2025-01-16 16:31:36.916 [main] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Registry connection listener to current client:com.alibaba.nacos.client.naming.remote.gprc.redo.NamingGrpcRedoService
+2025-01-16 16:31:36.916 [main] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Register server push request handler:com.alibaba.nacos.client.naming.remote.gprc.NamingPushRequestHandler
+2025-01-16 16:31:36.917 [main] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Try to connect to server on start up, server: {serverIp = '127.0.0.1', server main port = 8848}
+2025-01-16 16:31:36.933 [main] INFO  c.a.nacos.common.remote.client.grpc.GrpcClient - grpc client connection server:127.0.0.1 ip,serverPort:9848,grpcTslConfig:{"sslProvider":"OPENSSL","enableTls":false,"mutualAuthEnable":false,"trustAll":false}
+2025-01-16 16:31:37.672 [main] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Success to connect to server [127.0.0.1:8848] on start up, connectionId = 1737016297504_172.17.0.1_35934
+2025-01-16 16:31:37.672 [com.alibaba.nacos.client.remote.worker] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Notify connected event to listeners.
+2025-01-16 16:31:37.672 [com.alibaba.nacos.client.remote.worker] INFO  com.alibaba.nacos.client.naming - Grpc connection connect
+2025-01-16 16:31:37.673 [main] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$ConnectResetRequestHandler
+2025-01-16 16:31:37.673 [main] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$$Lambda$1288/0x00000172119ae5e8
+2025-01-16 16:31:37.674 [main] INFO  com.alibaba.nacos.client.naming - [REGISTER-SERVICE] xiaohashu registering service xiaohashu-comment with instance Instance{instanceId='null', ip='192.168.1.3', port=8093, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='DEFAULT', serviceName='null', metadata={IPv6=[240e:b62:43b:9100:68b6:95d0:2542:aa46], preserved.register.source=SPRING_CLOUD}}
+2025-01-16 16:31:37.684 [main] INFO  c.a.cloud.nacos.registry.NacosServiceRegistry - nacos registry, DEFAULT_GROUP xiaohashu-comment 192.168.1.3:8093 register finished
+2025-01-16 16:31:37.841 [main] INFO  c.q.x.comment.biz.XiaohashuCommentBizApplication - Started XiaohashuCommentBizApplication in 4.487 seconds (process running for 4.874)
+2025-01-16 16:32:04.719 [http-nio-8093-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-01-16 16:32:04.720 [http-nio-8093-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-01-16 16:32:04.720 [http-nio-8093-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-01-16 16:32:04.724 [http-nio-8093-exec-1] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 设置 userId 到 ThreadLocal 中， 用户 ID: 27
+2025-01-16 16:32:04.781 [http-nio-8093-exec-1] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求开始: [发布评论], 入参: {"noteId":1862482047415615528,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":null}, 请求类: CommentController, 请求方法: publishComment =================================== 
+2025-01-16 16:32:04.782 [http-nio-8093-exec-1] INFO  c.q.f.b.c.interceptor.FeignRequestInterceptor - ########## feign 请求设置请求头 userId: 27
+2025-01-16 16:32:04.817 [http-nio-8093-exec-1] INFO  com.alibaba.nacos.client.naming - [SUBSCRIBE-SERVICE] service:xiaohashu-distributed-id-generator, group:DEFAULT_GROUP, clusters: 
+2025-01-16 16:32:04.827 [http-nio-8093-exec-1] INFO  com.alibaba.nacos.client.naming - init new ips(1) service: DEFAULT_GROUP@@xiaohashu-distributed-id-generator -> [{"ip":"192.168.1.3","port":8085,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-distributed-id-generator","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"ipDeleteTimeout":30000,"instanceHeartBeatInterval":5000,"instanceHeartBeatTimeOut":15000}]
+2025-01-16 16:32:04.831 [http-nio-8093-exec-1] INFO  com.alibaba.nacos.client.naming - current ips:(1) service: DEFAULT_GROUP@@xiaohashu-distributed-id-generator -> [{"ip":"192.168.1.3","port":8085,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-distributed-id-generator","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"ipDeleteTimeout":30000,"instanceHeartBeatInterval":5000,"instanceHeartBeatTimeOut":15000}]
+2025-01-16 16:32:04.924 [http-nio-8093-exec-1] INFO  c.q.xiaohashu.comment.biz.retry.SendMqRetryHelper - ==> 开始异步发送 MQ, Topic: PublishCommentTopic, Body: {"noteId":1862482047415615528,"commentId":30001,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":null,"createTime":"2025-01-16 16:32:04","creatorId":27}
+2025-01-16 16:32:04.928 [http-nio-8093-exec-1] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求结束: [发布评论], 耗时: 148ms, 出参: {"success":true,"message":null,"errorCode":null,"data":null} =================================== 
+2025-01-16 16:32:04.935 [http-nio-8093-exec-1] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 删除 ThreadLocal， userId: 27
+2025-01-16 16:32:04.943 [NettyClientPublicExecutor_1] INFO  c.q.xiaohashu.comment.biz.retry.SendMqRetryHelper - ==> 【评论发布】MQ 发送成功，SendResult: SendResult [sendStatus=SEND_OK, msgId=7F000001719C63947C6B50CBAB480000, offsetMsgId=AC1B600100002A9F000000000277872F, messageQueue=MessageQueue [topic=PublishCommentTopic, brokerName=SK-20231010EQPS, queueId=0], queueOffset=12540]
+2025-01-16 16:32:04.949 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> 本批次消息大小: 1
+2025-01-16 16:32:04.951 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> Consumer - Received message: {"noteId":1862482047415615528,"commentId":30001,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":null,"createTime":"2025-01-16 16:32:04","creatorId":27}
+2025-01-16 16:32:04.959 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ## 清洗后的 CommentBOS: [{"id":30001,"noteId":1862482047415615528,"userId":27,"contentUuid":"57d3c5bf-70c8-43fe-8c41-5c8a55d7106f","content":"这是一条测试评论","isContentEmpty":false,"imageUrl":"","level":1,"replyTotal":0,"likeTotal":0,"parentId":1862482047415615528,"replyCommentId":0,"replyUserId":0,"isTop":false,"createTime":"2025-01-16 16:32:04","updateTime":"2025-01-16 16:32:04"}]
+2025-01-16 16:32:04.988 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - ==>  Preparing: insert IGNORE into t_comment (id, note_id, user_id, content_uuid, is_content_empty, image_url, `level`, reply_total, like_total, parent_id, reply_comment_id, reply_user_id, is_top, create_time, update_time ) values (?, ?, ?, ?, ? , ?, ?, ?, ?, ? , ?, ?, ?, ?, ?)
+2025-01-16 16:32:05.145 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - ==> Parameters: 30001(Long), 1862482047415615528(Long), 27(Long), 57d3c5bf-70c8-43fe-8c41-5c8a55d7106f(String), false(Boolean), (String), 1(Integer), 0(Long), 0(Long), 1862482047415615528(Long), 0(Long), 0(Long), false(Boolean), 2025-01-16T16:32:04(LocalDateTime), 2025-01-16T16:32:04(LocalDateTime)
+2025-01-16 16:32:05.151 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - <==    Updates: 1
+2025-01-16 16:32:05.163 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  com.alibaba.nacos.client.naming - [SUBSCRIBE-SERVICE] service:xiaohashu-kv, group:DEFAULT_GROUP, clusters: 
+2025-01-16 16:32:05.168 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  com.alibaba.nacos.client.naming - init new ips(1) service: DEFAULT_GROUP@@xiaohashu-kv -> [{"ip":"192.168.1.3","port":8084,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-kv","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"ipDeleteTimeout":30000,"instanceHeartBeatInterval":5000,"instanceHeartBeatTimeOut":15000}]
+2025-01-16 16:32:05.168 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  com.alibaba.nacos.client.naming - current ips:(1) service: DEFAULT_GROUP@@xiaohashu-kv -> [{"ip":"192.168.1.3","port":8084,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-kv","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"ipDeleteTimeout":30000,"instanceHeartBeatInterval":5000,"instanceHeartBeatTimeOut":15000}]
+2025-01-16 16:32:05.331 [nacos-grpc-client-executor-127.0.0.1-19] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Receive server push request, request = NotifySubscriberRequest, requestId = 1961
+2025-01-16 16:32:05.331 [nacos-grpc-client-executor-127.0.0.1-19] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Ack server push request, request = NotifySubscriberRequest, requestId = 1961
+2025-01-16 16:32:05.569 [NettyClientPublicExecutor_2] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> 【计数: 评论发布】MQ 发送成功，SendResult: SendResult [sendStatus=SEND_OK, msgId=7F000001719C63947C6B50CBADBF0001, offsetMsgId=AC1B600100002A9F00000000027788EF, messageQueue=MessageQueue [topic=CountNoteCommentTopic, brokerName=SK-20231010EQPS, queueId=3], queueOffset=29]
+2025-01-16 16:32:05.723 [nacos-grpc-client-executor-127.0.0.1-20] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Receive server push request, request = NotifySubscriberRequest, requestId = 1962
+2025-01-16 16:32:05.724 [nacos-grpc-client-executor-127.0.0.1-20] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Ack server push request, request = NotifySubscriberRequest, requestId = 1962
+2025-01-16 16:32:06.592 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.b.c.OneLevelCommentFirstReplyCommentIdUpdateConsumer - ==> 【一级评论 first_reply_comment_id 更新】聚合消息, size: 1
+2025-01-16 16:32:06.593 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.b.c.OneLevelCommentFirstReplyCommentIdUpdateConsumer - ==> 【一级评论 first_reply_comment_id 更新】聚合消息, ["[{\"noteId\":1862482047415615528,\"commentId\":30001,\"level\":1,\"parentId\":1862482047415615528}]"]
+2025-01-16 16:33:49.370 [http-nio-8093-exec-6] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 设置 userId 到 ThreadLocal 中， 用户 ID: 27
+2025-01-16 16:33:49.373 [http-nio-8093-exec-6] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求开始: [评论分页查询], 入参: {"noteId":1862482047415615528,"pageNo":1}, 请求类: CommentController, 请求方法: findCommentPageList =================================== 
+2025-01-16 16:33:49.381 [http-nio-8093-exec-6] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.selectPageList - ==>  Preparing: select id, user_id, content_uuid, is_content_empty, image_url, like_total, is_top, create_time, first_reply_comment_id, child_comment_total, heat from t_comment where note_id = ? and level = 1 order by heat desc limit ?, ?
+2025-01-16 16:33:49.381 [NoteExecutor-1] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectHeatComments - ==>  Preparing: select id, heat from t_comment where note_id = ? and level = 1 order by heat desc limit 500
+2025-01-16 16:33:49.393 [http-nio-8093-exec-6] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.selectPageList - ==> Parameters: 1862482047415615528(Long), 0(Long), 10(Long)
+2025-01-16 16:33:49.393 [NoteExecutor-1] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectHeatComments - ==> Parameters: 1862482047415615528(Long)
+2025-01-16 16:33:49.405 [NoteExecutor-1] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectHeatComments - <==      Total: 18
+2025-01-16 16:33:49.406 [http-nio-8093-exec-6] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.selectPageList - <==      Total: 10
+2025-01-16 16:33:49.407 [http-nio-8093-exec-6] DEBUG c.q.x.c.b.d.m.C.selectTwoLevelCommentByIds - ==>  Preparing: select id, user_id, content_uuid, is_content_empty, image_url, like_total, create_time, heat from t_comment where id in ( ? , ? )
+2025-01-16 16:33:49.408 [http-nio-8093-exec-6] DEBUG c.q.x.c.b.d.m.C.selectTwoLevelCommentByIds - ==> Parameters: 14002(Long), 28007(Long)
+2025-01-16 16:33:49.410 [http-nio-8093-exec-6] DEBUG c.q.x.c.b.d.m.C.selectTwoLevelCommentByIds - <==      Total: 2
+2025-01-16 16:33:49.412 [http-nio-8093-exec-6] INFO  c.q.f.b.c.interceptor.FeignRequestInterceptor - ########## feign 请求设置请求头 userId: 27
+2025-01-16 16:33:49.473 [http-nio-8093-exec-6] INFO  c.q.f.b.c.interceptor.FeignRequestInterceptor - ########## feign 请求设置请求头 userId: 27
+2025-01-16 16:33:49.480 [http-nio-8093-exec-6] INFO  com.alibaba.nacos.client.naming - [SUBSCRIBE-SERVICE] service:xiaohashu-user, group:DEFAULT_GROUP, clusters: 
+2025-01-16 16:33:49.483 [http-nio-8093-exec-6] INFO  com.alibaba.nacos.client.naming - init new ips(0) service: DEFAULT_GROUP@@xiaohashu-user -> []
+2025-01-16 16:33:49.483 [http-nio-8093-exec-6] INFO  com.alibaba.nacos.client.naming - current ips:(0) service: DEFAULT_GROUP@@xiaohashu-user -> []
+2025-01-16 16:33:49.484 [http-nio-8093-exec-6] WARN  o.s.cloud.loadbalancer.core.RoundRobinLoadBalancer - No servers available for service: xiaohashu-user
+2025-01-16 16:33:49.484 [http-nio-8093-exec-6] WARN  o.s.c.o.l.RetryableFeignBlockingLoadBalancerClient - Service instance was not resolved, executing the original request
+2025-01-16 16:33:50.048 [nacos-grpc-client-executor-127.0.0.1-48] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Receive server push request, request = NotifySubscriberRequest, requestId = 1963
+2025-01-16 16:33:50.048 [nacos-grpc-client-executor-127.0.0.1-48] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Ack server push request, request = NotifySubscriberRequest, requestId = 1963
+2025-01-16 16:33:52.191 [http-nio-8093-exec-6] ERROR c.q.x.comment.biz.exception.GlobalExceptionHandler - /comment/list request error, 
+feign.RetryableException: xiaohashu-user executing POST http://xiaohashu-user/user/findByIds
+	at feign.FeignException.errorExecuting(FeignException.java:277)
+	at feign.SynchronousMethodHandler.executeAndDecode(SynchronousMethodHandler.java:112)
+	at feign.SynchronousMethodHandler.invoke(SynchronousMethodHandler.java:72)
+	at feign.ReflectiveFeign$FeignInvocationHandler.invoke(ReflectiveFeign.java:98)
+	at jdk.proxy2/jdk.proxy2.$Proxy107.findByIds(Unknown Source)
+	at com.quanxiaoha.xiaohashu.comment.biz.rpc.UserRpcService.findByIds(UserRpcService.java:42)
+	at com.quanxiaoha.xiaohashu.comment.biz.service.impl.CommentServiceImpl.getCommentDataAndSync2Redis(CommentServiceImpl.java:362)
+	at com.quanxiaoha.xiaohashu.comment.biz.service.impl.CommentServiceImpl.findCommentPageList(CommentServiceImpl.java:272)
+	at com.quanxiaoha.xiaohashu.comment.biz.controller.CommentController.findCommentPageList(CommentController.java:41)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:343)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:752)
+	at org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint.proceed(MethodInvocationProceedingJoinPoint.java:89)
+	at com.quanxiaoha.framework.biz.operationlog.aspect.ApiOperationLogAspect.doAround(ApiOperationLogAspect.java:53)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethodWithGivenArgs(AbstractAspectJAdvice.java:633)
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethod(AbstractAspectJAdvice.java:623)
+	at org.springframework.aop.aspectj.AspectJAroundAdvice.invoke(AspectJAroundAdvice.java:71)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:173)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:752)
+	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:752)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:703)
+	at com.quanxiaoha.xiaohashu.comment.biz.controller.CommentController$$SpringCGLIB$$0.findCommentPageList(<generated>)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:207)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:152)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:884)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:797)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1080)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:973)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1011)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:547)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:223)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:158)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:185)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:158)
+	at com.quanxiaoha.framework.biz.context.filter.HeaderUserId2ContextFilter.doFilterInternal(HeaderUserId2ContextFilter.java:41)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:185)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:158)
+	at com.alibaba.druid.support.jakarta.WebStatFilter.doFilter(WebStatFilter.java:113)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:185)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:158)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:185)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:158)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:185)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:158)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:185)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:158)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:177)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:97)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:542)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:119)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:78)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:357)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:400)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:859)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1734)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.net.UnknownHostException: xiaohashu-user
+	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:572)
+	at java.base/java.net.Socket.connect(Socket.java:633)
+	at java.base/sun.net.NetworkClient.doConnect(NetworkClient.java:178)
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:534)
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:639)
+	at java.base/sun.net.www.http.HttpClient.<init>(HttpClient.java:282)
+	at java.base/sun.net.www.http.HttpClient.New(HttpClient.java:387)
+	at java.base/sun.net.www.http.HttpClient.New(HttpClient.java:409)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getNewHttpClient(HttpURLConnection.java:1309)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect0(HttpURLConnection.java:1242)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect(HttpURLConnection.java:1128)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.connect(HttpURLConnection.java:1057)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getOutputStream0(HttpURLConnection.java:1451)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getOutputStream(HttpURLConnection.java:1422)
+	at feign.Client$Default.convertAndSend(Client.java:219)
+	at feign.Client$Default.execute(Client.java:105)
+	at org.springframework.cloud.openfeign.loadbalancer.LoadBalancerUtils.executeWithLoadBalancerLifecycleProcessing(LoadBalancerUtils.java:56)
+	at org.springframework.cloud.openfeign.loadbalancer.RetryableFeignBlockingLoadBalancerClient.lambda$execute$2(RetryableFeignBlockingLoadBalancerClient.java:188)
+	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:329)
+	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:225)
+	at org.springframework.cloud.openfeign.loadbalancer.RetryableFeignBlockingLoadBalancerClient.execute(RetryableFeignBlockingLoadBalancerClient.java:135)
+	at feign.SynchronousMethodHandler.executeAndDecode(SynchronousMethodHandler.java:102)
+	... 88 common frames omitted
+2025-01-16 16:33:52.193 [http-nio-8093-exec-6] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 删除 ThreadLocal， userId: 27
+2025-01-16 16:34:14.398 [nacos-grpc-client-executor-127.0.0.1-53] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Receive server push request, request = NotifySubscriberRequest, requestId = 1964
+2025-01-16 16:34:14.398 [nacos-grpc-client-executor-127.0.0.1-53] INFO  com.alibaba.nacos.client.naming - new ips(1) service: DEFAULT_GROUP@@xiaohashu-user -> [{"ip":"192.168.1.3","port":8082,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-user","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"ipDeleteTimeout":30000,"instanceHeartBeatInterval":5000,"instanceHeartBeatTimeOut":15000}]
+2025-01-16 16:34:14.399 [nacos-grpc-client-executor-127.0.0.1-53] INFO  com.alibaba.nacos.client.naming - current ips:(1) service: DEFAULT_GROUP@@xiaohashu-user -> [{"ip":"192.168.1.3","port":8082,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-user","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"ipDeleteTimeout":30000,"instanceHeartBeatInterval":5000,"instanceHeartBeatTimeOut":15000}]
+2025-01-16 16:34:14.399 [nacos-grpc-client-executor-127.0.0.1-53] INFO  com.alibaba.nacos.common.remote.client - [3e1d70f0-9c79-4834-bf02-2d982134bc4a] Ack server push request, request = NotifySubscriberRequest, requestId = 1964
+2025-01-16 16:34:24.554 [http-nio-8093-exec-4] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 设置 userId 到 ThreadLocal 中， 用户 ID: 27
+2025-01-16 16:34:24.555 [http-nio-8093-exec-4] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求开始: [评论分页查询], 入参: {"noteId":1862482047415615528,"pageNo":1}, 请求类: CommentController, 请求方法: findCommentPageList =================================== 
+2025-01-16 16:34:24.565 [http-nio-8093-exec-4] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==>  Preparing: select id, user_id, content_uuid, is_content_empty, image_url, like_total, is_top, create_time, first_reply_comment_id, child_comment_total, level, parent_id, heat from t_comment where id in ( ? , ? , ? , ? , ? , ? , ? , ? , ? , ? )
+2025-01-16 16:34:24.566 [http-nio-8093-exec-4] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==> Parameters: 12003(Long), 28006(Long), 8001(Long), 30001(Long), 28002(Long), 28001(Long), 24001(Long), 14012(Long), 14001(Long), 12002(Long)
+2025-01-16 16:34:24.569 [http-nio-8093-exec-4] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - <==      Total: 10
+2025-01-16 16:34:24.570 [http-nio-8093-exec-4] DEBUG c.q.x.c.b.d.m.C.selectTwoLevelCommentByIds - ==>  Preparing: select id, user_id, content_uuid, is_content_empty, image_url, like_total, create_time, heat from t_comment where id in ( ? , ? )
+2025-01-16 16:34:24.570 [http-nio-8093-exec-4] DEBUG c.q.x.c.b.d.m.C.selectTwoLevelCommentByIds - ==> Parameters: 14002(Long), 28007(Long)
+2025-01-16 16:34:24.572 [http-nio-8093-exec-4] DEBUG c.q.x.c.b.d.m.C.selectTwoLevelCommentByIds - <==      Total: 2
+2025-01-16 16:34:24.573 [http-nio-8093-exec-4] INFO  c.q.f.b.c.interceptor.FeignRequestInterceptor - ########## feign 请求设置请求头 userId: 27
+2025-01-16 16:34:24.585 [http-nio-8093-exec-4] INFO  c.q.f.b.c.interceptor.FeignRequestInterceptor - ########## feign 请求设置请求头 userId: 27
+2025-01-16 16:34:24.704 [http-nio-8093-exec-4] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求结束: [评论分页查询], 耗时: 148ms, 出参: {"success":true,"message":null,"errorCode":null,"data":[{"commentId":12003,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"2024-12-31","likeTotal":0,"childCommentTotal":73,"firstReplyComment":{"commentId":14002,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"01-01","likeTotal":0,"childCommentTotal":null,"firstReplyComment":null,"heat":0.0},"heat":21.9},{"commentId":28006,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"21小时前","likeTotal":0,"childCommentTotal":4,"firstReplyComment":{"commentId":28007,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"19小时前","likeTotal":0,"childCommentTotal":null,"firstReplyComment":null,"heat":0.0},"heat":1.2},{"commentId":8001,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"2024-12-29","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0},{"commentId":12002,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"2024-12-31","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0},{"commentId":14001,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"01-01","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0},{"commentId":14012,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"01-01","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0},{"commentId":24001,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"01-05","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0},{"commentId":28001,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"21小时前","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0},{"commentId":28002,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"21小时前","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0},{"commentId":30001,"userId":27,"avatar":"http://127.0.0.1:9000/xiaohashu/46f41e9a32564cd084f3b874a548c16f.jpg","nickname":"犬小哈呀","content":"这是一条测试评论","imageUrl":"","createTime":"2分钟前","likeTotal":0,"childCommentTotal":0,"firstReplyComment":null,"heat":0.0}],"pageNo":1,"totalCount":3118,"pageSize":10,"totalPage":312} =================================== 
+2025-01-16 16:34:24.706 [http-nio-8093-exec-4] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 删除 ThreadLocal， userId: 27
+2025-01-16 16:34:44.211 [http-nio-8093-exec-5] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 设置 userId 到 ThreadLocal 中， 用户 ID: 27
+2025-01-16 16:34:44.213 [http-nio-8093-exec-5] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求开始: [发布评论], 入参: {"noteId":1862482047415615528,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":null}, 请求类: CommentController, 请求方法: publishComment =================================== 
+2025-01-16 16:34:44.213 [http-nio-8093-exec-5] INFO  c.q.f.b.c.interceptor.FeignRequestInterceptor - ########## feign 请求设置请求头 userId: 27
+2025-01-16 16:34:44.215 [http-nio-8093-exec-5] INFO  c.q.xiaohashu.comment.biz.retry.SendMqRetryHelper - ==> 开始异步发送 MQ, Topic: PublishCommentTopic, Body: {"noteId":1862482047415615528,"commentId":30002,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":null,"createTime":"2025-01-16 16:34:44","creatorId":27}
+2025-01-16 16:34:44.216 [http-nio-8093-exec-5] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求结束: [发布评论], 耗时: 3ms, 出参: {"success":true,"message":null,"errorCode":null,"data":null} =================================== 
+2025-01-16 16:34:44.216 [http-nio-8093-exec-5] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 删除 ThreadLocal， userId: 27
+2025-01-16 16:34:44.217 [NettyClientPublicExecutor_3] INFO  c.q.xiaohashu.comment.biz.retry.SendMqRetryHelper - ==> 【评论发布】MQ 发送成功，SendResult: SendResult [sendStatus=SEND_OK, msgId=7F000001719C63947C6B50CE19780002, offsetMsgId=AC1B600100002A9F0000000002778A5F, messageQueue=MessageQueue [topic=PublishCommentTopic, brokerName=SK-20231010EQPS, queueId=0], queueOffset=12541]
+2025-01-16 16:34:44.228 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_2] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> 本批次消息大小: 1
+2025-01-16 16:34:44.228 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_2] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> Consumer - Received message: {"noteId":1862482047415615528,"commentId":30002,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":null,"createTime":"2025-01-16 16:34:44","creatorId":27}
+2025-01-16 16:34:44.228 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_2] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ## 清洗后的 CommentBOS: [{"id":30002,"noteId":1862482047415615528,"userId":27,"contentUuid":"1e004b09-f428-447b-9ee8-22ce33cf670d","content":"这是一条测试评论","isContentEmpty":false,"imageUrl":"","level":1,"replyTotal":0,"likeTotal":0,"parentId":1862482047415615528,"replyCommentId":0,"replyUserId":0,"isTop":false,"createTime":"2025-01-16 16:34:44","updateTime":"2025-01-16 16:34:44"}]
+2025-01-16 16:34:44.230 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_2] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - ==>  Preparing: insert IGNORE into t_comment (id, note_id, user_id, content_uuid, is_content_empty, image_url, `level`, reply_total, like_total, parent_id, reply_comment_id, reply_user_id, is_top, create_time, update_time ) values (?, ?, ?, ?, ? , ?, ?, ?, ?, ? , ?, ?, ?, ?, ?)
+2025-01-16 16:34:44.230 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_2] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - ==> Parameters: 30002(Long), 1862482047415615528(Long), 27(Long), 1e004b09-f428-447b-9ee8-22ce33cf670d(String), false(Boolean), (String), 1(Integer), 0(Long), 0(Long), 1862482047415615528(Long), 0(Long), 0(Long), false(Boolean), 2025-01-16T16:34:44(LocalDateTime), 2025-01-16T16:34:44(LocalDateTime)
+2025-01-16 16:34:44.233 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_2] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - <==    Updates: 1
+2025-01-16 16:34:44.252 [NettyClientPublicExecutor_4] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> 【计数: 评论发布】MQ 发送成功，SendResult: SendResult [sendStatus=SEND_OK, msgId=7F000001719C63947C6B50CE199B0003, offsetMsgId=AC1B600100002A9F0000000002778C1F, messageQueue=MessageQueue [topic=CountNoteCommentTopic, brokerName=SK-20231010EQPS, queueId=2], queueOffset=34]
+2025-01-16 16:34:44.864 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.b.c.OneLevelCommentFirstReplyCommentIdUpdateConsumer - ==> 【一级评论 first_reply_comment_id 更新】聚合消息, size: 1
+2025-01-16 16:34:44.864 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.b.c.OneLevelCommentFirstReplyCommentIdUpdateConsumer - ==> 【一级评论 first_reply_comment_id 更新】聚合消息, ["[{\"noteId\":1862482047415615528,\"commentId\":30002,\"level\":1,\"parentId\":1862482047415615528}]"]
+2025-01-16 16:58:12.842 [Thread-16] WARN  c.alibaba.nacos.common.http.HttpClientBeanHolder - [HttpClientBeanHolder] Start destroying common HttpClient
+2025-01-16 16:58:12.842 [Thread-13] WARN  com.alibaba.nacos.common.notify.NotifyCenter - [NotifyCenter] Start destroying Publisher
+2025-01-16 16:58:12.842 [Thread-13] WARN  com.alibaba.nacos.common.notify.NotifyCenter - [NotifyCenter] Destruction of the end
+2025-01-16 16:58:12.843 [Thread-16] WARN  c.alibaba.nacos.common.http.HttpClientBeanHolder - [HttpClientBeanHolder] Destruction of the end
+2025-01-16 16:58:12.850 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 16:58:12.850 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 16:58:12.852 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 16:58:12.852 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 16:58:12.886 [SpringApplicationShutdownHook] INFO  c.a.cloud.nacos.registry.NacosServiceRegistry - De-registering from Nacos Server now...
+2025-01-16 16:58:12.886 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - [DEREGISTER-SERVICE] xiaohashu deregistering service xiaohashu-comment with instance: Instance{instanceId='null', ip='192.168.1.3', port=8093, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='DEFAULT', serviceName='null', metadata={}}
+2025-01-16 16:58:12.890 [SpringApplicationShutdownHook] INFO  c.a.cloud.nacos.registry.NacosServiceRegistry - De-registration finished.
+2025-01-16 16:58:12.890 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.cache.ServiceInfoHolder do shutdown begin
+2025-01-16 16:58:12.890 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.backups.FailoverReactor do shutdown begin
+2025-01-16 16:58:12.890 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.backups.FailoverReactor do shutdown stop
+2025-01-16 16:58:12.891 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.cache.ServiceInfoHolder do shutdown stop
+2025-01-16 16:58:12.891 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate do shutdown begin
+2025-01-16 16:58:12.891 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServiceInfoUpdateService do shutdown begin
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServiceInfoUpdateService do shutdown stop
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServerListManager do shutdown begin
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Start destroying NacosRestTemplate
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Destruction of the end
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServerListManager do shutdown stop
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.http.NamingHttpClientProxy do shutdown begin
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Start destroying NacosRestTemplate
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Destruction of the end
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.http.NamingHttpClientProxy do shutdown stop
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.common.remote.client - Shutdown rpc client, set status to shutdown
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.common.remote.client - Shutdown client event executor java.util.concurrent.ScheduledThreadPoolExecutor@7e0243ce[Running, pool size = 2, active threads = 2, queued tasks = 0, completed tasks = 0]
+2025-01-16 16:58:12.963 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.common.remote.client - Close current connection 1737016297504_172.17.0.1_35934
+2025-01-16 16:58:12.965 [nacos-grpc-client-executor-127.0.0.1-353] INFO  c.a.nacos.common.remote.client.grpc.GrpcClient - [1737016297504_172.17.0.1_35934]Ignore complete event,isRunning:false,isAbandon=false
+2025-01-16 16:58:12.967 [SpringApplicationShutdownHook] INFO  c.a.nacos.common.remote.client.grpc.GrpcClient - Shutdown grpc executor java.util.concurrent.ThreadPoolExecutor@55074aa9[Running, pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 354]
+2025-01-16 16:58:12.967 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - Shutdown grpc redo service executor java.util.concurrent.ScheduledThreadPoolExecutor@696032b3[Running, pool size = 1, active threads = 0, queued tasks = 1, completed tasks = 531]
+2025-01-16 16:58:12.967 [SpringApplicationShutdownHook] INFO  c.a.n.client.auth.ram.identify.CredentialWatcher - [null] CredentialWatcher is stopped
+2025-01-16 16:58:12.967 [SpringApplicationShutdownHook] INFO  c.a.n.client.auth.ram.identify.CredentialService - [null] CredentialService is freed
+2025-01-16 16:58:12.967 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate do shutdown stop
+2025-01-16 16:58:12.970 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 16:58:12.970 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 16:58:12.970 [SpringApplicationShutdownHook] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - container destroyed, DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_first_reply_comment_idCountNoteCommentTopic', namespace='', nameServer='127.0.0.1:9876', topic='CountNoteCommentTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 16:58:12.970 [SpringApplicationShutdownHook] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - container destroyed, DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_CommentHeatUpdateTopic', namespace='', nameServer='127.0.0.1:9876', topic='CommentHeatUpdateTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 16:58:13.098 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 16:58:13.098 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 16:58:13.101 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2025-01-16 16:58:13.101 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2025-01-16 16:58:16.865 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:58:16.914 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:58:17.208 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:58:17.216 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:58:17.216 [main] INFO  c.q.x.comment.biz.XiaohashuCommentBizApplication - The following 1 profile is active: "dev"
+2025-01-16 16:58:17.226 [main] WARN  o.s.core.annotation.AnnotationTypeMapping - Support for convention-based annotation attribute overrides is deprecated and will be removed in Spring Framework 6.1. Please annotate the following attributes in @org.springframework.retry.annotation.EnableRetry with appropriate @AliasFor declarations: [proxyTargetClass]
+2025-01-16 16:58:17.602 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-01-16 16:58:17.605 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-01-16 16:58:17.618 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 5 ms. Found 0 Redis repository interfaces.
+2025-01-16 16:58:17.770 [main] INFO  o.springframework.cloud.context.scope.GenericScope - BeanFactory id=8855d4ec-0ae8-360e-97bd-71beab16ef9b
+2025-01-16 16:58:17.799 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.quanxiaoha.xiaohashu.kv.api.KeyValueFeignApi' of type [org.springframework.cloud.openfeign.FeignClientFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:17.800 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.quanxiaoha.xiaohashu.user.api.UserFeignApi' of type [org.springframework.cloud.openfeign.FeignClientFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:17.800 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.quanxiaoha.xiaohashu.distributed.id.generator.api.DistributedIdGeneratorFeignApi' of type [org.springframework.cloud.openfeign.FeignClientFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:17.961 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:17.994 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:17.997 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.springframework.cloud.commons.config.CommonsConfigAutoConfiguration' of type [org.springframework.cloud.commons.config.CommonsConfigAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:17.999 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:18.000 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'loadBalancerClientsDefaultsMappingsProvider' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration$$Lambda$724/0x0000012fa6522848] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:18.001 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'defaultsBindHandlerAdvisor' of type [org.springframework.cloud.commons.config.DefaultsBindHandlerAdvisor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:18.004 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:18.005 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-01-16 16:58:18.172 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8093 (http)
+2025-01-16 16:58:18.178 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-01-16 16:58:18.179 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.5]
+2025-01-16 16:58:18.241 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-01-16 16:58:18.241 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1013 ms
+2025-01-16 16:58:18.310 [main] INFO  c.a.d.s.b.a.DruidDataSourceAutoConfigure - Init DruidDataSource
+2025-01-16 16:58:18.534 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2025-01-16 16:58:18.788 [main] INFO  o.s.cloud.openfeign.FeignClientFactoryBean - For 'xiaohashu-kv' URL not provided. Will try picking an instance via load-balancing.
+2025-01-16 16:58:18.855 [main] INFO  o.a.r.s.autoconfigure.RocketMQAutoConfiguration - a producer (xiaohashu_group) init on namesrv 127.0.0.1:9876
+2025-01-16 16:58:19.269 [main] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - running container: DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_CommentHeatUpdateTopic', namespace='', nameServer='127.0.0.1:9876', topic='CommentHeatUpdateTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 16:58:19.270 [main] INFO  o.a.r.s.a.ListenerContainerConfiguration - Register the listener to container, listenerBeanName:commentHeatUpdateConsumer, containerBeanName:org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_1
+2025-01-16 16:58:19.313 [main] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - running container: DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_first_reply_comment_idCountNoteCommentTopic', namespace='', nameServer='127.0.0.1:9876', topic='CountNoteCommentTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 16:58:19.313 [main] INFO  o.a.r.s.a.ListenerContainerConfiguration - Register the listener to container, listenerBeanName:oneLevelCommentFirstReplyCommentIdUpdateConsumer, containerBeanName:org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_2
+2025-01-16 16:58:19.351 [main] INFO  o.s.cloud.openfeign.FeignClientFactoryBean - For 'xiaohashu-distributed-id-generator' URL not provided. Will try picking an instance via load-balancing.
+2025-01-16 16:58:19.364 [main] INFO  o.s.cloud.openfeign.FeignClientFactoryBean - For 'xiaohashu-user' URL not provided. Will try picking an instance via load-balancing.
+2025-01-16 16:58:20.166 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port(s): 8093 (http) with context path ''
+2025-01-16 16:58:20.170 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-16 16:58:20.170 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from ans.namespace attribute : null
+2025-01-16 16:58:20.171 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from ALIBABA_ALIWARE_NAMESPACE attribute :null
+2025-01-16 16:58:20.171 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from namespace attribute :null
+2025-01-16 16:58:20.185 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - [settings] [req-serv] nacos-server port:8848
+2025-01-16 16:58:20.185 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - [settings] [http-client] connect timeout:1000
+2025-01-16 16:58:20.185 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - PER_TASK_CONFIG_SIZE: 3000.0
+2025-01-16 16:58:20.188 [main] INFO  c.a.n.p.auth.spi.client.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2025-01-16 16:58:20.188 [main] INFO  c.a.n.p.auth.spi.client.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2025-01-16 16:58:20.189 [main] INFO  c.a.n.client.auth.ram.identify.CredentialWatcher - null No credential found
+2025-01-16 16:58:20.195 [main] INFO  com.alibaba.nacos.common.remote.client - [RpcClientFactory] create a new rpc client of 63df7c83-663b-4ef3-9b4d-71b6102d2844
+2025-01-16 16:58:20.207 [main] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] RpcClient init, ServerListFactory = com.alibaba.nacos.client.naming.core.ServerListManager
+2025-01-16 16:58:20.207 [main] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Registry connection listener to current client:com.alibaba.nacos.client.naming.remote.gprc.redo.NamingGrpcRedoService
+2025-01-16 16:58:20.207 [main] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Register server push request handler:com.alibaba.nacos.client.naming.remote.gprc.NamingPushRequestHandler
+2025-01-16 16:58:20.208 [main] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Try to connect to server on start up, server: {serverIp = '127.0.0.1', server main port = 8848}
+2025-01-16 16:58:20.227 [main] INFO  c.a.nacos.common.remote.client.grpc.GrpcClient - grpc client connection server:127.0.0.1 ip,serverPort:9848,grpcTslConfig:{"sslProvider":"OPENSSL","enableTls":false,"mutualAuthEnable":false,"trustAll":false}
+2025-01-16 16:58:20.851 [main] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Success to connect to server [127.0.0.1:8848] on start up, connectionId = 1737017900692_172.17.0.1_45654
+2025-01-16 16:58:20.851 [com.alibaba.nacos.client.remote.worker] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Notify connected event to listeners.
+2025-01-16 16:58:20.851 [com.alibaba.nacos.client.remote.worker] INFO  com.alibaba.nacos.client.naming - Grpc connection connect
+2025-01-16 16:58:20.852 [main] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$ConnectResetRequestHandler
+2025-01-16 16:58:20.852 [main] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$$Lambda$1288/0x0000012fa69b4440
+2025-01-16 16:58:20.853 [main] INFO  com.alibaba.nacos.client.naming - [REGISTER-SERVICE] xiaohashu registering service xiaohashu-comment with instance Instance{instanceId='null', ip='192.168.1.3', port=8093, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='DEFAULT', serviceName='null', metadata={IPv6=[240e:b62:43b:9100:68b6:95d0:2542:aa46], preserved.register.source=SPRING_CLOUD}}
+2025-01-16 16:58:20.862 [main] INFO  c.a.cloud.nacos.registry.NacosServiceRegistry - nacos registry, DEFAULT_GROUP xiaohashu-comment 192.168.1.3:8093 register finished
+2025-01-16 16:58:20.975 [main] INFO  c.q.x.comment.biz.XiaohashuCommentBizApplication - Started XiaohashuCommentBizApplication in 4.515 seconds (process running for 4.8)
+2025-01-16 17:00:41.690 [http-nio-8093-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-01-16 17:00:41.690 [http-nio-8093-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-01-16 17:00:41.691 [http-nio-8093-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-01-16 17:00:41.694 [http-nio-8093-exec-1] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 设置 userId 到 ThreadLocal 中， 用户 ID: 27
+2025-01-16 17:00:41.761 [http-nio-8093-exec-1] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求开始: [发布评论], 入参: {"noteId":1862482047415615528,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":30002}, 请求类: CommentController, 请求方法: publishComment =================================== 
+2025-01-16 17:00:41.763 [http-nio-8093-exec-1] INFO  c.q.f.b.c.interceptor.FeignRequestInterceptor - ########## feign 请求设置请求头 userId: 27
+2025-01-16 17:00:41.816 [http-nio-8093-exec-1] INFO  com.alibaba.nacos.client.naming - [SUBSCRIBE-SERVICE] service:xiaohashu-distributed-id-generator, group:DEFAULT_GROUP, clusters: 
+2025-01-16 17:00:41.890 [http-nio-8093-exec-1] INFO  com.alibaba.nacos.client.naming - init new ips(1) service: DEFAULT_GROUP@@xiaohashu-distributed-id-generator -> [{"ip":"192.168.1.3","port":8085,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-distributed-id-generator","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"instanceHeartBeatTimeOut":15000,"instanceHeartBeatInterval":5000,"ipDeleteTimeout":30000}]
+2025-01-16 17:00:41.897 [http-nio-8093-exec-1] INFO  com.alibaba.nacos.client.naming - current ips:(1) service: DEFAULT_GROUP@@xiaohashu-distributed-id-generator -> [{"ip":"192.168.1.3","port":8085,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-distributed-id-generator","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"instanceHeartBeatTimeOut":15000,"instanceHeartBeatInterval":5000,"ipDeleteTimeout":30000}]
+2025-01-16 17:00:41.926 [http-nio-8093-exec-1] INFO  c.q.xiaohashu.comment.biz.retry.SendMqRetryHelper - ==> 开始异步发送 MQ, Topic: PublishCommentTopic, Body: {"noteId":1862482047415615528,"commentId":30003,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":30002,"createTime":"2025-01-16 17:00:41","creatorId":27}
+2025-01-16 17:00:41.930 [http-nio-8093-exec-1] INFO  c.q.f.b.operationlog.aspect.ApiOperationLogAspect - ====== 请求结束: [发布评论], 耗时: 170ms, 出参: {"success":true,"message":null,"errorCode":null,"data":null} =================================== 
+2025-01-16 17:00:41.938 [http-nio-8093-exec-1] INFO  c.q.f.b.context.filter.HeaderUserId2ContextFilter - ===== 删除 ThreadLocal， userId: 27
+2025-01-16 17:00:41.944 [NettyClientPublicExecutor_1] INFO  c.q.xiaohashu.comment.biz.retry.SendMqRetryHelper - ==> 【评论发布】MQ 发送成功，SendResult: SendResult [sendStatus=SEND_OK, msgId=7F000001B52C63947C6B50E5DE530000, offsetMsgId=AC1B600100002A9F0000000002778D8F, messageQueue=MessageQueue [topic=PublishCommentTopic, brokerName=SK-20231010EQPS, queueId=3], queueOffset=12562]
+2025-01-16 17:00:41.954 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> 本批次消息大小: 1
+2025-01-16 17:00:41.957 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> Consumer - Received message: {"noteId":1862482047415615528,"commentId":30003,"content":"这是一条测试评论","imageUrl":null,"replyCommentId":30002,"createTime":"2025-01-16 17:00:41","creatorId":27}
+2025-01-16 17:00:42.002 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==>  Preparing: select id, user_id, content_uuid, is_content_empty, image_url, like_total, is_top, create_time, first_reply_comment_id, child_comment_total, level, parent_id, heat, note_id from t_comment where id in ( ? )
+2025-01-16 17:00:42.123 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==> Parameters: 30002(Long)
+2025-01-16 17:00:42.140 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - <==      Total: 1
+2025-01-16 17:00:42.146 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ## 清洗后的 CommentBOS: [{"id":30003,"noteId":1862482047415615528,"userId":27,"contentUuid":"a5def693-ef3c-463d-b475-7f8357a0e85c","content":"这是一条测试评论","isContentEmpty":false,"imageUrl":"","level":2,"replyTotal":0,"likeTotal":0,"parentId":30002,"replyCommentId":30002,"replyUserId":27,"isTop":false,"createTime":"2025-01-16 17:00:41","updateTime":"2025-01-16 17:00:41"}]
+2025-01-16 17:00:42.152 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - ==>  Preparing: insert IGNORE into t_comment (id, note_id, user_id, content_uuid, is_content_empty, image_url, `level`, reply_total, like_total, parent_id, reply_comment_id, reply_user_id, is_top, create_time, update_time ) values (?, ?, ?, ?, ? , ?, ?, ?, ?, ? , ?, ?, ?, ?, ?)
+2025-01-16 17:00:42.220 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - ==> Parameters: 30003(Long), 1862482047415615528(Long), 27(Long), a5def693-ef3c-463d-b475-7f8357a0e85c(String), false(Boolean), (String), 2(Integer), 0(Long), 0(Long), 30002(Long), 30002(Long), 27(Long), false(Boolean), 2025-01-16T17:00:41(LocalDateTime), 2025-01-16T17:00:41(LocalDateTime)
+2025-01-16 17:00:42.225 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] DEBUG c.q.x.c.b.d.mapper.CommentDOMapper.batchInsert - <==    Updates: 1
+2025-01-16 17:00:42.239 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  com.alibaba.nacos.client.naming - [SUBSCRIBE-SERVICE] service:xiaohashu-kv, group:DEFAULT_GROUP, clusters: 
+2025-01-16 17:00:42.243 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  com.alibaba.nacos.client.naming - init new ips(1) service: DEFAULT_GROUP@@xiaohashu-kv -> [{"ip":"192.168.1.3","port":8084,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-kv","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"instanceHeartBeatTimeOut":15000,"instanceHeartBeatInterval":5000,"ipDeleteTimeout":30000}]
+2025-01-16 17:00:42.243 [ConsumeMessageThread_xiaohashu_group_PublishCommentTopic_1] INFO  com.alibaba.nacos.client.naming - current ips:(1) service: DEFAULT_GROUP@@xiaohashu-kv -> [{"ip":"192.168.1.3","port":8084,"weight":1.0,"healthy":true,"enabled":true,"ephemeral":true,"clusterName":"DEFAULT","serviceName":"DEFAULT_GROUP@@xiaohashu-kv","metadata":{"preserved.register.source":"SPRING_CLOUD","IPv6":"[240e:b62:43b:9100:68b6:95d0:2542:aa46]"},"instanceHeartBeatTimeOut":15000,"instanceHeartBeatInterval":5000,"ipDeleteTimeout":30000}]
+2025-01-16 17:00:42.273 [NettyClientPublicExecutor_2] INFO  c.q.x.comment.biz.consumer.Comment2DBConsumer - ==> 【计数: 评论发布】MQ 发送成功，SendResult: SendResult [sendStatus=SEND_OK, msgId=7F000001B52C63947C6B50E5DFA00001, offsetMsgId=AC1B600100002A9F0000000002778F50, messageQueue=MessageQueue [topic=CountNoteCommentTopic, brokerName=SK-20231010EQPS, queueId=1], queueOffset=27]
+2025-01-16 17:00:42.400 [nacos-grpc-client-executor-127.0.0.1-47] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Receive server push request, request = NotifySubscriberRequest, requestId = 1967
+2025-01-16 17:00:42.400 [nacos-grpc-client-executor-127.0.0.1-47] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Ack server push request, request = NotifySubscriberRequest, requestId = 1967
+2025-01-16 17:00:42.791 [nacos-grpc-client-executor-127.0.0.1-48] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Receive server push request, request = NotifySubscriberRequest, requestId = 1968
+2025-01-16 17:00:42.791 [nacos-grpc-client-executor-127.0.0.1-48] INFO  com.alibaba.nacos.common.remote.client - [63df7c83-663b-4ef3-9b4d-71b6102d2844] Ack server push request, request = NotifySubscriberRequest, requestId = 1968
+2025-01-16 17:00:43.281 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.b.c.OneLevelCommentFirstReplyCommentIdUpdateConsumer - ==> 【一级评论 first_reply_comment_id 更新】聚合消息, size: 1
+2025-01-16 17:00:43.281 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.b.c.OneLevelCommentFirstReplyCommentIdUpdateConsumer - ==> 【一级评论 first_reply_comment_id 更新】聚合消息, ["[{\"noteId\":1862482047415615528,\"commentId\":30003,\"level\":2,\"parentId\":30002}]"]
+2025-01-16 17:00:43.433 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==>  Preparing: select id, user_id, content_uuid, is_content_empty, image_url, like_total, is_top, create_time, first_reply_comment_id, child_comment_total, level, parent_id, heat, note_id from t_comment where id in ( ? )
+2025-01-16 17:00:43.434 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==> Parameters: 30002(Long)
+2025-01-16 17:00:43.435 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - <==      Total: 1
+2025-01-16 17:00:43.436 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.selectEarliestByParentId - ==>  Preparing: select id from t_comment where parent_id = ? and level = 2 order by create_time asc limit 1
+2025-01-16 17:00:43.438 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.selectEarliestByParentId - ==> Parameters: 30002(Long)
+2025-01-16 17:00:43.440 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.selectEarliestByParentId - <==      Total: 1
+2025-01-16 17:00:43.440 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.updateFirstReplyCommentIdByPrimaryKey - ==>  Preparing: update t_comment set first_reply_comment_id = ? where id = ?
+2025-01-16 17:00:43.442 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.updateFirstReplyCommentIdByPrimaryKey - ==> Parameters: 30003(Long), 30002(Long)
+2025-01-16 17:00:43.449 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.updateFirstReplyCommentIdByPrimaryKey - <==    Updates: 1
+2025-01-16 17:00:44.464 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.biz.consumer.CommentHeatUpdateConsumer - ==> 【评论热度值计算】聚合消息, size: 1
+2025-01-16 17:00:44.464 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.biz.consumer.CommentHeatUpdateConsumer - ==> 【评论热度值计算】聚合消息, ["[30002]"]
+2025-01-16 17:00:44.468 [pool-batch-consume-blocking-queue-thread-0] INFO  c.q.x.c.biz.consumer.CommentHeatUpdateConsumer - ==> 去重后的评论 ID: [30002]
+2025-01-16 17:00:44.468 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==>  Preparing: select id, user_id, content_uuid, is_content_empty, image_url, like_total, is_top, create_time, first_reply_comment_id, child_comment_total, level, parent_id, heat, note_id from t_comment where id in ( ? )
+2025-01-16 17:00:44.469 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - ==> Parameters: 30002(Long)
+2025-01-16 17:00:44.471 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.CommentDOMapper.selectByCommentIds - <==      Total: 1
+2025-01-16 17:00:44.472 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.batchUpdateHeatByCommentIds - ==>  Preparing: UPDATE t_comment SET heat = CASE id WHEN ? THEN ? ELSE heat END WHERE id IN ( ? )
+2025-01-16 17:00:44.473 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.batchUpdateHeatByCommentIds - ==> Parameters: 30002(Long), 0.3(Double), 30002(Long)
+2025-01-16 17:00:44.481 [pool-batch-consume-blocking-queue-thread-0] DEBUG c.q.x.c.b.d.m.C.batchUpdateHeatByCommentIds - <==    Updates: 1
+2025-01-16 20:13:44.596 [Thread-16] WARN  c.alibaba.nacos.common.http.HttpClientBeanHolder - [HttpClientBeanHolder] Start destroying common HttpClient
+2025-01-16 20:13:44.596 [Thread-13] WARN  com.alibaba.nacos.common.notify.NotifyCenter - [NotifyCenter] Start destroying Publisher
+2025-01-16 20:13:44.599 [Thread-13] WARN  com.alibaba.nacos.common.notify.NotifyCenter - [NotifyCenter] Destruction of the end
+2025-01-16 20:13:44.602 [Thread-16] WARN  c.alibaba.nacos.common.http.HttpClientBeanHolder - [HttpClientBeanHolder] Destruction of the end
+2025-01-16 20:13:44.642 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 20:13:44.642 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 20:13:44.644 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 20:13:44.644 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 20:13:44.704 [SpringApplicationShutdownHook] INFO  c.a.cloud.nacos.registry.NacosServiceRegistry - De-registering from Nacos Server now...
+2025-01-16 20:13:44.704 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - [DEREGISTER-SERVICE] xiaohashu deregistering service xiaohashu-comment with instance: Instance{instanceId='null', ip='192.168.1.3', port=8093, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='DEFAULT', serviceName='null', metadata={}}
+2025-01-16 20:13:44.709 [SpringApplicationShutdownHook] INFO  c.a.cloud.nacos.registry.NacosServiceRegistry - De-registration finished.
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.cache.ServiceInfoHolder do shutdown begin
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.backups.FailoverReactor do shutdown begin
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.backups.FailoverReactor do shutdown stop
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.cache.ServiceInfoHolder do shutdown stop
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate do shutdown begin
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServiceInfoUpdateService do shutdown begin
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServiceInfoUpdateService do shutdown stop
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServerListManager do shutdown begin
+2025-01-16 20:13:44.710 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Start destroying NacosRestTemplate
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Destruction of the end
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.core.ServerListManager do shutdown stop
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.http.NamingHttpClientProxy do shutdown begin
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Start destroying NacosRestTemplate
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Destruction of the end
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.http.NamingHttpClientProxy do shutdown stop
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.common.remote.client - Shutdown rpc client, set status to shutdown
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.common.remote.client - Shutdown client event executor java.util.concurrent.ScheduledThreadPoolExecutor@a6a5c9d[Running, pool size = 2, active threads = 2, queued tasks = 0, completed tasks = 0]
+2025-01-16 20:13:44.711 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.common.remote.client - Close current connection 1737017900692_172.17.0.1_45654
+2025-01-16 20:13:44.713 [nacos-grpc-client-executor-127.0.0.1-2386] INFO  c.a.nacos.common.remote.client.grpc.GrpcClient - [1737017900692_172.17.0.1_45654]Ignore complete event,isRunning:false,isAbandon=false
+2025-01-16 20:13:44.717 [SpringApplicationShutdownHook] INFO  c.a.nacos.common.remote.client.grpc.GrpcClient - Shutdown grpc executor java.util.concurrent.ThreadPoolExecutor@669272ef[Running, pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 2387]
+2025-01-16 20:13:44.717 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - Shutdown grpc redo service executor java.util.concurrent.ScheduledThreadPoolExecutor@66f284bd[Running, pool size = 1, active threads = 0, queued tasks = 1, completed tasks = 3906]
+2025-01-16 20:13:44.717 [SpringApplicationShutdownHook] INFO  c.a.n.client.auth.ram.identify.CredentialWatcher - [null] CredentialWatcher is stopped
+2025-01-16 20:13:44.717 [SpringApplicationShutdownHook] INFO  c.a.n.client.auth.ram.identify.CredentialService - [null] CredentialService is freed
+2025-01-16 20:13:44.717 [SpringApplicationShutdownHook] INFO  com.alibaba.nacos.client.naming - com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate do shutdown stop
+2025-01-16 20:13:44.720 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 20:13:44.720 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 20:13:44.720 [SpringApplicationShutdownHook] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - container destroyed, DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_first_reply_comment_idCountNoteCommentTopic', namespace='', nameServer='127.0.0.1:9876', topic='CountNoteCommentTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 20:13:44.721 [SpringApplicationShutdownHook] INFO  o.a.r.s.support.DefaultRocketMQListenerContainer - container destroyed, DefaultRocketMQListenerContainer{consumerGroup='xiaohashu_group_CommentHeatUpdateTopic', namespace='', nameServer='127.0.0.1:9876', topic='CommentHeatUpdateTopic', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2025-01-16 20:13:44.854 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[172.27.96.1:10911] result: true
+2025-01-16 20:13:44.854 [NettyClientSelector_1] INFO  RocketmqRemoting - closeChannel: close the connection to remote address[127.0.0.1:9876] result: true
+2025-01-16 20:13:44.858 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2025-01-16 20:13:44.859 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed

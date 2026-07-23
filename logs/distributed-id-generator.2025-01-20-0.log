@@ -1,0 +1,438 @@
+2025-01-20 21:09:12.084 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-20 21:09:12.119 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-20 21:09:12.448 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-20 21:09:12.457 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-20 21:09:12.457 [main] INFO  c.q.x.d.i.g.b.XiaohashuDistributedIdGeneratorBizApplication - The following 1 profile is active: "dev"
+2025-01-20 21:09:12.688 [main] INFO  o.springframework.cloud.context.scope.GenericScope - BeanFactory id=435afa5f-b2ad-30a4-b100-92ccf504f149
+2025-01-20 21:09:12.790 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8085 (http)
+2025-01-20 21:09:12.795 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-01-20 21:09:12.795 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.5]
+2025-01-20 21:09:12.835 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-01-20 21:09:12.835 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 372 ms
+2025-01-20 21:09:12.901 [main] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - Init ...
+2025-01-20 21:09:12.901 [main] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:09:12.992 [main] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - Add tag leaf-segment-comment-id from db to IdCache, SegmentBuffer SegmentBuffer{key='leaf-segment-comment-id', segments=[Segment(value:0,max:0,step:0), Segment(value:0,max:0,step:0)], currentPos=0, nextReady=false, initOk=false, threadRunning=false, step=0, minStep=0, updateTimestamp=0}
+2025-01-20 21:09:12.992 [main] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - Add tag leaf-segment-test from db to IdCache, SegmentBuffer SegmentBuffer{key='leaf-segment-test', segments=[Segment(value:0,max:0,step:0), Segment(value:0,max:0,step:0)], currentPos=0, nextReady=false, initOk=false, threadRunning=false, step=0, minStep=0, updateTimestamp=0}
+2025-01-20 21:09:12.992 [main] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - Add tag leaf-segment-user-id from db to IdCache, SegmentBuffer SegmentBuffer{key='leaf-segment-user-id', segments=[Segment(value:0,max:0,step:0), Segment(value:0,max:0,step:0)], currentPos=0, nextReady=false, initOk=false, threadRunning=false, step=0, minStep=0, updateTimestamp=0}
+2025-01-20 21:09:12.992 [main] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - Add tag leaf-segment-xiaohashu-id from db to IdCache, SegmentBuffer SegmentBuffer{key='leaf-segment-xiaohashu-id', segments=[Segment(value:0,max:0,step:0), Segment(value:0,max:0,step:0)], currentPos=0, nextReady=false, initOk=false, threadRunning=false, step=0, minStep=0, updateTimestamp=0}
+2025-01-20 21:09:12.992 [main] INFO  org.perf4j.TimingLogger - start[1737378552901] time[90] tag[updateCacheFromDb]
+2025-01-20 21:09:12.993 [main] INFO  c.q.x.d.id.generator.biz.service.SegmentService - Segment Service Init Successfully
+2025-01-20 21:09:13.004 [main] INFO  c.q.x.d.i.g.biz.core.snowflake.SnowflakeIDGenImpl - twepoch:1288834974657 ,ip:192.168.1.3 ,zkAddress:127.0.0.1:2181 port:2222
+2025-01-20 21:09:13.026 [main] WARN  org.apache.curator.CuratorZookeeperClient - session timeout [6000] is less than connection timeout [10000]
+2025-01-20 21:09:13.031 [main] INFO  o.a.curator.framework.imps.CuratorFrameworkImpl - Starting
+2025-01-20 21:09:13.035 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:zookeeper.version=3.6.0--b4c89dc7f6083829e18fae6e446907ae0b1f22d7, built on 02/25/2020 14:38 GMT
+2025-01-20 21:09:13.035 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:host.name=172.27.96.1
+2025-01-20 21:09:13.035 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:java.version=17.0.11
+2025-01-20 21:09:13.035 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:java.vendor=Oracle Corporation
+2025-01-20 21:09:13.035 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:java.home=E:\soft\java\jdk17
+2025-01-20 21:09:13.035 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:java.class.path=E:\java_workspace\xiaohashu3\xiaohashu-17.9节\xiaohashu2\xiaohashu-distributed-id-generator\xiaohashu-distributed-id-generator-biz\target\classes;E:\java_workspace\xiaohashu3\xiaohashu-17.9节\xiaohashu2\xiaoha-framework\xiaoha-common\target\classes;E:\soft\maven\repository\org\projectlombok\lombok\1.18.30\lombok-1.18.30.jar;E:\soft\maven\repository\com\fasterxml\jackson\core\jackson-databind\2.16.1\jackson-databind-2.16.1.jar;E:\soft\maven\repository\com\fasterxml\jackson\core\jackson-annotations\2.14.1\jackson-annotations-2.14.1.jar;E:\soft\maven\repository\com\fasterxml\jackson\core\jackson-core\2.16.1\jackson-core-2.16.1.jar;E:\soft\maven\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.14.1\jackson-datatype-jsr310-2.14.1.jar;E:\soft\maven\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;E:\soft\maven\repository\org\hibernate\validator\hibernate-validator\8.0.0.Final\hibernate-validator-8.0.0.Final.jar;E:\soft\maven\repository\org\jboss\logging\jboss-logging\3.5.0.Final\jboss-logging-3.5.0.Final.jar;E:\soft\maven\repository\com\fasterxml\classmate\1.5.1\classmate-1.5.1.jar;E:\soft\maven\repository\com\google\guava\guava\33.0.0-jre\guava-33.0.0-jre.jar;E:\soft\maven\repository\com\google\guava\failureaccess\1.0.2\failureaccess-1.0.2.jar;E:\soft\maven\repository\com\google\guava\listenablefuture\9999.0-empty-to-avoid-conflict-with-guava\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;E:\soft\maven\repository\com\google\code\findbugs\jsr305\3.0.2\jsr305-3.0.2.jar;E:\soft\maven\repository\org\checkerframework\checker-qual\3.41.0\checker-qual-3.41.0.jar;E:\soft\maven\repository\com\google\errorprone\error_prone_annotations\2.23.0\error_prone_annotations-2.23.0.jar;E:\soft\maven\repository\com\google\j2objc\j2objc-annotations\2.8\j2objc-annotations-2.8.jar;E:\soft\maven\repository\cn\hutool\hutool-all\5.8.26\hutool-all-5.8.26.jar;E:\soft\maven\repository\org\apache\commons\commons-lang3\3.12.0\commons-lang3-3.12.0.jar;E:\soft\maven\repository\org\springframework\boot\spring-boot-starter-web\3.0.2\spring-boot-starter-web-3.0.2.jar;E:\soft\maven\repository\org\springframework\boot\spring-boot-starter\3.0.2\spring-boot-starter-3.0.2.jar;E:\soft\maven\repository\org\springframework\boot\spring-boot\3.0.2\spring-boot-3.0.2.jar;E:\soft\maven\repository\org\springframework\boot\spring-boot-autoconfigure\3.0.2\spring-boot-autoconfigure-3.0.2.jar;E:\soft\maven\repository\org\springframework\boot\spring-boot-starter-logging\3.0.2\spring-boot-starter-logging-3.0.2.jar;E:\soft\maven\repository\ch\qos\logback\logback-classic\1.4.5\logback-classic-1.4.5.jar;E:\soft\maven\repository\ch\qos\logback\logback-core\1.4.5\logback-core-1.4.5.jar;E:\soft\maven\repository\org\apache\logging\log4j\log4j-to-slf4j\2.19.0\log4j-to-slf4j-2.19.0.jar;E:\soft\maven\repository\org\apache\logging\log4j\log4j-api\2.19.0\log4j-api-2.19.0.jar;E:\soft\maven\repository\org\slf4j\jul-to-slf4j\2.0.6\jul-to-slf4j-2.0.6.jar;E:\soft\maven\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;E:\soft\maven\repository\org\yaml\snakeyaml\1.33\snakeyaml-1.33.jar;E:\soft\maven\repository\org\springframework\boot\spring-boot-starter-json\3.0.2\spring-boot-starter-json-3.0.2.jar;E:\soft\maven\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.14.1\jackson-datatype-jdk8-2.14.1.jar;E:\soft\maven\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.14.1\jackson-module-parameter-names-2.14.1.jar;E:\soft\maven\repository\org\springframework\boot\spring-boot-starter-tomcat\3.0.2\spring-boot-starter-tomcat-3.0.2.jar;E:\soft\maven\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.5\tomcat-embed-core-10.1.5.jar;E:\soft\maven\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.5\tomcat-embed-el-10.1.5.jar;E:\soft\maven\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.5\tomcat-embed-websocket-10.1.5.jar;E:\soft\maven\repository\org\springframework\spring-web\6.0.4\spring-web-6.0.4.jar;E:\soft\maven\repository\org\springframework\spring-beans\6.0.4\spring-beans-6.0.4.jar;E:\soft\maven\repository\io\micrometer\micrometer-observation\1.10.3\micrometer-observation-1.10.3.jar;E:\soft\maven\repository\io\micrometer\micrometer-commons\1.10.3\micrometer-commons-1.10.3.jar;E:\soft\maven\repository\org\springframework\spring-webmvc\6.0.4\spring-webmvc-6.0.4.jar;E:\soft\maven\repository\org\springframework\spring-aop\6.0.4\spring-aop-6.0.4.jar;E:\soft\maven\repository\org\springframework\spring-context\6.0.4\spring-context-6.0.4.jar;E:\soft\maven\repository\org\springframework\spring-expression\6.0.4\spring-expression-6.0.4.jar;E:\soft\maven\repository\org\springframework\spring-core\6.0.4\spring-core-6.0.4.jar;E:\soft\maven\repository\org\springframework\spring-jcl\6.0.4\spring-jcl-6.0.4.jar;E:\soft\maven\repository\org\springframework\cloud\spring-cloud-starter-bootstrap\4.0.0\spring-cloud-starter-bootstrap-4.0.0.jar;E:\soft\maven\repository\org\springframework\cloud\spring-cloud-starter\4.0.0\spring-cloud-starter-4.0.0.jar;E:\soft\maven\repository\org\springframework\security\spring-security-rsa\1.0.11.RELEASE\spring-security-rsa-1.0.11.RELEASE.jar;E:\soft\maven\repository\org\bouncycastle\bcpkix-jdk15on\1.69\bcpkix-jdk15on-1.69.jar;E:\soft\maven\repository\org\bouncycastle\bcprov-jdk15on\1.69\bcprov-jdk15on-1.69.jar;E:\soft\maven\repository\org\bouncycastle\bcutil-jdk15on\1.69\bcutil-jdk15on-1.69.jar;E:\soft\maven\repository\com\alibaba\cloud\spring-cloud-starter-alibaba-nacos-discovery\2022.0.0.0\spring-cloud-starter-alibaba-nacos-discovery-2022.0.0.0.jar;E:\soft\maven\repository\com\alibaba\cloud\spring-cloud-alibaba-commons\2022.0.0.0\spring-cloud-alibaba-commons-2022.0.0.0.jar;E:\soft\maven\repository\com\alibaba\nacos\nacos-client\2.2.1\nacos-client-2.2.1.jar;E:\soft\maven\repository\com\alibaba\nacos\nacos-auth-plugin\2.2.1\nacos-auth-plugin-2.2.1.jar;E:\soft\maven\repository\com\alibaba\nacos\nacos-encryption-plugin\2.2.1\nacos-encryption-plugin-2.2.1.jar;E:\soft\maven\repository\commons-codec\commons-codec\1.15\commons-codec-1.15.jar;E:\soft\maven\repository\org\apache\httpcomponents\httpasyncclient\4.1.5\httpasyncclient-4.1.5.jar;E:\soft\maven\repository\org\apache\httpcomponents\httpcore\4.4.16\httpcore-4.4.16.jar;E:\soft\maven\repository\org\apache\httpcomponents\httpcore-nio\4.4.16\httpcore-nio-4.4.16.jar;E:\soft\maven\repository\org\apache\httpcomponents\httpclient\4.5.14\httpclient-4.5.14.jar;E:\soft\maven\repository\io\prometheus\simpleclient\0.16.0\simpleclient-0.16.0.jar;E:\soft\maven\repository\io\prometheus\simpleclient_tracer_otel\0.16.0\simpleclient_tracer_otel-0.16.0.jar;E:\soft\maven\repository\io\prometheus\simpleclient_tracer_common\0.16.0\simpleclient_tracer_common-0.16.0.jar;E:\soft\maven\repository\io\prometheus\simpleclient_tracer_otel_agent\0.16.0\simpleclient_tracer_otel_agent-0.16.0.jar;E:\soft\maven\repository\com\alibaba\spring\spring-context-support\1.0.11\spring-context-support-1.0.11.jar;E:\soft\maven\repository\org\springframework\cloud\spring-cloud-commons\4.0.0\spring-cloud-commons-4.0.0.jar;E:\soft\maven\repository\org\springframework\security\spring-security-crypto\6.0.1\spring-security-crypto-6.0.1.jar;E:\soft\maven\repository\org\springframework\cloud\spring-cloud-context\4.0.0\spring-cloud-context-4.0.0.jar;E:\soft\maven\repository\commons-io\commons-io\2.4\commons-io-2.4.jar;E:\soft\maven\repository\org\perf4j\perf4j\0.9.16\perf4j-0.9.16.jar;E:\soft\maven\repository\mysql\mysql-connector-java\8.0.29\mysql-connector-java-8.0.29.jar;E:\soft\maven\repository\com\google\protobuf\protobuf-java\3.19.4\protobuf-java-3.19.4.jar;E:\soft\maven\repository\com\alibaba\druid\1.0.18\druid-1.0.18.jar;E:\soft\maven\repository\org\mybatis\mybatis\3.3.0\mybatis-3.3.0.jar;E:\soft\maven\repository\org\apache\curator\curator-recipes\2.6.0\curator-recipes-2.6.0.jar;E:\soft\maven\repository\org\apache\curator\curator-framework\5.1.0\curator-framework-5.1.0.jar;E:\soft\maven\repository\org\apache\curator\curator-client\5.1.0\curator-client-5.1.0.jar;E:\soft\maven\repository\org\apache\zookeeper\zookeeper\3.6.0\zookeeper-3.6.0.jar;E:\soft\maven\repository\commons-lang\commons-lang\2.6\commons-lang-2.6.jar;E:\soft\maven\repository\org\apache\zookeeper\zookeeper-jute\3.6.0\zookeeper-jute-3.6.0.jar;E:\soft\maven\repository\org\apache\yetus\audience-annotations\0.5.0\audience-annotations-0.5.0.jar;E:\soft\maven\repository\io\netty\netty-handler\4.1.87.Final\netty-handler-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-common\4.1.87.Final\netty-common-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-resolver\4.1.87.Final\netty-resolver-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-buffer\4.1.87.Final\netty-buffer-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-transport\4.1.87.Final\netty-transport-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-transport-native-unix-common\4.1.87.Final\netty-transport-native-unix-common-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-codec\4.1.87.Final\netty-codec-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-transport-native-epoll\4.1.87.Final\netty-transport-native-epoll-4.1.87.Final.jar;E:\soft\maven\repository\io\netty\netty-transport-classes-epoll\4.1.87.Final\netty-transport-classes-epoll-4.1.87.Final.jar;E:\soft\maven\repository\org\slf4j\slf4j-api\2.0.6\slf4j-api-2.0.6.jar;E:\soft\maven\repository\org\slf4j\slf4j-reload4j\2.0.6\slf4j-reload4j-2.0.6.jar;E:\soft\maven\repository\log4j\log4j\1.2.17\log4j-1.2.17.jar
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:java.library.path=E:\soft\java\jdk17\bin;C:\Windows\Sun\Java\bin;C:\Windows\system32;C:\Windows;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;E:\soft\java\jdk8\jdk\bin;E:\soft\maven\apache-maven-3.9.6\bin;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\dotnet\;E:\soft\nodejs\;E:\soft\Git\cmd;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;E:\soft\java\jdk8\jdk\bin;;c:\Users\Administrator\AppData\Local\Programs\cursor\resources\app\bin;C:\Users\Administrator\AppData\Local\Programs\Python\Python37-32\Scripts\;C:\Users\Administrator\AppData\Local\Programs\Python\Python37-32\;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;E:\soft\Microsoft VS Code\bin;C:\Users\Administrator\AppData\Roaming\npm;E:\soft\IntelliJ IDEA 2024.2.0.1\bin;;E:\soft\WebStorm 2024.1.5\bin;;E:\soft\PyCharm 2024.1.4\bin;;E:\soft\GoLand 2024.2\bin;;E:\soft\PhpStorm 2024.1.5\bin;;E:\soft\DataGrip 2024.1.5\bin;;E:\soft\CLion 2024.2\bin;;C:\Users\Administrator\AppData\Local\Programs\Ollama;E:\soft\RustRover 2024.2.3\bin;;.
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:java.io.tmpdir=C:\Users\Administrator\AppData\Local\Temp\
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:java.compiler=<NA>
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:os.name=Windows 11
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:os.arch=amd64
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:os.version=10.0
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:user.name=Administrator
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:user.home=C:\Users\Administrator
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:user.dir=E:\java_workspace\xiaohashu3\xiaohashu-17.9节\xiaohashu2
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:os.memory.free=84MB
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:os.memory.max=16344MB
+2025-01-20 21:09:13.036 [main] INFO  org.apache.zookeeper.ZooKeeper - Client environment:os.memory.total=112MB
+2025-01-20 21:09:13.037 [main] INFO  org.apache.zookeeper.ZooKeeper - Initiating client connection, connectString=127.0.0.1:2181 sessionTimeout=6000 watcher=org.apache.curator.ConnectionState@76973a6
+2025-01-20 21:09:13.038 [main] INFO  org.apache.zookeeper.common.X509Util - Setting -D jdk.tls.rejectClientInitiatedRenegotiation=true to disable client-initiated TLS renegotiation
+2025-01-20 21:09:13.044 [main] INFO  org.apache.zookeeper.ClientCnxnSocket - jute.maxbuffer value is 1048575 Bytes
+2025-01-20 21:09:13.047 [main] INFO  org.apache.zookeeper.ClientCnxn - zookeeper.request.timeout value is 0. feature enabled=false
+2025-01-20 21:09:13.049 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Opening socket connection to server kubernetes.docker.internal/127.0.0.1:2181.
+2025-01-20 21:09:13.049 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - SASL config status: Will not attempt to authenticate using SASL (unknown error)
+2025-01-20 21:09:13.050 [main] INFO  o.a.curator.framework.imps.CuratorFrameworkImpl - Default schema
+2025-01-20 21:09:13.051 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Socket connection established, initiating session, client: /127.0.0.1:65406, server: kubernetes.docker.internal/127.0.0.1:2181
+2025-01-20 21:09:13.065 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Session establishment complete on server kubernetes.docker.internal/127.0.0.1:2181, session id = 0x100068bfb940002, negotiated timeout = 6000
+2025-01-20 21:09:13.067 [main-EventThread] INFO  o.a.curator.framework.state.ConnectionStateManager - State change: CONNECTED
+2025-01-20 21:09:13.074 [main-EventThread] INFO  org.apache.curator.framework.imps.EnsembleTracker - New config event received: {}
+2025-01-20 21:09:13.079 [main-EventThread] INFO  org.apache.curator.framework.imps.EnsembleTracker - New config event received: {}
+2025-01-20 21:09:13.106 [main] INFO  c.q.x.d.i.g.b.c.snowflake.SnowflakeZookeeperHolder - file exists status is true
+2025-01-20 21:09:13.109 [main] INFO  c.q.x.d.i.g.b.c.snowflake.SnowflakeZookeeperHolder - update file cache workerID is 0
+2025-01-20 21:09:13.109 [main] INFO  c.q.x.d.i.g.b.c.snowflake.SnowflakeZookeeperHolder - [Old NODE]find forever node have this endpoint ip-192.168.1.3 port-2222 workid-0 childnode and start SUCCESS
+2025-01-20 21:09:13.109 [main] INFO  c.q.x.d.i.g.biz.core.snowflake.SnowflakeIDGenImpl - START SUCCESS USE ZK WORKERID-0
+2025-01-20 21:09:13.109 [main] INFO  c.q.x.d.id.generator.biz.service.SnowflakeService - Snowflake Service Init Successfully
+2025-01-20 21:09:13.549 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port(s): 8085 (http) with context path ''
+2025-01-20 21:09:13.552 [main] WARN  com.alibaba.nacos.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2025-01-20 21:09:13.552 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from ans.namespace attribute : null
+2025-01-20 21:09:13.552 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from ALIBABA_ALIWARE_NAMESPACE attribute :null
+2025-01-20 21:09:13.553 [main] INFO  com.alibaba.nacos.client.naming - initializer namespace from namespace attribute :null
+2025-01-20 21:09:13.561 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - [settings] [req-serv] nacos-server port:8848
+2025-01-20 21:09:13.561 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - [settings] [http-client] connect timeout:1000
+2025-01-20 21:09:13.563 [main] INFO  com.alibaba.nacos.client.utils.ParamUtil - PER_TASK_CONFIG_SIZE: 3000.0
+2025-01-20 21:09:13.565 [main] INFO  c.a.n.p.auth.spi.client.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2025-01-20 21:09:13.565 [main] INFO  c.a.n.p.auth.spi.client.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2025-01-20 21:09:13.566 [main] INFO  c.a.n.client.auth.ram.identify.CredentialWatcher - null No credential found
+2025-01-20 21:09:13.569 [main] INFO  com.alibaba.nacos.common.remote.client - [RpcClientFactory] create a new rpc client of dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700
+2025-01-20 21:09:13.580 [main] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] RpcClient init, ServerListFactory = com.alibaba.nacos.client.naming.core.ServerListManager
+2025-01-20 21:09:13.580 [main] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] Registry connection listener to current client:com.alibaba.nacos.client.naming.remote.gprc.redo.NamingGrpcRedoService
+2025-01-20 21:09:13.580 [main] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] Register server push request handler:com.alibaba.nacos.client.naming.remote.gprc.NamingPushRequestHandler
+2025-01-20 21:09:13.581 [main] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] Try to connect to server on start up, server: {serverIp = '127.0.0.1', server main port = 8848}
+2025-01-20 21:09:13.588 [main] INFO  c.a.nacos.common.remote.client.grpc.GrpcClient - grpc client connection server:127.0.0.1 ip,serverPort:9848,grpcTslConfig:{"sslProvider":"OPENSSL","enableTls":false,"mutualAuthEnable":false,"trustAll":false}
+2025-01-20 21:09:14.101 [main] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] Success to connect to server [127.0.0.1:8848] on start up, connectionId = 1737378553959_172.17.0.1_45996
+2025-01-20 21:09:14.101 [com.alibaba.nacos.client.remote.worker] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] Notify connected event to listeners.
+2025-01-20 21:09:14.101 [com.alibaba.nacos.client.remote.worker] INFO  com.alibaba.nacos.client.naming - Grpc connection connect
+2025-01-20 21:09:14.101 [main] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$ConnectResetRequestHandler
+2025-01-20 21:09:14.101 [main] INFO  com.alibaba.nacos.common.remote.client - [dfcb1a63-2500-4b9d-b2ee-6a8f93e4e700] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$$Lambda$961/0x0000024647732e50
+2025-01-20 21:09:14.103 [main] INFO  com.alibaba.nacos.client.naming - [REGISTER-SERVICE] xiaohashu registering service xiaohashu-distributed-id-generator with instance Instance{instanceId='null', ip='192.168.1.3', port=8085, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='DEFAULT', serviceName='null', metadata={IPv6=[240e:b62:43b:9100:68b6:95d0:2542:aa46], preserved.register.source=SPRING_CLOUD}}
+2025-01-20 21:09:14.116 [main] INFO  c.a.cloud.nacos.registry.NacosServiceRegistry - nacos registry, DEFAULT_GROUP xiaohashu-distributed-id-generator 192.168.1.3:8085 register finished
+2025-01-20 21:09:14.324 [main] INFO  c.q.x.d.i.g.b.XiaohashuDistributedIdGeneratorBizApplication - Started XiaohashuDistributedIdGeneratorBizApplication in 2.657 seconds (process running for 2.96)
+2025-01-20 21:10:13.010 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:10:13.014 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737378613010] time[4] tag[updateCacheFromDb]
+2025-01-20 21:11:13.027 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:11:13.036 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737378673027] time[8] tag[updateCacheFromDb]
+2025-01-20 21:11:45.428 [http-nio-8085-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-01-20 21:11:45.429 [http-nio-8085-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-01-20 21:11:45.429 [http-nio-8085-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-01-20 21:11:45.469 [http-nio-8085-exec-1] INFO  org.perf4j.TimingLogger - start[1737378705454] time[15] tag[updateSegmentFromDb] message[leaf-segment-comment-id Segment(value:36001,max:38001,step:2000)]
+2025-01-20 21:11:45.470 [http-nio-8085-exec-1] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - Init buffer. Update leafkey leaf-segment-comment-id Segment(value:36001,max:38001,step:2000) from db
+2025-01-20 21:12:13.048 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:12:13.052 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737378733048] time[3] tag[updateCacheFromDb]
+2025-01-20 21:13:13.057 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:13:13.062 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737378793057] time[4] tag[updateCacheFromDb]
+2025-01-20 21:14:13.063 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:14:13.066 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737378853063] time[3] tag[updateCacheFromDb]
+2025-01-20 21:15:13.073 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:15:13.077 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737378913073] time[4] tag[updateCacheFromDb]
+2025-01-20 21:16:13.088 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:16:13.091 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737378973088] time[3] tag[updateCacheFromDb]
+2025-01-20 21:17:13.105 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:17:13.108 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379033105] time[2] tag[updateCacheFromDb]
+2025-01-20 21:18:13.113 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:18:13.115 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379093113] time[2] tag[updateCacheFromDb]
+2025-01-20 21:19:13.127 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:19:13.131 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379153127] time[3] tag[updateCacheFromDb]
+2025-01-20 21:20:13.138 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:20:13.141 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379213138] time[2] tag[updateCacheFromDb]
+2025-01-20 21:21:13.145 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:21:13.148 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379273145] time[3] tag[updateCacheFromDb]
+2025-01-20 21:22:13.153 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:22:13.156 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379333153] time[3] tag[updateCacheFromDb]
+2025-01-20 21:23:13.171 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:23:13.175 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379393172] time[3] tag[updateCacheFromDb]
+2025-01-20 21:24:13.181 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:24:13.184 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379453181] time[2] tag[updateCacheFromDb]
+2025-01-20 21:25:13.195 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:25:13.198 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379513195] time[3] tag[updateCacheFromDb]
+2025-01-20 21:26:13.215 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:26:13.218 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379573215] time[2] tag[updateCacheFromDb]
+2025-01-20 21:27:13.223 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:27:13.226 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379633223] time[2] tag[updateCacheFromDb]
+2025-01-20 21:28:13.242 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:28:13.248 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379693242] time[6] tag[updateCacheFromDb]
+2025-01-20 21:29:13.252 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:29:13.257 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379753252] time[5] tag[updateCacheFromDb]
+2025-01-20 21:30:13.268 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:30:13.271 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379813268] time[2] tag[updateCacheFromDb]
+2025-01-20 21:31:13.273 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:31:13.277 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379873273] time[3] tag[updateCacheFromDb]
+2025-01-20 21:32:13.280 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:32:13.283 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379933280] time[3] tag[updateCacheFromDb]
+2025-01-20 21:33:13.285 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:33:13.288 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737379993285] time[2] tag[updateCacheFromDb]
+2025-01-20 21:34:13.295 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:34:13.299 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380053295] time[4] tag[updateCacheFromDb]
+2025-01-20 21:35:13.310 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:35:13.314 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380113310] time[4] tag[updateCacheFromDb]
+2025-01-20 21:36:13.316 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:36:13.320 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380173316] time[2] tag[updateCacheFromDb]
+2025-01-20 21:37:13.326 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:37:13.331 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380233326] time[5] tag[updateCacheFromDb]
+2025-01-20 21:38:13.339 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:38:13.343 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380293339] time[3] tag[updateCacheFromDb]
+2025-01-20 21:39:13.354 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:39:13.357 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380353354] time[3] tag[updateCacheFromDb]
+2025-01-20 21:40:13.367 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:40:13.374 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380413367] time[6] tag[updateCacheFromDb]
+2025-01-20 21:41:13.376 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:41:13.379 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380473376] time[2] tag[updateCacheFromDb]
+2025-01-20 21:42:13.384 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:42:13.387 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380533384] time[3] tag[updateCacheFromDb]
+2025-01-20 21:43:13.391 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:43:13.394 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380593391] time[2] tag[updateCacheFromDb]
+2025-01-20 21:44:13.399 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:44:13.402 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380653399] time[2] tag[updateCacheFromDb]
+2025-01-20 21:45:13.415 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:45:13.419 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380713415] time[3] tag[updateCacheFromDb]
+2025-01-20 21:46:13.422 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:46:13.425 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380773422] time[3] tag[updateCacheFromDb]
+2025-01-20 21:47:13.435 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:47:13.440 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380833435] time[5] tag[updateCacheFromDb]
+2025-01-20 21:48:13.456 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:48:13.460 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380893456] time[3] tag[updateCacheFromDb]
+2025-01-20 21:49:13.470 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:49:13.474 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737380953470] time[3] tag[updateCacheFromDb]
+2025-01-20 21:50:13.476 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:50:13.480 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381013476] time[3] tag[updateCacheFromDb]
+2025-01-20 21:51:13.487 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:51:13.491 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381073487] time[4] tag[updateCacheFromDb]
+2025-01-20 21:52:13.499 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:52:13.502 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381133499] time[3] tag[updateCacheFromDb]
+2025-01-20 21:53:13.516 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:53:13.519 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381193516] time[3] tag[updateCacheFromDb]
+2025-01-20 21:54:13.524 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:54:13.528 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381253524] time[4] tag[updateCacheFromDb]
+2025-01-20 21:55:13.534 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:55:13.537 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381313534] time[2] tag[updateCacheFromDb]
+2025-01-20 21:56:13.545 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:56:13.550 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381373545] time[4] tag[updateCacheFromDb]
+2025-01-20 21:57:13.553 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:57:13.558 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381433553] time[5] tag[updateCacheFromDb]
+2025-01-20 21:58:13.572 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:58:13.576 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381493572] time[3] tag[updateCacheFromDb]
+2025-01-20 21:59:13.579 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 21:59:13.583 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381553579] time[3] tag[updateCacheFromDb]
+2025-01-20 22:00:13.595 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:00:13.598 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381613595] time[3] tag[updateCacheFromDb]
+2025-01-20 22:01:13.604 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:01:13.609 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381673604] time[4] tag[updateCacheFromDb]
+2025-01-20 22:02:13.625 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:02:13.629 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381733625] time[3] tag[updateCacheFromDb]
+2025-01-20 22:03:13.637 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:03:13.639 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381793637] time[2] tag[updateCacheFromDb]
+2025-01-20 22:04:13.643 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:04:13.650 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381853643] time[7] tag[updateCacheFromDb]
+2025-01-20 22:05:13.655 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:05:13.660 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381913655] time[4] tag[updateCacheFromDb]
+2025-01-20 22:06:13.664 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:06:13.668 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737381973664] time[3] tag[updateCacheFromDb]
+2025-01-20 22:07:13.681 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:07:13.684 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382033681] time[3] tag[updateCacheFromDb]
+2025-01-20 22:08:13.692 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:08:13.695 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382093692] time[2] tag[updateCacheFromDb]
+2025-01-20 22:09:13.709 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:09:13.715 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382153709] time[5] tag[updateCacheFromDb]
+2025-01-20 22:10:13.725 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:10:13.729 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382213725] time[3] tag[updateCacheFromDb]
+2025-01-20 22:11:13.734 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:11:13.739 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382273734] time[4] tag[updateCacheFromDb]
+2025-01-20 22:12:13.742 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:12:13.745 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382333742] time[3] tag[updateCacheFromDb]
+2025-01-20 22:13:13.746 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:13:13.750 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382393746] time[3] tag[updateCacheFromDb]
+2025-01-20 22:14:13.764 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:14:13.767 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382453764] time[2] tag[updateCacheFromDb]
+2025-01-20 22:15:13.780 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:15:13.783 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382513780] time[3] tag[updateCacheFromDb]
+2025-01-20 22:16:13.784 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:16:13.787 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382573784] time[2] tag[updateCacheFromDb]
+2025-01-20 22:17:13.791 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:17:13.795 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382633791] time[3] tag[updateCacheFromDb]
+2025-01-20 22:18:13.796 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:18:13.806 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382693796] time[9] tag[updateCacheFromDb]
+2025-01-20 22:19:13.811 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:19:13.815 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382753811] time[3] tag[updateCacheFromDb]
+2025-01-20 22:20:13.827 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:20:13.831 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382813827] time[2] tag[updateCacheFromDb]
+2025-01-20 22:21:13.832 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:21:13.838 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382873832] time[5] tag[updateCacheFromDb]
+2025-01-20 22:22:13.848 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:22:13.855 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382933848] time[6] tag[updateCacheFromDb]
+2025-01-20 22:23:13.869 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:23:13.873 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737382993869] time[3] tag[updateCacheFromDb]
+2025-01-20 22:24:13.881 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:24:13.884 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383053881] time[2] tag[updateCacheFromDb]
+2025-01-20 22:25:13.897 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:25:13.903 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383113897] time[5] tag[updateCacheFromDb]
+2025-01-20 22:26:13.911 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:26:13.914 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383173911] time[2] tag[updateCacheFromDb]
+2025-01-20 22:27:13.923 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:27:13.926 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383233923] time[2] tag[updateCacheFromDb]
+2025-01-20 22:28:13.929 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:28:13.932 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383293929] time[3] tag[updateCacheFromDb]
+2025-01-20 22:29:13.946 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:29:13.950 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383353946] time[3] tag[updateCacheFromDb]
+2025-01-20 22:30:13.958 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:30:13.963 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383413958] time[4] tag[updateCacheFromDb]
+2025-01-20 22:31:13.968 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:31:13.971 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383473968] time[3] tag[updateCacheFromDb]
+2025-01-20 22:32:13.978 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:32:13.982 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383533978] time[4] tag[updateCacheFromDb]
+2025-01-20 22:33:13.985 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:33:13.988 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383593985] time[3] tag[updateCacheFromDb]
+2025-01-20 22:34:14.000 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:34:14.004 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383654000] time[3] tag[updateCacheFromDb]
+2025-01-20 22:35:14.005 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:35:14.008 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383714005] time[2] tag[updateCacheFromDb]
+2025-01-20 22:36:14.022 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:36:14.030 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383774022] time[7] tag[updateCacheFromDb]
+2025-01-20 22:37:14.045 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:37:14.049 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383834045] time[4] tag[updateCacheFromDb]
+2025-01-20 22:38:14.062 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:38:14.066 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383894062] time[3] tag[updateCacheFromDb]
+2025-01-20 22:39:14.070 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:39:14.074 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737383954070] time[2] tag[updateCacheFromDb]
+2025-01-20 22:40:14.075 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:40:14.079 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384014075] time[3] tag[updateCacheFromDb]
+2025-01-20 22:41:14.084 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:41:14.087 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384074084] time[3] tag[updateCacheFromDb]
+2025-01-20 22:42:14.092 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:42:14.096 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384134092] time[4] tag[updateCacheFromDb]
+2025-01-20 22:43:14.109 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:43:14.112 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384194109] time[3] tag[updateCacheFromDb]
+2025-01-20 22:44:14.117 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:44:14.120 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384254117] time[2] tag[updateCacheFromDb]
+2025-01-20 22:45:14.131 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:45:14.134 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384314131] time[3] tag[updateCacheFromDb]
+2025-01-20 22:46:14.149 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:46:14.152 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384374149] time[3] tag[updateCacheFromDb]
+2025-01-20 22:47:14.158 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:47:14.161 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384434158] time[2] tag[updateCacheFromDb]
+2025-01-20 22:48:14.175 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:48:14.179 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384494175] time[3] tag[updateCacheFromDb]
+2025-01-20 22:49:14.185 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:49:14.189 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384554185] time[4] tag[updateCacheFromDb]
+2025-01-20 22:50:14.205 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:50:14.208 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384614205] time[3] tag[updateCacheFromDb]
+2025-01-20 22:51:14.220 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:51:14.223 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384674220] time[3] tag[updateCacheFromDb]
+2025-01-20 22:52:14.229 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:52:14.232 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384734229] time[3] tag[updateCacheFromDb]
+2025-01-20 22:53:14.238 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:53:14.240 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384794238] time[2] tag[updateCacheFromDb]
+2025-01-20 22:54:14.248 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:54:14.251 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384854248] time[2] tag[updateCacheFromDb]
+2025-01-20 22:55:14.260 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:55:14.262 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384914260] time[2] tag[updateCacheFromDb]
+2025-01-20 22:56:14.269 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:56:14.272 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737384974269] time[2] tag[updateCacheFromDb]
+2025-01-20 22:57:14.273 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:57:14.276 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385034273] time[2] tag[updateCacheFromDb]
+2025-01-20 22:58:14.283 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:58:14.287 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385094283] time[3] tag[updateCacheFromDb]
+2025-01-20 22:59:14.291 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 22:59:14.295 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385154291] time[4] tag[updateCacheFromDb]
+2025-01-20 23:00:14.301 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:00:14.304 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385214301] time[2] tag[updateCacheFromDb]
+2025-01-20 23:01:14.314 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:01:14.317 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385274314] time[2] tag[updateCacheFromDb]
+2025-01-20 23:02:14.326 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:02:14.331 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385334326] time[4] tag[updateCacheFromDb]
+2025-01-20 23:03:14.337 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:03:14.341 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385394337] time[3] tag[updateCacheFromDb]
+2025-01-20 23:04:14.352 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:04:14.355 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385454352] time[2] tag[updateCacheFromDb]
+2025-01-20 23:05:14.367 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:05:14.369 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385514367] time[2] tag[updateCacheFromDb]
+2025-01-20 23:06:14.371 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:06:14.376 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385574371] time[4] tag[updateCacheFromDb]
+2025-01-20 23:07:14.381 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:07:14.385 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385634381] time[4] tag[updateCacheFromDb]
+2025-01-20 23:08:14.400 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:08:14.402 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385694400] time[3] tag[updateCacheFromDb]
+2025-01-20 23:09:14.408 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:09:14.412 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385754408] time[3] tag[updateCacheFromDb]
+2025-01-20 23:10:14.416 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:10:14.419 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385814416] time[3] tag[updateCacheFromDb]
+2025-01-20 23:11:14.429 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:11:14.431 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385874429] time[2] tag[updateCacheFromDb]
+2025-01-20 23:12:14.445 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:12:14.449 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385934445] time[4] tag[updateCacheFromDb]
+2025-01-20 23:13:14.454 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:13:14.458 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737385994454] time[3] tag[updateCacheFromDb]
+2025-01-20 23:14:14.471 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:14:14.475 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386054471] time[3] tag[updateCacheFromDb]
+2025-01-20 23:15:14.480 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:15:14.483 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386114480] time[3] tag[updateCacheFromDb]
+2025-01-20 23:16:14.491 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:16:14.494 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386174491] time[2] tag[updateCacheFromDb]
+2025-01-20 23:17:14.502 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:17:14.505 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386234502] time[2] tag[updateCacheFromDb]
+2025-01-20 23:18:14.510 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:18:14.512 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386294510] time[2] tag[updateCacheFromDb]
+2025-01-20 23:19:14.527 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:19:14.530 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386354527] time[2] tag[updateCacheFromDb]
+2025-01-20 23:20:14.539 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:20:14.544 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386414539] time[4] tag[updateCacheFromDb]
+2025-01-20 23:21:14.557 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:21:14.560 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386474557] time[3] tag[updateCacheFromDb]
+2025-01-20 23:22:14.561 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:22:14.566 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386534561] time[5] tag[updateCacheFromDb]
+2025-01-20 23:23:14.582 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:23:14.584 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386594582] time[2] tag[updateCacheFromDb]
+2025-01-20 23:24:14.593 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:24:14.596 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386654593] time[2] tag[updateCacheFromDb]
+2025-01-20 23:25:14.598 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:25:14.602 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386714598] time[3] tag[updateCacheFromDb]
+2025-01-20 23:26:14.614 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:26:14.617 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386774614] time[2] tag[updateCacheFromDb]
+2025-01-20 23:27:14.628 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:27:14.630 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386834628] time[2] tag[updateCacheFromDb]
+2025-01-20 23:28:14.634 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:28:14.637 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386894634] time[3] tag[updateCacheFromDb]
+2025-01-20 23:29:14.646 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:29:14.649 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737386954646] time[3] tag[updateCacheFromDb]
+2025-01-20 23:30:14.659 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:30:14.662 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387014659] time[3] tag[updateCacheFromDb]
+2025-01-20 23:31:14.676 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:31:14.679 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387074676] time[3] tag[updateCacheFromDb]
+2025-01-20 23:32:14.692 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:32:14.695 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387134692] time[3] tag[updateCacheFromDb]
+2025-01-20 23:33:14.710 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:33:14.713 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387194710] time[2] tag[updateCacheFromDb]
+2025-01-20 23:34:14.722 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:34:14.727 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387254722] time[4] tag[updateCacheFromDb]
+2025-01-20 23:35:14.733 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:35:14.737 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387314733] time[3] tag[updateCacheFromDb]
+2025-01-20 23:36:14.752 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:36:14.755 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387374752] time[3] tag[updateCacheFromDb]
+2025-01-20 23:37:14.756 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:37:14.760 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387434756] time[3] tag[updateCacheFromDb]
+2025-01-20 23:38:14.768 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:38:14.772 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387494768] time[3] tag[updateCacheFromDb]
+2025-01-20 23:39:14.774 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:39:14.778 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387554774] time[3] tag[updateCacheFromDb]
+2025-01-20 23:40:14.789 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:40:14.792 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387614789] time[3] tag[updateCacheFromDb]
+2025-01-20 23:41:14.796 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:41:14.807 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387674796] time[10] tag[updateCacheFromDb]
+2025-01-20 23:42:14.822 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:42:14.825 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387734822] time[3] tag[updateCacheFromDb]
+2025-01-20 23:43:14.838 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:43:14.840 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387794838] time[3] tag[updateCacheFromDb]
+2025-01-20 23:44:14.843 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:44:14.846 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387854843] time[2] tag[updateCacheFromDb]
+2025-01-20 23:45:14.854 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:45:14.858 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387914854] time[3] tag[updateCacheFromDb]
+2025-01-20 23:46:14.869 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:46:14.872 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737387974869] time[2] tag[updateCacheFromDb]
+2025-01-20 23:47:14.877 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:47:14.880 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737388034877] time[2] tag[updateCacheFromDb]
+2025-01-20 23:48:14.886 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:48:14.889 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737388094886] time[3] tag[updateCacheFromDb]
+2025-01-20 23:49:14.895 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:49:14.899 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737388154895] time[3] tag[updateCacheFromDb]
+2025-01-20 23:50:14.907 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:50:14.910 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737388214907] time[2] tag[updateCacheFromDb]
+2025-01-20 23:51:14.925 [check-idCache-thread] INFO  c.q.x.d.i.g.biz.core.segment.SegmentIDGenImpl - update cache from db
+2025-01-20 23:51:14.928 [check-idCache-thread] INFO  org.perf4j.TimingLogger - start[1737388274925] time[3] tag[updateCacheFromDb]
+2025-01-20 23:51:58.893 [main-SendThread(127.0.0.1:2181)] WARN  org.apache.zookeeper.ClientCnxn - Client session timed out, have not heard from server in 4007ms for session id 0x100068bfb940002
+2025-01-20 23:51:58.894 [main-SendThread(127.0.0.1:2181)] WARN  org.apache.zookeeper.ClientCnxn - Session 0x100068bfb940002 for sever kubernetes.docker.internal/127.0.0.1:2181, Closing socket connection. Attempting reconnect except it is a SessionExpiredException.
+org.apache.zookeeper.ClientCnxn$SessionTimeoutException: Client session timed out, have not heard from server in 4007ms for session id 0x100068bfb940002
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1230)
+2025-01-20 23:51:59.021 [main-EventThread] INFO  o.a.curator.framework.state.ConnectionStateManager - State change: SUSPENDED
+2025-01-20 23:51:59.032 [schedule-upload-time] INFO  c.q.x.d.i.g.b.c.snowflake.SnowflakeZookeeperHolder - update init data error path is /snowflake/com.sankuai.leaf.opensource.test/forever/192.168.1.3:2222-0000000000 error is {}
+org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /snowflake/com.sankuai.leaf.opensource.test/forever/192.168.1.3:2222-0000000000
+	at org.apache.zookeeper.KeeperException.create(KeeperException.java:102)
+	at org.apache.zookeeper.KeeperException.create(KeeperException.java:54)
+	at org.apache.zookeeper.ZooKeeper.setData(ZooKeeper.java:2551)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl$4.call(SetDataBuilderImpl.java:291)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl$4.call(SetDataBuilderImpl.java:287)
+	at org.apache.curator.RetryLoop.callWithRetry(RetryLoop.java:93)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl.pathInForeground(SetDataBuilderImpl.java:284)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl.forPath(SetDataBuilderImpl.java:270)
+	at org.apache.curator.framework.imps.SetDataBuilderImpl.forPath(SetDataBuilderImpl.java:33)
+	at com.quanxiaoha.xiaohashu.distributed.id.generator.biz.core.snowflake.SnowflakeZookeeperHolder.updateNewData(SnowflakeZookeeperHolder.java:158)
+	at com.quanxiaoha.xiaohashu.distributed.id.generator.biz.core.snowflake.SnowflakeZookeeperHolder$1.run(SnowflakeZookeeperHolder.java:124)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+2025-01-20 23:52:00.688 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Opening socket connection to server kubernetes.docker.internal/127.0.0.1:2181.
+2025-01-20 23:52:00.688 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - SASL config status: Will not attempt to authenticate using SASL (unknown error)
+2025-01-20 23:52:00.690 [main-SendThread(127.0.0.1:2181)] INFO  org.apache.zookeeper.ClientCnxn - Socket connection established, initiating session, client: /127.0.0.1:60834, server: kubernetes.docker.internal/127.0.0.1:2181
