@@ -10,7 +10,6 @@ end
 
 -- 获取笔记点赞列表大小
 local size = redis.call('ZCARD', key)
-
 -- 若已经点赞了 100 篇笔记，则移除最早点赞的那篇
 if size >= 100 then
     redis.call('ZPOPMIN', key)

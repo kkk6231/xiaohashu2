@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * @author: 犬小哈
  * @date: 2024/8/9 11:52
  * @version: v1.0.0
- * @description: 计数: 笔记点赞数
+ * @description: 计数: 笔记点赞数，先更新 Redis，再异步发送写库 MQ
  **/
 @Component
 @RocketMQMessageListener(consumerGroup = "xiaohashu_group_" + MQConstants.TOPIC_COUNT_NOTE_LIKE, // Group 组
@@ -66,7 +66,7 @@ public class CountNoteLikeConsumer implements RocketMQListener<String> {
         List<CountLikeUnlikeNoteMqDTO> countLikeUnlikeNoteMqDTOS = bodys.stream()
                 .map(body -> JsonUtils.parseObject(body, CountLikeUnlikeNoteMqDTO.class)).toList();
 
-        // 按笔记 ID 进行分组
+        // 按不同 笔记ID 进行分组
         Map<Long, List<CountLikeUnlikeNoteMqDTO>> groupMap = countLikeUnlikeNoteMqDTOS.stream()
                 .collect(Collectors.groupingBy(CountLikeUnlikeNoteMqDTO::getNoteId));
 
@@ -82,15 +82,14 @@ public class CountNoteLikeConsumer implements RocketMQListener<String> {
             List<CountLikeUnlikeNoteMqDTO> list = entry.getValue();
             // 最终的计数值，默认为 0
             int finalCount = 0;
+            // 对同一篇笔记，遍历对应的点赞取消点赞消息
             for (CountLikeUnlikeNoteMqDTO countLikeUnlikeNoteMqDTO : list) {
-                // 设置笔记发布者用户 ID
+                // 获取笔记发布者用户 ID
                 creatorId = countLikeUnlikeNoteMqDTO.getNoteCreatorId();
                 // 获取操作类型
                 Integer type = countLikeUnlikeNoteMqDTO.getType();
-
                 // 根据操作类型，获取对应枚举
                 LikeUnlikeNoteTypeEnum likeUnlikeNoteTypeEnum = LikeUnlikeNoteTypeEnum.valueOf(type);
-
                 // 若枚举为空，跳到下一次循环
                 if (Objects.isNull(likeUnlikeNoteTypeEnum)) continue;
 
@@ -122,7 +121,6 @@ public class CountNoteLikeConsumer implements RocketMQListener<String> {
             String countNoteRedisKey = RedisKeyConstants.buildCountNoteKey(noteId);
             // 判断 Redis 中 Hash 是否存在
             boolean isCountNoteExisted = redisTemplate.hasKey(countNoteRedisKey);
-
             // 若存在才会更新
             // (因为缓存设有过期时间，考虑到过期后，缓存会被删除，这里需要判断一下，存在才会去更新，而初始化工作放在查询计数来做)
             if (isCountNoteExisted) {

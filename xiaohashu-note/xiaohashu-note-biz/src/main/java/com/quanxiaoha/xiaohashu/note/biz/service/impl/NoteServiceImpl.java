@@ -663,7 +663,7 @@ public class NoteServiceImpl implements NoteService {
         // 1. 校验被点赞的笔记是否存在，若存在，则获取发布者用户 ID
         Long creatorId = checkNoteIsExistAndGetCreatorId(noteId);
 
-        // 2. 判断目标笔记，是否已经点赞过
+        // 2. 判断目标笔记，是否已经点赞过（布隆过滤器）
         // 当前登录用户ID
         Long userId = LoginUserContextHolder.getUserId();
 
@@ -680,19 +680,20 @@ public class NoteServiceImpl implements NoteService {
         Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId);
         NoteLikeLuaResultEnum noteLikeLuaResultEnum = NoteLikeLuaResultEnum.valueOf(result);
 
-        // 用户点赞列表 ZSet Key
+        // 构造用户点赞列表 ZSet Key
         String userNoteLikeZSetKey = RedisKeyConstants.buildUserNoteLikeZSetKey(userId);
 
+        // 根据 Lua 脚本的不同结果操作
         switch (noteLikeLuaResultEnum) {
-            // Redis 中布隆过滤器不存在（-1）
+            // A、Redis 中布隆过滤器不存在
             case NOT_EXIST -> {
-                // 从数据库中校验笔记是否被点赞，并异步初始化布隆过滤器，设置过期时间
+                // 从数据库中校验该笔记是否被点赞
                 int count = noteLikeDOMapper.selectCountByUserIdAndNoteId(userId, noteId);
 
                 // 保底1天+随机秒数
                 long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
 
-                // 目标笔记已经被点赞（说明布隆过滤器过期了，只要重建即可）
+                // 目标笔记已经被点赞（说明布隆过滤器过期了，只需要将数据库中的点赞记录批量同步到新的布隆过滤器中，然后抛出异常）
                 if (count > 0) {
                     // 异步初始化布隆过滤器
                     threadPoolTaskExecutor.submit(() ->
@@ -704,41 +705,45 @@ public class NoteServiceImpl implements NoteService {
                 batchAddNoteLike2BloomAndExpire(userId, expireSeconds, bloomUserNoteLikeListKey);
 
                 // 添加当前点赞笔记 ID 到布隆过滤器中
-                // Lua 脚本路径
+                // 注意，这里的点赞记录并没有添加到 ZSet 中
                 script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_add_note_like_and_expire.lua")));
-                // 返回值类型
                 script.setResultType(Long.class);
                 redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId, expireSeconds);
             }
-            // 目标笔记已经被点赞 (可能存在误判，需要进一步确认)
+            // B、目标笔记可能被点赞 ，可能存在误判，需要进一步确认（误判来自假阳性和被取消的点赞，因为布隆过滤器中无法删除）
             case NOTE_LIKED -> {
                 // 校验 ZSet 列表中是否包含被点赞的笔记ID
                 Double score = redisTemplate.opsForZSet().score(userNoteLikeZSetKey, noteId);
 
+                // ZSet中有对应的点赞记录，说明确实是已经点赞了
                 if (Objects.nonNull(score)) {
                     throw new BizException(ResponseCodeEnum.NOTE_ALREADY_LIKED);
                 }
 
-                // 若 Score 为空，则表示 ZSet 点赞列表中不存在，查询数据库校验
+                // score 为空，不代表没点赞，因为 ZSet 可能过期，或者只缓存最近 100 条，需要查数据库确认
                 int count = noteLikeDOMapper.selectNoteIsLiked(userId, noteId);
-
+                // 数据库里面有点赞记录，是历史点赞
                 if (count > 0) {
-                    // 数据库里面有点赞记录，而 Redis 中 ZSet 不存在，需要重新异步初始化 ZSet
+                    // 判断对应 ZSet 是否存在，如果不存在重建缓存
                     asynInitUserNoteLikesZSet(userId, userNoteLikeZSetKey);
-
+                    // 抛出重复点赞异常
                     throw new BizException(ResponseCodeEnum.NOTE_ALREADY_LIKED);
                 }
             }
         }
 
+        /**
+         * 走到这里的几种情况：
+         * 1、布隆过滤器存在，且判断未点过赞
+         * 2、布隆过滤器不存在，且数据库中没有点赞记录
+         *  上面两种情况只把点赞记录同步到了布隆过滤器，但是未同步到 ZSet
+         * 3、ZSet 存在，但没有当前 noteId，数据库也没有
+         * 4、ZSet 不存在，数据库也没有
+         */
         // 3. 更新用户 ZSET 点赞列表
         LocalDateTime now = LocalDateTime.now();
-        // Lua 脚本路径
         script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/note_like_check_and_update_zset.lua")));
-        // 返回值类型
         script.setResultType(Long.class);
-
-        // 执行 Lua 脚本，拿到返回结果
         result = redisTemplate.execute(script, Collections.singletonList(userNoteLikeZSetKey), noteId, DateUtils.localDateTime2Timestamp(now));
 
         // 若 ZSet 列表不存在，需要重新初始化
@@ -752,16 +757,22 @@ public class NoteServiceImpl implements NoteService {
                 // 构建 Lua 参数
                 Object[] luaArgs = buildNoteLikeZSetLuaArgs(noteLikeDOS, expireSeconds);
 
+                // 批量同步到 ZSet
                 DefaultRedisScript<Long> script2 = new DefaultRedisScript<>();
-                // Lua 脚本路径
                 script2.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/batch_add_note_like_zset_and_expire.lua")));
-                // 返回值类型
                 script2.setResultType(Long.class);
-
                 redisTemplate.execute(script2, Collections.singletonList(userNoteLikeZSetKey), luaArgs);
 
                 // 再次调用 note_like_check_and_update_zset.lua 脚本，将点赞的笔记添加到 zset 中
                 redisTemplate.execute(script, Collections.singletonList(userNoteLikeZSetKey), noteId, DateUtils.localDateTime2Timestamp(now));
+            } else{
+                // 若用户首次点赞，直接加入 ZSet
+                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
+
+                DefaultRedisScript<Long> script3 = new DefaultRedisScript<>();
+                script3.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/zset_add_note_like_and_expire.lua")));
+                script3.setResultType(Long.class);
+                redisTemplate.execute(script3, Collections.singletonList(userNoteLikeZSetKey), noteId, DateUtils.localDateTime2Timestamp(now), expireSeconds);
             }
         }
 
@@ -822,18 +833,14 @@ public class NoteServiceImpl implements NoteService {
         String bloomUserNoteLikeListKey = RedisKeyConstants.buildBloomUserNoteLikeListKey(userId);
 
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        // Lua 脚本路径
         script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_note_unlike_check.lua")));
-        // 返回值类型
         script.setResultType(Long.class);
-
-        // 执行 Lua 脚本，拿到返回结果
         Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId);
 
         NoteUnlikeLuaResultEnum noteUnlikeLuaResultEnum = NoteUnlikeLuaResultEnum.valueOf(result);
 
         switch (noteUnlikeLuaResultEnum) {
-            // 布隆过滤器不存在
+            // A、布隆过滤器不存在（-1）
             case NOT_EXIST -> {
                 // 异步初始化布隆过滤器
                 threadPoolTaskExecutor.submit(() -> {
@@ -848,11 +855,16 @@ public class NoteServiceImpl implements NoteService {
                 // 未点赞，无法取消点赞操作，抛出业务异常
                 if (count == 0) throw new BizException(ResponseCodeEnum.NOTE_NOT_LIKED);
             }
-            // 布隆过滤器校验目标笔记未被点赞（判断绝对正确）
+            // B、布隆过滤器校验目标笔记未被点赞（判断绝对正确）
             case NOTE_NOT_LIKED -> throw new BizException(ResponseCodeEnum.NOTE_NOT_LIKED);
         }
 
-        // 3. 能走到这里，说明布隆过滤器判断已点赞，直接删除 ZSET 中已点赞的笔记 ID
+        /**
+         * 3. 能走到这里，有两种情况
+         *  a、布隆过滤器不存在，但是数据库存在
+         *  b、布隆过滤器存在且判断已点赞（这里的误判可以忽略，）
+         */
+        // 说明布隆过滤器判断已点赞，直接删除 ZSET 中已点赞的笔记 ID
         // 用户点赞列表 ZSet Key
         String userNoteLikeZSetKey = RedisKeyConstants.buildUserNoteLikeZSetKey(userId);
 
@@ -1007,6 +1019,14 @@ public class NoteServiceImpl implements NoteService {
 
                 // 再次调用 note_collect_check_and_update_zset.lua 脚本，将当前收藏的笔记添加到 zset 中
                 redisTemplate.execute(script, Collections.singletonList(userNoteCollectZSetKey), noteId, DateUtils.localDateTime2Timestamp(now));
+            } else {
+                // 若用户首次收藏，直接加入 ZSet
+                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
+
+                DefaultRedisScript<Long> script3 = new DefaultRedisScript<>();
+                script3.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/zset_add_note_collect_and_expire.lua")));
+                script3.setResultType(Long.class);
+                redisTemplate.execute(script3, Collections.singletonList(userNoteCollectZSetKey), noteId, DateUtils.localDateTime2Timestamp(now), expireSeconds);
             }
         }
 

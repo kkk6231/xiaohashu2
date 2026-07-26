@@ -20,7 +20,7 @@ import java.util.List;
  * @author: 犬小哈
  * @date: 2024/8/9 11:52
  * @version: v1.0.0
- * @description: 计数: 笔记点赞数落库
+ * @description: 计数: 笔记点赞数落库（笔记点赞表，用户计数表）
  **/
 @Component
 @RocketMQMessageListener(consumerGroup = "xiaohashu_group_" + MQConstants.TOPIC_COUNT_NOTE_LIKE_2_DB, // Group 组

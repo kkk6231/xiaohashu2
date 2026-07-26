@@ -25,7 +25,7 @@ import java.util.Objects;
  * @author: 犬小哈
  * @date: 2024/8/9 11:52
  * @version: v1.0.0
- * @description: 笔记点赞、取消点赞 MQ 消费者
+ * @description: 笔记点赞、取消点赞 MQ 消费者，用于笔记点赞、取消点赞的异步落库
  **/
 @Component
 @RocketMQMessageListener(consumerGroup = "xiaohashu_group_" + MQConstants.TOPIC_LIKE_OR_UNLIKE, // Group 组
@@ -66,7 +66,7 @@ public class LikeUnlikeNoteConsumer implements RocketMQListener<Message> {
     }
 
     /**
-     * 笔记点赞
+     * 笔记点赞（笔记点赞表）
      * @param bodyJsonStr
      */
     private void handleLikeNoteTagMessage(String bodyJsonStr) {
@@ -101,7 +101,7 @@ public class LikeUnlikeNoteConsumer implements RocketMQListener<Message> {
         org.springframework.messaging.Message<String> message = MessageBuilder.withPayload(bodyJsonStr)
                 .build();
 
-        // 异步发送 MQ 消息
+        // 异步发送计数 MQ 消息
         rocketMQTemplate.asyncSend(MQConstants.TOPIC_COUNT_NOTE_LIKE, message, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
@@ -151,7 +151,7 @@ public class LikeUnlikeNoteConsumer implements RocketMQListener<Message> {
         org.springframework.messaging.Message<String> message = MessageBuilder.withPayload(bodyJsonStr)
                 .build();
 
-        // 异步发送 MQ 消息
+        // 异步发送计数 MQ 消息
         rocketMQTemplate.asyncSend(MQConstants.TOPIC_COUNT_NOTE_LIKE, message, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {

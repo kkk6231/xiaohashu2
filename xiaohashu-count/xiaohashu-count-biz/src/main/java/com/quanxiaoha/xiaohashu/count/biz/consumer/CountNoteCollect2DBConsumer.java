@@ -6,7 +6,7 @@ import com.quanxiaoha.framework.common.util.JsonUtils;
 import com.quanxiaoha.xiaohashu.count.biz.constant.MQConstants;
 import com.quanxiaoha.xiaohashu.count.biz.domain.mapper.NoteCountDOMapper;
 import com.quanxiaoha.xiaohashu.count.biz.domain.mapper.UserCountDOMapper;
-import com.quanxiaoha.xiaohashu.count.biz.model.dto.AggregationCountLikeUnlikeNoteMqDTO;
+import com.quanxiaoha.xiaohashu.count.biz.model.dto.AggregationCountCollectUnCollectNoteMqDTO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -47,9 +47,9 @@ public class CountNoteCollect2DBConsumer implements RocketMQListener<String> {
 
         log.info("## 消费到了 MQ 【计数: 笔记收藏数入库】, {}...", body);
 
-        List<AggregationCountLikeUnlikeNoteMqDTO> countList = null;
+        List<AggregationCountCollectUnCollectNoteMqDTO> countList = null;
         try {
-            countList = JsonUtils.parseList(body, AggregationCountLikeUnlikeNoteMqDTO.class);
+            countList = JsonUtils.parseList(body, AggregationCountCollectUnCollectNoteMqDTO.class);
         } catch (Exception e) {
             log.error("## 解析 JSON 字符串异常", e);
         }
