@@ -164,8 +164,6 @@ public class FollowUnfollowConsumer implements RocketMQListener<Message> {
         // 判空
         if (Objects.isNull(unfollowUserMqDTO)) return;
 
-        // 幂等性：通过联合唯一索引保证
-
         Long userId = unfollowUserMqDTO.getUserId();
         Long unfollowUserId = unfollowUserMqDTO.getUnfollowUserId();
         LocalDateTime createTime = unfollowUserMqDTO.getCreateTime();
@@ -177,10 +175,12 @@ public class FollowUnfollowConsumer implements RocketMQListener<Message> {
                 // 关注表：一条记录
                 int count = followingDOMapper.deleteByUserIdAndFollowingUserId(userId, unfollowUserId);
 
-                // 粉丝表：一条记录
-                if (count > 0) {
-                    fansDOMapper.deleteByUserIdAndFansUserId(unfollowUserId, userId);
+                if (count == 0) {
+                    return false;
                 }
+                // 粉丝表：一条记录
+                fansDOMapper.deleteByUserIdAndFansUserId(unfollowUserId, userId);
+
                 return true;
             } catch (Exception ex) {
                 status.setRollbackOnly(); // 标记事务为回滚
