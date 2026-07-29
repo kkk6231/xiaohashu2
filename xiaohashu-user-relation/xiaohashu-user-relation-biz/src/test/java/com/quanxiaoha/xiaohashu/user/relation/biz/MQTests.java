@@ -17,6 +17,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @SpringBootTest
@@ -34,6 +35,7 @@ class MQTests {
         for (long i = 0; i < 10000; i++) {
             // 构建消息体 DTO
             FollowUserMqDTO followUserMqDTO = FollowUserMqDTO.builder()
+                    .eventId(UUID.randomUUID().toString().replace("-", ""))
                     .userId(i)
                     .followUserId(i)
                     .createTime(LocalDateTime.now())
@@ -80,6 +82,7 @@ class MQTests {
                 // 发送 MQ
                 // 构建消息体 DTO
                 FollowUserMqDTO followUserMqDTO = FollowUserMqDTO.builder()
+                        .eventId(UUID.randomUUID().toString().replace("-", ""))
                         .userId(userId)
                         .followUserId(targetUserId)
                         .createTime(LocalDateTime.now())
@@ -104,6 +107,7 @@ class MQTests {
                 // 发送 MQ
                 // 构建消息体 DTO
                 UnfollowUserMqDTO unfollowUserMqDTO = UnfollowUserMqDTO.builder()
+                        .eventId(UUID.randomUUID().toString().replace("-", ""))
                         .userId(userId)
                         .unfollowUserId(targetUserId)
                         .createTime(LocalDateTime.now())
@@ -135,6 +139,7 @@ class MQTests {
         for (long i = 0; i < 3200; i++) {
             // 构建消息体 DTO
             CountFollowUnfollowMqDTO countFollowUnfollowMqDTO = CountFollowUnfollowMqDTO.builder()
+                    .eventId(UUID.randomUUID().toString().replace("-", ""))
                     .userId(i+1) // 关注者用户 ID
                     .targetUserId(27L) // 目标用户
                     .type(FollowUnfollowTypeEnum.FOLLOW.getCode())

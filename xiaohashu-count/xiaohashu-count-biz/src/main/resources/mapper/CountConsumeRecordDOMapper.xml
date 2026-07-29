@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.quanxiaoha.xiaohashu.count.biz.domain.mapper.CountConsumeRecordDOMapper">
+
+  <!--
+    插入计数 MQ 消费记录。
+    t_count_consume_record 需要依赖 consumer_type + message_id 唯一索引做 DB 幂等：
+    - 插入成功：表示该落库消息首次消费，后续可以更新计数表；
+    - 唯一键冲突：表示该落库消息已经处理过，消费者应直接跳过。
+  -->
+  <insert id="insert" parameterType="com.quanxiaoha.xiaohashu.count.biz.domain.dataobject.CountConsumeRecordDO">
+    INSERT INTO t_count_consume_record (consumer_type, message_id, create_time)
+    VALUES (#{consumerType}, #{messageId}, #{createTime})
+  </insert>
+
+</mapper>

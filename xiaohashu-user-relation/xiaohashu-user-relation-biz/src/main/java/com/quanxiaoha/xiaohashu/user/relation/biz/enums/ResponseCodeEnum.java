@@ -25,6 +25,8 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     ALREADY_FOLLOWED("RELATION-20004", "您已经关注了该用户"),
     CANT_UNFOLLOW_YOUR_SELF("RELATION-20005", "无法取关自己"),
     NOT_FOLLOWED("RELATION-20006", "你未关注对方，无法取关"),
+    FOLLOW_OPERATE_MQ_SEND_FAILED("RELATION-20007", "关注失败，请稍后重试"),
+    UNFOLLOW_OPERATE_MQ_SEND_FAILED("RELATION-20008", "取关失败，请稍后重试"),
     ;
 
     // 异常码

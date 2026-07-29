@@ -24,6 +24,11 @@ public class RedisKeyConstants {
     private static final String COUNT_COMMENT_KEY_PREFIX = "count:comment:";
 
     /**
+     * 关注数计数幂等 Key 前缀
+     */
+    private static final String IDEMPOTENT_FOLLOWING_KEY_PREFIX = "idem:following:";
+
+    /**
      * Hash Field: 点赞总数
      */
     public static final String FIELD_LIKE_TOTAL = "likeTotal";
@@ -86,5 +91,13 @@ public class RedisKeyConstants {
         return COUNT_COMMENT_KEY_PREFIX + commentId;
     }
 
+    /**
+     * 构建关注数计数幂等 Key
+     * @param eventId
+     * @return
+     */
+    public static String buildIdempotentFollowingKey(String eventId) {
+        return IDEMPOTENT_FOLLOWING_KEY_PREFIX + eventId;
+    }
 
 }

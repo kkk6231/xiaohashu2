@@ -18,6 +18,11 @@ import lombok.NoArgsConstructor;
 public class CountFollowUnfollowMqDTO {
 
     /**
+     * 同一业务事件的全链路唯一标识
+     */
+    private String eventId;
+
+    /**
      * 原用户
      */
     private Long userId;

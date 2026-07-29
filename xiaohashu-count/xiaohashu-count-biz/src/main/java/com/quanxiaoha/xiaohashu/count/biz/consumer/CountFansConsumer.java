@@ -6,16 +6,16 @@ import com.quanxiaoha.framework.common.util.JsonUtils;
 import com.quanxiaoha.xiaohashu.count.biz.constant.MQConstants;
 import com.quanxiaoha.xiaohashu.count.biz.constant.RedisKeyConstants;
 import com.quanxiaoha.xiaohashu.count.biz.enums.FollowUnfollowTypeEnum;
+import com.quanxiaoha.xiaohashu.count.biz.model.dto.AggregationCountFansMqDTO;
 import com.quanxiaoha.xiaohashu.count.biz.model.dto.CountFollowUnfollowMqDTO;
+import com.quanxiaoha.xiaohashu.count.biz.service.UserCountCacheService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Case;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
@@ -24,110 +24,97 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * @author: 犬小哈
- * @date: 2024/8/9 11:52
- * @version: v1.0.0
- * @description: 计数: 粉丝数
- **/
+ * 粉丝数计数消费者。
+ *
+ * <p>粉丝数属于高频社交计数，保留原项目的 BufferTrigger 聚合思路：
+ * 先把 MQ 消息攒成批次，再按目标用户聚合出净增量，最后更新 Redis 并发送落库 MQ。</p>
+ */
 @Component
-@RocketMQMessageListener(consumerGroup = "xiaohashu_group_" + MQConstants.TOPIC_COUNT_FANS, // Group 组
-        topic = MQConstants.TOPIC_COUNT_FANS // 主题 Topic
-        )
+@RocketMQMessageListener(consumerGroup = "xiaohashu_group_" + MQConstants.TOPIC_COUNT_FANS,
+        topic = MQConstants.TOPIC_COUNT_FANS)
 @Slf4j
 public class CountFansConsumer implements RocketMQListener<String> {
 
     @Resource
-    private RedisTemplate<String, Object> redisTemplate;
-    @Resource
     private RocketMQTemplate rocketMQTemplate;
+    @Resource
+    private UserCountCacheService userCountCacheService;
 
-    private BufferTrigger<String> bufferTrigger = BufferTrigger.<String>batchBlocking()
-            .bufferSize(50000) // 缓存队列的最大容量
-            .batchSize(1000)   // 一批次最多聚合 1000 条
-            .linger(Duration.ofSeconds(1)) // 多久聚合一次
-            .setConsumerEx(this::consumeMessage) // 设置消费者方法
+    /**
+     * JVM 内存聚合缓冲器：最多 1000 条或等待 1 秒触发一次批处理。
+     */
+    private final BufferTrigger<String> bufferTrigger = BufferTrigger.<String>batchBlocking()
+            .bufferSize(50000)
+            .batchSize(1000)
+            .linger(Duration.ofSeconds(1))
+            .setConsumerEx(this::consumeMessage)
             .build();
 
     @Override
     public void onMessage(String body) {
-        // 往 bufferTrigger 中添加元素
+        // onMessage 只入缓冲区，真正的 Redis 更新和落库 MQ 发送在 consumeMessage 中聚合执行。
         bufferTrigger.enqueue(body);
     }
 
     private void consumeMessage(List<String> bodys) {
-        log.info("==> 聚合消息, size: {}", bodys.size());
-        log.info("==> 聚合消息, {}", JsonUtils.toJsonString(bodys));
+        log.info("==> 聚合粉丝数消息, size: {}", bodys.size());
+        log.info("==> 聚合粉丝数消息明细: {}", JsonUtils.toJsonString(bodys));
 
-        // List<String> 转 List<CountFollowUnfollowMqDTO>
         List<CountFollowUnfollowMqDTO> countFollowUnfollowMqDTOS = bodys.stream()
-                .map(body -> JsonUtils.parseObject(body, CountFollowUnfollowMqDTO.class)).toList();
+                .map(body -> JsonUtils.parseObject(body, CountFollowUnfollowMqDTO.class))
+                .toList();
 
-        // 按目标用户进行分组
+        // 按被关注用户分组，因为 fansTotal 统计的是“目标用户被多少人关注”。
         Map<Long, List<CountFollowUnfollowMqDTO>> groupMap = countFollowUnfollowMqDTOS.stream()
+                .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(CountFollowUnfollowMqDTO::getTargetUserId));
 
-        // 按组汇总数据，统计出最终的计数
-        // key 为目标用户ID, value 为最终操作的计数
         Map<Long, Integer> countMap = Maps.newHashMap();
-
         for (Map.Entry<Long, List<CountFollowUnfollowMqDTO>> entry : groupMap.entrySet()) {
-            List<CountFollowUnfollowMqDTO> list = entry.getValue();
-            // 最终的计数值，默认为 0
             int finalCount = 0;
-            for (CountFollowUnfollowMqDTO countFollowUnfollowMqDTO : list) {
-                // 获取操作类型
-                Integer type = countFollowUnfollowMqDTO.getType();
-
-                // 根据操作类型，获取对应枚举
-                FollowUnfollowTypeEnum followUnfollowTypeEnum = FollowUnfollowTypeEnum.valueOf(type);
-
-                // 若枚举为空，跳到下一次循环
-                if (Objects.isNull(followUnfollowTypeEnum)) continue;
+            for (CountFollowUnfollowMqDTO countFollowUnfollowMqDTO : entry.getValue()) {
+                FollowUnfollowTypeEnum followUnfollowTypeEnum = FollowUnfollowTypeEnum.valueOf(countFollowUnfollowMqDTO.getType());
+                if (Objects.isNull(followUnfollowTypeEnum)) {
+                    continue;
+                }
 
                 switch (followUnfollowTypeEnum) {
-                    case FOLLOW -> finalCount += 1; // 如果为关注操作，粉丝数 +1
-                    case UNFOLLOW -> finalCount -= 1; // 如果为取关操作，粉丝数 -1
+                    case FOLLOW -> finalCount += 1;
+                    case UNFOLLOW -> finalCount -= 1;
                 }
             }
-            // 将分组后统计出的最终计数，存入 countMap 中
             countMap.put(entry.getKey(), finalCount);
         }
 
-        log.info("## 聚合后的计数数据: {}", JsonUtils.toJsonString(countMap));
+        log.info("==> 聚合后的粉丝数数据: {}", JsonUtils.toJsonString(countMap));
 
-        // 更新 Redis
-        countMap.forEach((k, v) -> {
-            // Redis Key
-            String redisKey = RedisKeyConstants.buildCountUserKey(k);
-            // 判断 Redis 中 Hash 是否存在
-            boolean isExisted = redisTemplate.hasKey(redisKey);
-
-            // 若存在才会更新
-            // (因为缓存设有过期时间，考虑到过期后，缓存会被删除，这里需要判断一下，存在才会去更新，而初始化工作放在查询计数来做)
-            if (isExisted) {
-                // 对目标用户 Hash 中的粉丝数字段进行计数操作
-                redisTemplate.opsForHash().increment(redisKey, RedisKeyConstants.FIELD_FANS_TOTAL, v);
-            }
+        countMap.forEach((userId, delta) -> {
+            // Redis 不存在时，基于 t_user_count 完整快照初始化，并把本批粉丝数聚合增量一起写入。
+            userCountCacheService.initOrIncrementUserCount(userId, RedisKeyConstants.FIELD_FANS_TOTAL, Long.valueOf(delta));
         });
 
-        // 发送 MQ, 计数数据落库
-        // 构建消息体 DTO
-        Message<String> message = MessageBuilder.withPayload(JsonUtils.toJsonString(countMap))
+        // batchId 标识这一批聚合结果，2DB 消费者用 consumerType + batchId 做落库幂等。
+        AggregationCountFansMqDTO aggregationCountFansMqDTO = AggregationCountFansMqDTO.builder()
+                .batchId(UUID.randomUUID().toString().replace("-", ""))
+                .countMap(countMap)
                 .build();
 
-        // 异步发送 MQ 消息
+        Message<String> message = MessageBuilder.withPayload(JsonUtils.toJsonString(aggregationCountFansMqDTO))
+                .build();
+
         rocketMQTemplate.asyncSend(MQConstants.TOPIC_COUNT_FANS_2_DB, message, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
-                log.info("==> 【计数服务：粉丝数入库】MQ 发送成功，SendResult: {}", sendResult);
+                log.info("==> 【计数服务：粉丝数入库】MQ 发送成功, SendResult: {}", sendResult);
             }
 
             @Override
             public void onException(Throwable throwable) {
-                log.error("==> 【计数服务：粉丝数入库】MQ 发送异常: ", throwable);
+                log.error("==> 【计数服务：粉丝数入库】MQ 发送异常", throwable);
             }
         });
     }

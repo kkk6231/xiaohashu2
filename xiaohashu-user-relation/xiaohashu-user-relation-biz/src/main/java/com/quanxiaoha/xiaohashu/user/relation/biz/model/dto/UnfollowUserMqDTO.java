@@ -19,6 +19,11 @@ import java.time.LocalDateTime;
 @Builder
 public class UnfollowUserMqDTO {
 
+    /**
+     * 同一业务事件的全链路唯一标识
+     */
+    private String eventId;
+
     private Long userId;
 
     private Long unfollowUserId;

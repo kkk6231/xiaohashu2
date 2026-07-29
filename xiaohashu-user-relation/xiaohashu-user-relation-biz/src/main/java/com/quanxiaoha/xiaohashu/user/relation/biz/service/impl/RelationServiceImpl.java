@@ -8,6 +8,7 @@ import com.quanxiaoha.framework.common.response.PageResponse;
 import com.quanxiaoha.framework.common.response.Response;
 import com.quanxiaoha.framework.common.util.DateUtils;
 import com.quanxiaoha.framework.common.util.JsonUtils;
+import com.quanxiaoha.xiaohashu.count.dto.resp.FindUserCountByIdRspDTO;
 import com.quanxiaoha.xiaohashu.user.dto.resp.FindUserByIdRspDTO;
 import com.quanxiaoha.xiaohashu.user.relation.biz.constant.MQConstants;
 import com.quanxiaoha.xiaohashu.user.relation.biz.constant.RedisKeyConstants;
@@ -15,17 +16,19 @@ import com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.FansDO;
 import com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.FollowingDO;
 import com.quanxiaoha.xiaohashu.user.relation.biz.domain.mapper.FansDOMapper;
 import com.quanxiaoha.xiaohashu.user.relation.biz.domain.mapper.FollowingDOMapper;
+import com.quanxiaoha.xiaohashu.user.relation.biz.enums.FollowUnfollowTypeEnum;
 import com.quanxiaoha.xiaohashu.user.relation.biz.enums.LuaResultEnum;
 import com.quanxiaoha.xiaohashu.user.relation.biz.enums.ResponseCodeEnum;
 import com.quanxiaoha.xiaohashu.user.relation.biz.model.dto.FollowUserMqDTO;
 import com.quanxiaoha.xiaohashu.user.relation.biz.model.dto.UnfollowUserMqDTO;
 import com.quanxiaoha.xiaohashu.user.relation.biz.model.vo.*;
+import com.quanxiaoha.xiaohashu.user.relation.biz.rpc.CountRpcService;
 import com.quanxiaoha.xiaohashu.user.relation.biz.rpc.UserRpcService;
 import com.quanxiaoha.xiaohashu.user.relation.biz.service.RelationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -57,6 +60,8 @@ public class RelationServiceImpl implements RelationService {
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private UserRpcService userRpcService;
+    @Resource
+    private CountRpcService countRpcService;
     @Resource
     private FollowingDOMapper followingDOMapper;
     @Resource
@@ -151,7 +156,9 @@ public class RelationServiceImpl implements RelationService {
 
         // 发送 MQ
         // 构建消息体 DTO
+        String eventId = UUID.randomUUID().toString().replace("-", "");
         FollowUserMqDTO followUserMqDTO = FollowUserMqDTO.builder()
+                .eventId(eventId)
                 .userId(userId)
                 .followUserId(followUserId)
                 .createTime(now)
@@ -164,22 +171,22 @@ public class RelationServiceImpl implements RelationService {
         // 通过冒号连接, 可让 MQ 发送给主题 Topic 时，携带上标签 Tag
         String destination = MQConstants.TOPIC_FOLLOW_OR_UNFOLLOW + ":" + MQConstants.TAG_FOLLOW;
 
-        log.info("==> 开始发送关注操作 MQ, 消息体: {}", followUserMqDTO);
+        log.info("==> 开始同步顺序发送关注操作 MQ, 消息体: {}", followUserMqDTO);
 
-        String hashKey = String.valueOf(userId);
+        try {
+            SendResult sendResult = rocketMQTemplate.syncSendOrderly(destination, message, String.valueOf(userId));
+            log.info("==> 关注操作 MQ 发送结果: {}", sendResult);
 
-        // 异步发送 MQ 消息，提升接口响应速度
-        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
-                log.info("==> MQ 发送成功，SendResult: {}", sendResult);
+            if (Objects.isNull(sendResult) || !Objects.equals(sendResult.getSendStatus(), SendStatus.SEND_OK)) {
+                log.error("==> 关注操作 MQ 发送失败, SendResult: {}", sendResult);
+                throw new BizException(ResponseCodeEnum.FOLLOW_OPERATE_MQ_SEND_FAILED);
             }
-
-            @Override
-            public void onException(Throwable throwable) {
-                log.error("==> MQ 发送异常: ", throwable);
-            }
-        });
+        } catch (BizException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("==> 关注操作 MQ 发送异常", ex);
+            throw new BizException(ResponseCodeEnum.FOLLOW_OPERATE_MQ_SEND_FAILED);
+        }
 
         return Response.success();
     }
@@ -259,7 +266,9 @@ public class RelationServiceImpl implements RelationService {
 
         // 发送 MQ
         // 构建消息体 DTO
+        String eventId = UUID.randomUUID().toString().replace("-", "");
         UnfollowUserMqDTO unfollowUserMqDTO = UnfollowUserMqDTO.builder()
+                .eventId(eventId)
                 .userId(userId)
                 .unfollowUserId(unfollowUserId)
                 .createTime(LocalDateTime.now())
@@ -272,22 +281,22 @@ public class RelationServiceImpl implements RelationService {
         // 通过冒号连接, 可让 MQ 发送给主题 Topic 时，携带上标签 Tag
         String destination = MQConstants.TOPIC_FOLLOW_OR_UNFOLLOW + ":" + MQConstants.TAG_UNFOLLOW;
 
-        log.info("==> 开始发送取关操作 MQ, 消息体: {}", unfollowUserMqDTO);
+        log.info("==> 开始同步顺序发送取关操作 MQ, 消息体: {}", unfollowUserMqDTO);
 
-        String hashKey = String.valueOf(userId);
+        try {
+            SendResult sendResult = rocketMQTemplate.syncSendOrderly(destination, message, String.valueOf(userId));
+            log.info("==> 取关操作 MQ 发送结果: {}", sendResult);
 
-        // 异步发送 MQ 消息，提升接口响应速度
-        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
-                log.info("==> MQ 发送成功，SendResult: {}", sendResult);
+            if (Objects.isNull(sendResult) || !Objects.equals(sendResult.getSendStatus(), SendStatus.SEND_OK)) {
+                log.error("==> 取关操作 MQ 发送失败, SendResult: {}", sendResult);
+                throw new BizException(ResponseCodeEnum.UNFOLLOW_OPERATE_MQ_SEND_FAILED);
             }
-
-            @Override
-            public void onException(Throwable throwable) {
-                log.error("==> MQ 发送异常: ", throwable);
-            }
-        });
+        } catch (BizException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("==> 取关操作 MQ 发送异常", ex);
+            throw new BizException(ResponseCodeEnum.UNFOLLOW_OPERATE_MQ_SEND_FAILED);
+        }
 
         return Response.success();
     }
@@ -511,21 +520,30 @@ public class RelationServiceImpl implements RelationService {
         // RPC: 批量查询用户信息
         List<FindUserByIdRspDTO> findUserByIdRspDTOS = userRpcService.findByIds(userIds);
 
-        // TODO RPC: 批量查询用户的计数数据（笔记总数、粉丝总数）
+        // 批量查询计数服务；计数服务内部负责 Redis 未命中时从 DB 初始化完整计数 Hash。
+        Map<Long, FindUserCountByIdRspDTO> userCountMap = countRpcService.findUserCountsByIds(userIds).stream()
+                .collect(java.util.stream.Collectors.toMap(FindUserCountByIdRspDTO::getUserId, count -> count, (oldValue, newValue) -> oldValue));
 
         // 若不为空，DTO 转 VO
         if (CollUtil.isNotEmpty(findUserByIdRspDTOS)) {
             findFansUserRspVOS = findUserByIdRspDTOS.stream()
-                    .map(dto -> FindFansUserRspVO.builder()
-                            .userId(dto.getId())
-                            .avatar(dto.getAvatar())
-                            .nickname(dto.getNickName())
-                            .noteTotal(0L) // TODO: 这块的数据暂无，后续补充
-                            .fansTotal(0L) // TODO: 这块的数据暂无，后续补充
-                            .build())
+                    .map(dto -> {
+                        FindUserCountByIdRspDTO countDTO = userCountMap.get(dto.getId());
+                        return FindFansUserRspVO.builder()
+                                .userId(dto.getId())
+                                .avatar(dto.getAvatar())
+                                .nickname(dto.getNickName())
+                                .noteTotal(getCountValue(Objects.nonNull(countDTO) ? countDTO.getNoteTotal() : null))
+                                .fansTotal(getCountValue(Objects.nonNull(countDTO) ? countDTO.getFansTotal() : null))
+                                .build();
+                    })
                     .toList();
         }
         return findFansUserRspVOS;
+    }
+
+    private Long getCountValue(Long count) {
+        return Objects.isNull(count) ? 0L : count;
     }
 
     /**
