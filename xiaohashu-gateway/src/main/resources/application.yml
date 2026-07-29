@@ -34,12 +34,18 @@ spring:
             - Path=/comment/**
           filters:
             - StripPrefix=1
+        - id: oss
+          uri: lb://xiaohashu-oss
+          predicates:
+            - Path=/oss/**
+          filters:
+            - StripPrefix=1
   data:
     redis:
       database: 0 # Redis 数据库索引（默认为 0）
       host: 127.0.0.1 # Redis 服务器地址
       port: 6379 # Redis 服务器连接端口
-      password: qwe123!@# # Redis 服务器连接密码（默认为空）
+      password: wzx1230.qqq # Redis 服务器连接密码（默认为空）
       timeout: 5s # 读超时时间
       connect-timeout: 5s # 链接超时时间
       lettuce:

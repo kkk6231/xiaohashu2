@@ -1,10 +1,9 @@
 spring:
   cassandra:
     keyspace-name: xiaohashu
-    contact-points: localhost
+    contact-points: 127.0.0.1
     port: 9042
 #    schema-action: none
-
 
 
 

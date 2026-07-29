@@ -12,11 +12,20 @@
     <module>xiaoha-framework</module>
     <module>xiaohashu-gateway</module>
     <module>xiaohashu-auth</module>
+    <module>xiaohashu-oss</module>
+    <module>xiaohashu-user</module>
+    <module>xiaohashu-kv</module>
+    <module>xiaohashu-distributed-id-generator</module>
+    <module>xiaohashu-note</module>
+    <module>xiaohashu-user-relation</module>
+    <module>xiaohashu-count</module>
+    <module>xiaohashu-data-align</module>
+    <module>xiaohashu-search</module>
+    <module>xiaohashu-comment</module>
   </modules>
   <properties>
-    <java.version>17</java.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+    <minio.version>8.2.1</minio.version>
+    <feign-form.version>3.8.0</feign-form.version>
     <hutool.version>5.8.26</hutool.version>
     <mysql-connector-java.version>8.0.29</mysql-connector-java.version>
     <jackson.version>2.16.1</jackson.version>
@@ -26,22 +35,61 @@
     <spring-boot.version>3.0.2</spring-boot.version>
     <spring-cloud-alibaba.version>2022.0.0.0</spring-cloud-alibaba.version>
     <dysmsapi.version>2.0.24</dysmsapi.version>
-    <revision>0.0.1-SNAPSHOT</revision>
     <spring-cloud.version>2022.0.0</spring-cloud.version>
-    <lombok.version>1.18.30</lombok.version>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <elasticsearch.version>7.3.0</elasticsearch.version>
     <mybatis-generator-maven-plugin.version>1.3.5</mybatis-generator-maven-plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <commons-lang3.version>3.12.0</commons-lang3.version>
+    <caffeine.version>3.1.8</caffeine.version>
+    <rocketmq.version>2.2.3</rocketmq.version>
+    <java.version>17</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <aliyun-sdk-oss.version>3.17.4</aliyun-sdk-oss.version>
+    <activation.version>1.1.1</activation.version>
+    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+    <buffertrigger.version>0.2.21</buffertrigger.version>
+    <jaxb-runtime.version>2.3.3</jaxb-runtime.version>
+    <revision>0.0.1-SNAPSHOT</revision>
+    <lombok.version>1.18.30</lombok.version>
+    <jaxb-api.version>2.3.1</jaxb-api.version>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <rocketmq-client.version>4.9.4</rocketmq-client.version>
+    <canal.version>1.1.7</canal.version>
     <druid.version>1.2.23</druid.version>
     <nacos-config.version>0.3.0-RC</nacos-config.version>
     <transmittable-thread-local.version>2.14.2</transmittable-thread-local.version>
+    <xxl-job.version>2.4.1</xxl-job.version>
   </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>com.quanxiaoha</groupId>
         <artifactId>xiaoha-common</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.quanxiaoha</groupId>
+        <artifactId>xiaohashu-oss-api</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.quanxiaoha</groupId>
+        <artifactId>xiaohashu-user-api</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.quanxiaoha</groupId>
+        <artifactId>xiaohashu-kv-api</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.quanxiaoha</groupId>
+        <artifactId>xiaohashu-search-api</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.quanxiaoha</groupId>
+        <artifactId>xiaohashu-distributed-id-generator-api</artifactId>
         <version>0.0.1-SNAPSHOT</version>
       </dependency>
       <dependency>
@@ -154,6 +202,91 @@
         <groupId>com.alibaba</groupId>
         <artifactId>transmittable-thread-local</artifactId>
         <version>${transmittable-thread-local.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.minio</groupId>
+        <artifactId>minio</artifactId>
+        <version>${minio.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.aliyun.oss</groupId>
+        <artifactId>aliyun-sdk-oss</artifactId>
+        <version>${aliyun-sdk-oss.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.xml.bind</groupId>
+        <artifactId>jaxb-api</artifactId>
+        <version>${jaxb-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.activation</groupId>
+        <artifactId>activation</artifactId>
+        <version>${activation.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb-runtime.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.openfeign.form</groupId>
+        <artifactId>feign-form</artifactId>
+        <version>${feign-form.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.ben-manes.caffeine</groupId>
+        <artifactId>caffeine</artifactId>
+        <version>${caffeine.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-spring-boot-starter</artifactId>
+        <version>${rocketmq.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-client</artifactId>
+        <version>${rocketmq-client.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.phantomthief</groupId>
+        <artifactId>buffer-trigger</artifactId>
+        <version>${buffertrigger.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.xuxueli</groupId>
+        <artifactId>xxl-job-core</artifactId>
+        <version>${xxl-job.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-high-level-client</artifactId>
+        <version>${elasticsearch.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-client</artifactId>
+        <version>${elasticsearch.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.elasticsearch</groupId>
+        <artifactId>elasticsearch</artifactId>
+        <version>${elasticsearch.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.alibaba.otter</groupId>
+        <artifactId>canal.client</artifactId>
+        <version>${canal.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.alibaba.otter</groupId>
+        <artifactId>canal.common</artifactId>
+        <version>${canal.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.alibaba.otter</groupId>
+        <artifactId>canal.protocol</artifactId>
+        <version>${canal.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

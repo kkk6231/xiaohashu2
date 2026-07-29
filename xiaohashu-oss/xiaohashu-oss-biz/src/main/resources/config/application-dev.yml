@@ -1,13 +1,15 @@
 #=================================================================
-# 对象存储配置
+# Object storage config
 #=================================================================
 storage:
-  minio:
-    endpoint: http://127.0.0.1:9000
-    accessKey: quanxiaoha
-    secretKey: quanxiaoha
   aliyun-oss:
-    endpoint: oss-cn-hangzhou.aliyuncs.com
-    accessKey: LTAIRRJPMGDccZrP
-    secretKey: cyfu4tjkuAAGuNvWCG9lNH7m6RN8pQ
+    endpoint: oss-cn-beijing.aliyuncs.com
+    accessKey: LTAI5t6ENKJGB7cVrWfjgdt4
+    secretKey: 5eOH9RwJBadNAREV508lQvFilDLiOU
+    bucketName: xiaohashu-6231
 
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
