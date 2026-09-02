@@ -48,6 +48,9 @@ build/
 *.tmp
 *.swp
 
+### Local documentation ###
+*.md
+
 ### Sensitive local config ###
 .env
 *.pem
