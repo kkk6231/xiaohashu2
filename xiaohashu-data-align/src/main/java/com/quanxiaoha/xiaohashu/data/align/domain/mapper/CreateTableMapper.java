@@ -41,9 +41,4 @@ public interface CreateTableMapper {
      */
     void createDataAlignNoteLikeCountTempTable(String tableNameSuffix);
 
-    /**
-     * 创建日增量表：笔记发布数计数变更
-     * @param tableNameSuffix
-     */
-    void createDataAlignNotePublishCountTempTable(String tableNameSuffix);
 }

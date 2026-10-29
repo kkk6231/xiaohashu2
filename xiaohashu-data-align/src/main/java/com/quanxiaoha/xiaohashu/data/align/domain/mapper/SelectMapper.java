@@ -49,15 +49,6 @@ public interface SelectMapper {
     int selectCountFromNoteLikeTableByUserId(long noteId);
 
     /**
-     * 日增量表：笔记发布数变更 - 批量查询
-     * @param tableNameSuffix
-     * @param batchSize
-     * @return
-     */
-    List<Long> selectBatchFromDataAlignNotePublishCountTempTable(@Param("tableNameSuffix") String tableNameSuffix,
-                                                              @Param("batchSize") int batchSize);
-
-    /**
      * 查询 t_note 笔记表，获取用户发布的笔记总数
      */
     int selectCountFromNoteTableByUserId(long userId);

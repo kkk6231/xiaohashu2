@@ -34,13 +34,6 @@
         </foreach>
     </delete>
 
-    <delete id="batchDeleteDataAlignNotePublishCountTempTable" parameterType="list">
-        delete from `t_data_align_note_publish_count_temp_${tableNameSuffix}`
-        where user_id in
-        <foreach collection="userIds" open="(" item="userId" close=")" separator=",">
-            #{userId}
-        </foreach>
-    </delete>
 
     <delete id="batchDeleteDataAlignNoteLikeCountTempTable" parameterType="list">
         delete from `t_data_align_note_like_count_temp_${tableNameSuffix}`

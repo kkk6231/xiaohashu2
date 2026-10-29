@@ -26,7 +26,4 @@
         DROP TABLE IF EXISTS `t_data_align_note_like_count_temp_${tableNameSuffix}`;
     </delete>
 
-    <delete id="deleteDataAlignNotePublishCountTempTable" parameterType="map">
-        DROP TABLE IF EXISTS `t_data_align_note_publish_count_temp_${tableNameSuffix}`;
-    </delete>
 </mapper>

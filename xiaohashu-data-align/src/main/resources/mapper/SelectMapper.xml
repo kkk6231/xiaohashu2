@@ -29,10 +29,6 @@
             limit #{batchSize}
     </select>
 
-    <select id="selectBatchFromDataAlignNotePublishCountTempTable" resultType="long" parameterType="map">
-        select user_id from `t_data_align_note_publish_count_temp_${tableNameSuffix}` order by id
-            limit #{batchSize}
-    </select>
 
 
     <select id="selectCountFromNoteLikeTableByUserId" parameterType="map" resultType="int">

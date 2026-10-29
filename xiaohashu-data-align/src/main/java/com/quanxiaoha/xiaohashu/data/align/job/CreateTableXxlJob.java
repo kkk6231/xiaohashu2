@@ -54,7 +54,6 @@ public class CreateTableXxlJob {
                 createTableMapper.createDataAlignUserCollectCountTempTable(tableNameSuffix);
                 createTableMapper.createDataAlignUserLikeCountTempTable(tableNameSuffix);
                 createTableMapper.createDataAlignNoteLikeCountTempTable(tableNameSuffix);
-                createTableMapper.createDataAlignNotePublishCountTempTable(tableNameSuffix);
             }
         }
 

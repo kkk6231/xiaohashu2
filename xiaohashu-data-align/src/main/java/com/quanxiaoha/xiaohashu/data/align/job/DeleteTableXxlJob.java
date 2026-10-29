@@ -66,7 +66,6 @@ public class DeleteTableXxlJob {
                 deleteTableMapper.deleteDataAlignUserCollectCountTempTable(tableNameSuffix);
                 deleteTableMapper.deleteDataAlignUserLikeCountTempTable(tableNameSuffix);
                 deleteTableMapper.deleteDataAlignNoteLikeCountTempTable(tableNameSuffix);
-                deleteTableMapper.deleteDataAlignNotePublishCountTempTable(tableNameSuffix);
             }
         }
         XxlJobHelper.log("## 结束删除最近一个月的日增量临时表");

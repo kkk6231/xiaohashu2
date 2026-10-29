@@ -44,12 +44,6 @@ public interface DeleteMapper {
                                                      @Param("noteIds") List<Long> noteIds);
 
     /**
-     * 日增量表：用户发布笔记数变更 - 批量删除
-     */
-    void batchDeleteDataAlignNotePublishCountTempTable(@Param("tableNameSuffix") String tableNameSuffix,
-                                                       @Param("userIds") List<Long> userIds);
-
-    /**
      * 日增量表：笔记收藏计数变更 - 批量删除
      */
     void batchDeleteDataAlignNoteCollectCountTempTable(@Param("tableNameSuffix") String tableNameSuffix,

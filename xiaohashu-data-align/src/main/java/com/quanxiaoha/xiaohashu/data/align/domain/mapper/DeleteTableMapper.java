@@ -41,9 +41,4 @@ public interface DeleteTableMapper {
      */
     void deleteDataAlignNoteLikeCountTempTable(String tableNameSuffix);
 
-    /**
-     * 删除日增量表：笔记发布数计数变更
-     * @param tableNameSuffix
-     */
-    void deleteDataAlignNotePublishCountTempTable(String tableNameSuffix);
 }

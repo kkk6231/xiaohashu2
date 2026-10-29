@@ -19,11 +19,6 @@ public interface MQConstants {
     String TOPIC_LIKE_OR_UNLIKE = "LikeUnlikeTopic";
 
     /**
-     * Topic: 笔记操作（发布、删除）
-     */
-    String TOPIC_NOTE_OPERATE = "NoteOperateTopic";
-
-    /**
      * Topic: 收藏、取消收藏共用一个
      */
     String TOPIC_COLLECT_OR_UN_COLLECT = "CollectUnCollectTopic";
@@ -58,13 +53,4 @@ public interface MQConstants {
      */
     String TAG_UN_COLLECT = "UnCollect";
 
-    /**
-     * Tag 标签：笔记发布
-     */
-    String TAG_NOTE_PUBLISH = "publishNote";
-
-    /**
-     * Tag 标签：笔记删除
-     */
-    String TAG_NOTE_DELETE = "deleteNote";
 }
