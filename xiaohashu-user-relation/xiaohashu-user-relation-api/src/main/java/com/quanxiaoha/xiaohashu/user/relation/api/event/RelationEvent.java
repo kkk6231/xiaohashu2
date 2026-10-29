@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 /** 关系变更事件。消息可能重复投递，消费方必须按 eventId 去重。 */
 @Data
 public class RelationEvent {
+    /** 历史事件固定归属第一代；新事件在事实事务中设置代次。 */
+    private Long countGeneration = 1L;
     public static final String TOPIC = "RelationChangedV1";
     /** 事件唯一标识，重试和补发时保持不变 */
     private Long eventId;

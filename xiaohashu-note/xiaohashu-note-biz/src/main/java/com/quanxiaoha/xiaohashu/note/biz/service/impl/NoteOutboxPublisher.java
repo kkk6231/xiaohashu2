@@ -10,6 +10,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.annotation.*;
 import org.springframework.stereotype.Component;
 import java.util.UUID;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import com.quanxiaoha.xiaohashu.note.biz.constant.RedisKeyConstants;
+import com.quanxiaoha.xiaohashu.note.biz.constant.MQConstants;
 
 @Component
 @EnableScheduling
@@ -20,6 +23,9 @@ public class NoteOutboxPublisher {
     @Resource
     private RocketMQTemplate rocketMQTemplate;
 
+    @Resource
+    private StringRedisTemplate redisTemplate;
+
     /** 领取后再发送，不持有数据库事务等待 Broker；发送结果未知时保留原事件重试。 */
     @Scheduled(fixedDelayString = "${note.outbox.scan-delay-millis:1000}")
     public void scan() {
@@ -27,6 +33,17 @@ public class NoteOutboxPublisher {
             String token = UUID.randomUUID().toString();
             if (outboxMapper.claim(row.getId(), token) != 1) continue;
             try {
+                if ("CACHE_INVALIDATE".equals(row.getEventType())) {
+                    redisTemplate.delete(RedisKeyConstants.buildNoteDetailKey(row.getNoteId()));
+                    var cacheResult = rocketMQTemplate.syncSend(
+                            MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE,
+                            row.getNoteId());
+                    if (cacheResult.getSendStatus() != SendStatus.SEND_OK) {
+                        throw new IllegalStateException("缓存失效广播未确认");
+                    }
+                    outboxMapper.sent(row.getId(), token);
+                    continue;
+                }
                 var result = rocketMQTemplate.syncSend(NoteCountEvent.TOPIC,
                         MessageBuilder.withPayload(row.getPayload()).build(), 3000);
                 if (result.getSendStatus() != SendStatus.SEND_OK) {

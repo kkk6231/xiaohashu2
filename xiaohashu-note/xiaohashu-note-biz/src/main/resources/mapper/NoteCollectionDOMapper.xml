@@ -122,4 +122,23 @@
     update t_note_collection set status = #{status}, create_time = #{createTime}
     where user_id = #{userId} and note_id = #{noteId} and status = 1
   </update>
+
+  <!-- 总数与分页共用可见性条件：排除已取消、已删除以及其他作者的私有笔记。 -->
+  <sql id="VisibleInteractionNotes">
+    FROM t_note_collection interaction
+    INNER JOIN t_note note ON note.id = interaction.note_id
+    WHERE interaction.user_id = #{userId} AND interaction.status = 1
+      AND note.status = 1 AND (note.visible = 0 OR note.creator_id = #{userId})
+  </sql>
+  <select id="countVisibleNotes" resultType="long">
+    SELECT COUNT(*) <include refid="VisibleInteractionNotes"/>
+  </select>
+  <select id="selectVisibleNotesPage" resultType="com.quanxiaoha.xiaohashu.note.biz.model.vo.FindInteractionNoteListRspVO">
+    SELECT note.id AS noteId, note.title, note.creator_id AS creatorId, note.type,
+           note.img_uris AS imgUris, note.video_uri AS videoUri,
+           interaction.create_time AS interactionTime
+    <include refid="VisibleInteractionNotes"/>
+    ORDER BY interaction.create_time DESC, interaction.id DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
 </mapper>

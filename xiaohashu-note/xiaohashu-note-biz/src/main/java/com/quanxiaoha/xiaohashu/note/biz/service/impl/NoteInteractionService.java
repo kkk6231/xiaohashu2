@@ -1,5 +1,8 @@
 package com.quanxiaoha.xiaohashu.note.biz.service.impl;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.quanxiaoha.framework.common.util.CountGenerationUtils;
+
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.*;
 import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteInteractionMapper;
 import com.quanxiaoha.xiaohashu.note.biz.model.dto.NoteInteractionCommandDTO;
@@ -14,16 +17,37 @@ import java.util.*;
 @Service
 public class NoteInteractionService {
     @Resource
+    private JdbcTemplate countJdbcTemplate;
+    @Resource
     private NoteInteractionMapper interactionMapper;
 
-    /** 事实和处理结果一起提交，RPC 重试时直接复用原结果。 */
+    /** 同批非法消息与有效互动一起持久化；任一步失败均回滚，消费者不得确认消息。 */
+    @Transactional(rollbackFor = Exception.class)
+    public void executeBatch(List<NoteInteractionCommandDTO> commands, List<NoteInteractionFailureDO> failures) {
+        if (!failures.isEmpty()) {
+            interactionMapper.saveFailures(failures);
+        }
+        if (!commands.isEmpty()) {
+            execute(commands);
+        }
+    }
+
+    /** 事实、请求结果及待处理计数状态同事务提交，重试复用原始增量。 */
     @Transactional(rollbackFor = Exception.class)
     public List<NoteInteractionResultDO> execute(List<NoteInteractionCommandDTO> commands) {
-        commands.forEach(NoteInteractionCommandDTO::validate);
-        // 按笔记 ID 排序加锁，与删除作品共用行锁，避免快照与互动写入交叉。
+        long countGeneration = CountGenerationUtils.lockCurrent(countJdbcTemplate);
+        for (NoteInteractionCommandDTO command : commands) {
+            command.validate();
+        }
+        // 每篇笔记只普通读取一次，不让不同用户的互动竞争笔记排他锁。
+        // 读取后笔记可能被删除，仍允许本次互动提交；删除并发下作者汇总计数可有偏差。
         Map<Long, NoteDO> notes = new HashMap<>();
-        commands.stream().map(NoteInteractionCommandDTO::getNoteId).distinct().sorted()
-                .forEach(id -> notes.put(id, interactionMapper.lockNote(id)));
+        for (NoteInteractionCommandDTO command : commands) {
+            Long noteId = command.getNoteId();
+            if (!notes.containsKey(noteId)) {
+                notes.put(noteId, interactionMapper.findNote(noteId));
+            }
+        }
         // 已提交的请求复用原始结果，包括原始增量；不能依据当前状态重新计算。
         Map<String, NoteInteractionResultDO> results = new LinkedHashMap<>();
         for (NoteInteractionResultDO row : interactionMapper.findResults(commands)) {
@@ -31,10 +55,12 @@ public class NoteInteractionService {
         }
         // 批内后续命令读取前一条命令更新后的状态，保证“点赞→取消”连续计算。
         Map<String, Integer> states = new HashMap<>();
-        interactionMapper.findLikes(commands).forEach(r ->
-                states.put(stateKey(r.getUserId(), r.getNoteId(), "LIKE"), r.getStatus()));
-        interactionMapper.findCollections(commands).forEach(r ->
-                states.put(stateKey(r.getUserId(), r.getNoteId(), "COLLECT"), r.getStatus()));
+        for (NoteLikeDO relation : interactionMapper.findLikes(commands)) {
+            states.put(stateKey(relation.getUserId(), relation.getNoteId(), "LIKE"), relation.getStatus());
+        }
+        for (NoteCollectionDO relation : interactionMapper.findCollections(commands)) {
+            states.put(stateKey(relation.getUserId(), relation.getNoteId(), "COLLECT"), relation.getStatus());
+        }
         // 事实表只写每个用户/笔记的最终状态，结果表则保留每条请求的实际增量。
         Map<String, NoteLikeDO> likes = new LinkedHashMap<>();
         Map<String, NoteCollectionDO> collections = new LinkedHashMap<>();
@@ -52,6 +78,7 @@ public class NoteInteractionService {
                 continue;
             }
             NoteInteractionResultDO result = new NoteInteractionResultDO();
+            result.setCountGeneration(countGeneration);
             result.setUserId(command.getUserId());
             result.setRequestId(command.getRequestId());
             result.setNoteId(command.getNoteId());
@@ -92,7 +119,7 @@ public class NoteInteractionService {
             newResults.add(result);
             batchResults.add(result);
         }
-        // 事实和结果同事务提交。之后计数 RPC 失败时，下一次消费仍能拿到相同增量。
+        // 结果表同时保存待处理计数状态；提交后即可确认 MQ，计数失败由定时任务补偿。
         if (!likes.isEmpty()) {
             interactionMapper.saveLikes(new ArrayList<>(likes.values()));
         }
@@ -105,6 +132,7 @@ public class NoteInteractionService {
         return batchResults;
     }
 
+    /** 生成批内关系状态键，分别合并点赞和收藏的最终状态。 */
     private String stateKey(long userId, long noteId, String action) {
         return userId + ":" + noteId + ":" + action;
     }

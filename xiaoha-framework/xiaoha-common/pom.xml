@@ -16,6 +16,7 @@
     <description>平台通用模块，如一些通用枚举、工具类等等</description>
 
     <dependencies>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-jdbc</artifactId></dependency>
         <!-- 避免编写那些冗余的 Java 样板式代码，如 get、set 方法等 -->
         <dependency>
             <groupId>org.projectlombok</groupId>

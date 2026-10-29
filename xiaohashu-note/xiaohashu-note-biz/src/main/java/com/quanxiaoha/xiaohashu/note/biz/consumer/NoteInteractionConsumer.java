@@ -1,46 +1,100 @@
 package com.quanxiaoha.xiaohashu.note.biz.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteInteractionFailureDO;
 import com.quanxiaoha.xiaohashu.note.biz.model.dto.NoteInteractionCommandDTO;
 import com.quanxiaoha.xiaohashu.note.biz.service.impl.NoteInteractionService;
-import com.quanxiaoha.xiaohashu.note.biz.rpc.CountRpcService;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.consumer.listener.*;
+import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
+import java.util.List;
 
 @Configuration
 @Slf4j
-public class NoteInteractionConsumer {
+public class NoteInteractionConsumer implements MessageListenerOrderly {
+    @Resource
+    private ObjectMapper objectMapper;
+    @Resource
+    private NoteInteractionService interactionService;
+
+    /** 注册顺序消费者；数据库等临时故障保留当前批次重试，不越过有效命令。 */
     @Bean(initMethod = "start", destroyMethod = "shutdown")
-    public DefaultMQPushConsumer interactionConsumer(@Value("${rocketmq.name-server}") String nameServer,
-            ObjectMapper objectMapper, NoteInteractionService interactionService, CountRpcService countRpcService) throws Exception {
+    public DefaultMQPushConsumer interactionConsumer(@Value("${rocketmq.name-server}") String nameServer)
+            throws Exception {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("note-interaction-v1");
         consumer.setNamesrvAddr(nameServer);
-        consumer.setConsumeFromWhere(org.apache.rocketmq.common.consumer.ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
         consumer.subscribe(NoteInteractionCommandDTO.TOPIC, "*");
         consumer.setConsumeMessageBatchMaxSize(100);
-        // 顺序消费的 -1 使用持续重试语义，不将失败命令移到队尾越过后续操作。
         consumer.setMaxReconsumeTimes(-1);
-        consumer.registerMessageListener((MessageListenerOrderly) (messages, context) -> {
-            try {
-                var commands = new ArrayList<NoteInteractionCommandDTO>();
-                for (var message : messages) {
-                    commands.add(objectMapper.readValue(message.getBody(), NoteInteractionCommandDTO.class));
-                }
-                // 先提交互动事实和处理结果，再更新计数。RPC 失败不会回滚已经提交的事实。
-                var results = interactionService.execute(commands);
-                countRpcService.applyInteractionResults(results);
-                // 只有计数也成功才确认；重试会复用数据库结果，并由 Redis 排除重复增量。
-                return ConsumeOrderlyStatus.SUCCESS;
-            } catch (Exception exception) {
-                log.error("互动命令处理失败，保留当前批次重试", exception);
-                return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
-            }
-        });
+        consumer.registerMessageListener(this);
         return consumer;
+    }
+
+    /** 事实、结果及异常原文提交后确认消息，Redis 计数由独立补偿任务更新。 */
+    @Override
+    public ConsumeOrderlyStatus consumeMessage(List<MessageExt> messages, ConsumeOrderlyContext context) {
+        try {
+            List<NoteInteractionCommandDTO> commands = new ArrayList<>();
+            List<NoteInteractionFailureDO> failures = new ArrayList<>();
+            for (MessageExt message : messages) {
+                try {
+                    NoteInteractionCommandDTO command = objectMapper.readValue(
+                            message.getBody(), NoteInteractionCommandDTO.class);
+                    if (command == null) {
+                        throw new IllegalArgumentException("互动命令不能为空");
+                    }
+                    command.validate();
+                    commands.add(command);
+                } catch (JsonProcessingException | IllegalArgumentException exception) {
+                    // 只把反序列化和命令校验错误视为永久非法；SQL、RPC 等异常不能在这里跳过。
+                    String reason = exception instanceof JsonProcessingException ? "INVALID_JSON" : "INVALID_COMMAND";
+                    failures.add(buildFailure(message, reason));
+                }
+            }
+            interactionService.executeBatch(commands, failures);
+            if (!failures.isEmpty()) {
+                log.warn("非法互动命令已持久化隔离，条数：{}", failures.size());
+            }
+            return ConsumeOrderlyStatus.SUCCESS;
+        } catch (Exception exception) {
+            log.error("互动批次未提交，保留原顺序重试；请检查数据库及事务异常", exception);
+            return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+        }
+    }
+
+    /** 以消息来源和原文摘要去重，避免重投反复插入异常记录；日志不打印原文。 */
+    private NoteInteractionFailureDO buildFailure(MessageExt message, String reasonCode)
+            throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String source = message.getTopic() + "|" + message.getMsgId() + "|"
+                + message.getQueueId() + "|" + message.getQueueOffset() + "|";
+        digest.update(source.getBytes(StandardCharsets.UTF_8));
+        if (message.getBody() != null) {
+            digest.update(message.getBody());
+        }
+        NoteInteractionFailureDO failure = new NoteInteractionFailureDO();
+        failure.setMessageKey(HexFormat.of().formatHex(digest.digest()));
+        failure.setTopic(message.getTopic());
+        failure.setBrokerMessageId(message.getMsgId());
+        failure.setQueueId(message.getQueueId());
+        failure.setQueueOffset(message.getQueueOffset());
+        failure.setBody(message.getBody());
+        failure.setReasonCode(reasonCode);
+        return failure;
     }
 }

@@ -1,5 +1,8 @@
 package com.quanxiaoha.xiaohashu.user.relation.biz.service.impl;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.quanxiaoha.framework.common.util.CountGenerationUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quanxiaoha.framework.common.exception.BizException;
 import com.quanxiaoha.xiaohashu.user.relation.api.event.RelationEvent;
@@ -21,6 +24,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Service
 public class RelationCommandService {
+    @Resource
+    private JdbcTemplate countJdbcTemplate;
     @Resource
     private RelationDOMapper relationDOMapper;
     @Resource
@@ -56,8 +61,10 @@ public class RelationCommandService {
         return followOperation;
     }
 
+    /** 先取得恢复屏障，再修改关系事实并记录同代次事件。 */
     private Long changeInTransaction(
             long fromUserId, long toUserId, boolean followOperation) {
+        long countGeneration = CountGenerationUtils.lockCurrent(countJdbcTemplate);
         // 只使用数据库用户行锁，使同一用户的上限检查和关系写入在事务内串行执行。
         // 必须先取得该锁，再读取关系和计数；锁随事务提交或回滚释放。
         relationDOMapper.lockUser(fromUserId);
@@ -95,13 +102,14 @@ public class RelationCommandService {
             }
         }
         // 关系变更和本地消息必须由同一个数据库事务提交
-        appendEvent(relationDO);
+        appendEvent(relationDO, countGeneration);
         return relationDO.getId();
     }
 
     /** 分配事件 ID 后回填消息体；任一步失败都回滚整笔事务。 */
-    private void appendEvent(RelationDO relationDO) {
+    private void appendEvent(RelationDO relationDO, long countGeneration) {
         RelationEvent relationEvent = new RelationEvent();
+        relationEvent.setCountGeneration(countGeneration);
         relationEvent.setRelationId(relationDO.getId());
         relationEvent.setFromUserId(relationDO.getFromUserId());
         relationEvent.setToUserId(relationDO.getToUserId());
