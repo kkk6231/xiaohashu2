@@ -53,6 +53,8 @@ class RelationFlowTest {
         assertTrue(url.contains("/relation_refactor_test"));
         var ds = new DriverManagerDataSource(url, "root", "");
         jdbc = new JdbcTemplate(ds);
+        jdbc.execute("CREATE TABLE IF NOT EXISTS t_count_generation(id INT PRIMARY KEY,generation BIGINT,status VARCHAR(16))");
+        jdbc.update("REPLACE INTO t_count_generation VALUES(1,1,'READY')");
         jdbc.execute("DROP TABLE IF EXISTS t_relation_outbox");
         jdbc.execute("DROP TABLE IF EXISTS t_relation_user_lock");
         jdbc.execute("DROP TABLE IF EXISTS t_following");
@@ -103,7 +105,7 @@ class RelationFlowTest {
                         locks,
                         publisher,
                         properties,
-                        json);
+                        json, jdbc);
     }
 
     @AfterAll
@@ -185,7 +187,7 @@ class RelationFlowTest {
                         locks,
                         publisher,
                         properties,
-                        json);
+                        json, jdbc);
         assertThrows(IllegalStateException.class, () -> command.change(10, 20, true));
         assertNull(relations.following(10, 20));
         verifyNoInteractions(publisher);

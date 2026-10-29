@@ -4,6 +4,7 @@
     <resultMap id="ResultMap" type="com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteInteractionResultDO">
         <id column="user_id" property="userId"/>
         <id column="request_id" property="requestId"/>
+        <result column="count_generation" property="countGeneration"/>
         <result column="note_id" property="noteId"/>
         <result column="action_type" property="actionType"/>
         <result column="target_state" property="targetState"/>
@@ -36,11 +37,11 @@
     </select>
     <insert id="saveResults">
         INSERT INTO t_note_interaction_result
-        (user_id, request_id, note_id, action_type, target_state, author_id, result_type, reason_code, actual_delta, created_at)
+        (user_id, request_id, note_id, action_type, target_state, author_id, result_type, reason_code, actual_delta, created_at, count_generation)
         VALUES
         <foreach collection="results" item="r" separator=",">
             (#{r.userId}, #{r.requestId}, #{r.noteId}, #{r.actionType}, #{r.targetState},
-             #{r.authorId}, #{r.resultType}, #{r.reasonCode}, #{r.actualDelta}, #{r.createdAt})
+             #{r.authorId}, #{r.resultType}, #{r.reasonCode}, #{r.actualDelta}, #{r.createdAt}, #{r.countGeneration})
         </foreach>
     </insert>
     <insert id="saveLikes">

@@ -1,5 +1,8 @@
 package com.quanxiaoha.xiaohashu.note.biz.service.impl;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.quanxiaoha.framework.common.util.CountGenerationUtils;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -59,6 +62,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class NoteServiceImpl implements NoteService {
+    @Resource
+    private JdbcTemplate countJdbcTemplate;
 
     @Resource
     private NoteDOMapper noteDOMapper;
@@ -477,6 +482,7 @@ public class NoteServiceImpl implements NoteService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Response<?> deleteNote(DeleteNoteReqVO deleteNoteReqVO) {
+        CountGenerationUtils.lockCurrent(countJdbcTemplate);
         // 笔记 ID
         Long noteId = deleteNoteReqVO.getId();
 
@@ -511,13 +517,8 @@ public class NoteServiceImpl implements NoteService {
 
         noteDOMapper.updateByPrimaryKeySelective(noteDO);
 
-        // 删除缓存
-        String noteDetailRedisKey = RedisKeyConstants.buildNoteDetailKey(noteId);
-        redisTemplate.delete(noteDetailRedisKey);
-
-        // 同步发送广播模式 MQ，将所有实例中的本地缓存都删除掉
-        rocketMQTemplate.syncSend(MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, noteId);
-        log.info("====> MQ：删除笔记本地缓存发送成功...");
+        // 与删除事实同事务记录；投递器仅能看到已提交的任务，失败会自动重试。
+        noteCountEventService.appendCacheInvalidation(noteId);
 
         // 发送 MQ
         // 构建消息体 DTO

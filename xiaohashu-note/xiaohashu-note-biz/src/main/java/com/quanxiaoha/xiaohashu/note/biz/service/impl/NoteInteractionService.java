@@ -1,5 +1,8 @@
 package com.quanxiaoha.xiaohashu.note.biz.service.impl;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.quanxiaoha.framework.common.util.CountGenerationUtils;
+
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.*;
 import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteInteractionMapper;
 import com.quanxiaoha.xiaohashu.note.biz.model.dto.NoteInteractionCommandDTO;
@@ -14,11 +17,14 @@ import java.util.*;
 @Service
 public class NoteInteractionService {
     @Resource
+    private JdbcTemplate countJdbcTemplate;
+    @Resource
     private NoteInteractionMapper interactionMapper;
 
     /** 事实和处理结果一起提交，RPC 重试时直接复用原结果。 */
     @Transactional(rollbackFor = Exception.class)
     public List<NoteInteractionResultDO> execute(List<NoteInteractionCommandDTO> commands) {
+        long countGeneration = CountGenerationUtils.lockCurrent(countJdbcTemplate);
         commands.forEach(NoteInteractionCommandDTO::validate);
         // 按笔记 ID 排序加锁，与删除作品共用行锁，避免快照与互动写入交叉。
         Map<Long, NoteDO> notes = new HashMap<>();
@@ -52,6 +58,7 @@ public class NoteInteractionService {
                 continue;
             }
             NoteInteractionResultDO result = new NoteInteractionResultDO();
+            result.setCountGeneration(countGeneration);
             result.setUserId(command.getUserId());
             result.setRequestId(command.getRequestId());
             result.setNoteId(command.getNoteId());

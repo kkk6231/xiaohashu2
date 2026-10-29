@@ -28,7 +28,7 @@ class NoteInteractionDatabaseTest {
         jdbc.execute("CREATE TABLE t_note(id BIGINT PRIMARY KEY,creator_id BIGINT,status INT,visible INT)");
         jdbc.execute("CREATE TABLE t_note_like(id BIGINT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,note_id BIGINT,status INT,create_time TIMESTAMP,UNIQUE(user_id,note_id))");
         jdbc.execute("CREATE TABLE t_note_collection(id BIGINT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,note_id BIGINT,status INT,create_time TIMESTAMP,UNIQUE(user_id,note_id))");
-        jdbc.execute("CREATE TABLE t_note_interaction_result(user_id BIGINT,request_id VARCHAR(36),note_id BIGINT,action_type VARCHAR(16),target_state TINYINT,author_id BIGINT,result_type VARCHAR(16),reason_code VARCHAR(32),actual_delta SMALLINT,created_at TIMESTAMP,PRIMARY KEY(user_id,request_id))");
+        jdbc.execute("CREATE TABLE t_note_interaction_result(user_id BIGINT,request_id VARCHAR(36),note_id BIGINT,action_type VARCHAR(16),target_state TINYINT,author_id BIGINT,result_type VARCHAR(16),reason_code VARCHAR(32),count_generation BIGINT,actual_delta SMALLINT,created_at TIMESTAMP,PRIMARY KEY(user_id,request_id))");
         jdbc.update("INSERT INTO t_note VALUES (10,20,1,0)");
         var factory = new SqlSessionFactoryBean();
         factory.setDataSource(dataSource);
@@ -38,6 +38,10 @@ class NoteInteractionDatabaseTest {
                 new ClassPathResource("mapper/NoteInteractionMapper.xml"));
         mapper = new SqlSessionTemplate(factory.getObject()).getMapper(NoteInteractionMapper.class);
         service = new NoteInteractionService();
+        var generationJdbc = org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);
+        org.mockito.Mockito.when(generationJdbc.queryForObject(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.eq(Long.class))).thenReturn(1L);
+        ReflectionTestUtils.setField(service, "countJdbcTemplate", generationJdbc);
         ReflectionTestUtils.setField(service, "interactionMapper", mapper);
     }
 
@@ -85,5 +89,21 @@ class NoteInteractionDatabaseTest {
         var rejected = transaction.execute(s -> service.execute(List.of(command(false)))).get(0);
         assertEquals("REJECTED", rejected.getResultType());
         assertEquals(1, mapper.countLikes(10));
+    }
+
+    /** 重建后旧请求复用原代次，新命令在实际执行时取得新代次。 */
+    @Test
+    void generationIsPersistedWithFactAndReusedOnReplay() {
+        var add = command(true);
+        var first = transaction.execute(status -> service.execute(List.of(add))).get(0);
+        assertEquals(1L, first.getCountGeneration());
+        var generationJdbc = (JdbcTemplate) ReflectionTestUtils.getField(service, "countJdbcTemplate");
+        org.mockito.Mockito.when(generationJdbc.queryForObject(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.eq(Long.class))).thenReturn(2L);
+        var replay = transaction.execute(status -> service.execute(List.of(add))).get(0);
+        assertEquals(1L, replay.getCountGeneration());
+        var remove = transaction.execute(status -> service.execute(List.of(command(false)))).get(0);
+        assertEquals(2L, remove.getCountGeneration());
+        assertEquals(-1, remove.getActualDelta());
     }
 }

@@ -1,5 +1,8 @@
 package com.quanxiaoha.xiaohashu.count.biz.service.impl;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.quanxiaoha.framework.common.util.CountGenerationUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quanxiaoha.xiaohashu.count.api.dto.*;
 import com.quanxiaoha.xiaohashu.count.biz.service.CountService;
@@ -10,6 +13,7 @@ import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +21,8 @@ import java.util.*;
 
 @Service
 public class CountServiceImpl implements CountService {
+    @Resource
+    private JdbcTemplate countJdbcTemplate;
     // 顺序即 Redis String 的字段布局，每个字段占 8 字节；读写必须保持一致。
     private static final List<String> USER_FIELDS = List.of("followingTotal", "fansTotal",
             "likesReceivedTotal", "collectsReceivedTotal", "worksTotal");
@@ -34,6 +40,7 @@ public class CountServiceImpl implements CountService {
     private final DefaultRedisScript<Long> updateScript = new DefaultRedisScript<>();
     private final DefaultRedisScript<String> readScript = new DefaultRedisScript<>();
 
+    /** 加载计数读写脚本。 */
     public CountServiceImpl() {
         updateScript.setLocation(new ClassPathResource("lua/count-apply.lua"));
         updateScript.setResultType(Long.class);
@@ -46,9 +53,29 @@ public class CountServiceImpl implements CountService {
      * 不同目标之间不构成事务：部分成功后由上游重试，已成功的目标通过事件键去重。
      */
     @Override
+    @Transactional
     public void apply(List<CountChangeDTO> changes) {
-        Map<String, List<CountChangeDTO>> changesByTarget = validateAndGroupChanges(changes);
-        changesByTarget.forEach(this::applyTargetChanges);
+        long generation = CountGenerationUtils.lockCurrent(countJdbcTemplate);
+        List<CountChangeDTO> currentChanges = new ArrayList<>();
+        if (changes == null || changes.isEmpty() || changes.size() > MAX_CHANGE_BATCH_SIZE) {
+            throw new IllegalArgumentException("计数批量参数不合法");
+        }
+        for (CountChangeDTO change : changes) {
+            if (change == null || change.getCountGeneration() == null || change.getCountGeneration() < 1
+                    || change.getCountGeneration() > generation) {
+                throw new IllegalArgumentException("计数代次缺失或尚未切换");
+            }
+            if (change.getCountGeneration() == generation) {
+                currentChanges.add(change);
+            }
+        }
+        if (currentChanges.isEmpty()) {
+            return;
+        }
+        Map<String, List<CountChangeDTO>> changesByTarget = validateAndGroupChanges(currentChanges);
+        for (Map.Entry<String, List<CountChangeDTO>> target : changesByTarget.entrySet()) {
+            applyTargetChanges(target.getKey(), target.getValue());
+        }
     }
 
     /** 先完成整批参数校验，再开始访问 Redis。 */
@@ -70,12 +97,13 @@ public class CountServiceImpl implements CountService {
                     throw new IllegalArgumentException("计数字段或增量不合法");
                 }
             });
-            String targetKey = buildTargetKey(change.getTargetType(), change.getTargetId());
+            String targetKey = CountGenerationUtils.targetKey(change.getCountGeneration(), change.getTargetType(), change.getTargetId());
             changesByTarget.computeIfAbsent(targetKey, ignored -> new ArrayList<>()).add(change);
         }
         return changesByTarget;
     }
 
+    /** 对一个目标原子执行去重及计数更新。 */
     private void applyTargetChanges(String targetKey, List<CountChangeDTO> targetChanges) {
         List<String> fieldNames = fieldNamesFor(targetChanges.get(0).getTargetType());
         List<Map<String, Object>> scriptEvents = buildScriptEvents(targetChanges, fieldNames);
@@ -107,7 +135,9 @@ public class CountServiceImpl implements CountService {
         return scriptEvents;
     }
 
+    /** 查询用户五项计数。 */
     @Override
+    @Transactional
     public List<UserCountDTO> findUsers(List<Long> ids) {
         List<long[]> counts = readCounts("user", ids);
         List<UserCountDTO> result = new ArrayList<>();
@@ -125,7 +155,9 @@ public class CountServiceImpl implements CountService {
         return result;
     }
 
+    /** 查询作品点赞和收藏计数。 */
     @Override
+    @Transactional
     public List<NoteCountDTO> findNotes(List<Long> ids) {
         List<long[]> counts = readCounts("note", ids);
         List<NoteCountDTO> result = new ArrayList<>();
@@ -139,7 +171,9 @@ public class CountServiceImpl implements CountService {
         return result;
     }
 
+    /** 在恢复屏障内批量读取当前代次的计数。 */
     private List<long[]> readCounts(String type, List<Long> ids) {
+        long generation = CountGenerationUtils.lockCurrent(countJdbcTemplate);
         if (ids == null || ids.isEmpty() || ids.size() > MAX_QUERY_BATCH_SIZE || ids.stream().anyMatch(id -> id == null || id <= 0)) {
             throw new IllegalArgumentException("计数查询 ID 必须为正数，且数量在 1 到 100 之间");
         }
@@ -148,7 +182,7 @@ public class CountServiceImpl implements CountService {
         // 直接 EVAL 避免 pipeline 中 EVALSHA 缓存未命中，并保留原始二进制返回值。
         List<Object> results = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (Long id : ids) {
-                String prefix = buildTargetKey(type, id);
+                String prefix = CountGenerationUtils.targetKey(generation, type, id);
                 connection.scriptingCommands().eval(script, ReturnType.VALUE, 2,
                         (prefix + ":data").getBytes(StandardCharsets.UTF_8),
                         (prefix + ":seen").getBytes(StandardCharsets.UTF_8));
@@ -163,6 +197,7 @@ public class CountServiceImpl implements CountService {
         return values;
     }
 
+    /** 解码固定长度计数，展示时把临时负数截断为零。 */
     public static long[] decode(byte[] raw, int fieldCount) {
         long[] values = new long[fieldCount];
         if (raw == null) {
@@ -179,6 +214,7 @@ public class CountServiceImpl implements CountService {
         return values;
     }
 
+    /** 返回与二进制布局一致的字段顺序。 */
     private static List<String> fieldNamesFor(String type) {
         if ("user".equals(type)) {
             return USER_FIELDS;
@@ -189,8 +225,5 @@ public class CountServiceImpl implements CountService {
         throw new IllegalArgumentException("不支持的计数对象");
     }
 
-    private static String buildTargetKey(String type, long id) {
-        // hash tag 让同一目标的 data 和 seen 落在同一个 Redis Cluster 槽位。
-        return "counter:{" + type + ":" + id + "}";
-    }
+
 }

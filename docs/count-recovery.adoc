@@ -1,0 +1,47 @@
+= 计数恢复与部署说明
+
+== 范围
+
+当前关系、笔记、计数、数据对齐服务连接同一个 MySQL 事实库。
+本实现用共享 t_count_generation 行锁建立恢复屏障，不支持这些服务拆成不同数据库。
+为简化暂停与切换，每批计数读写增加一次 MySQL 代次查询并持有共享锁；这是实习项目的明确性能取舍。
+事实事务与计数请求持有共享锁；恢复任务先获取排他锁，等待在途请求完成，持久化 REBUILDING 后再加载。
+重建期间相关业务写入及计数读写失败，MQ 不确认成功；查询不能返回半成品。
+暂停业务入口并停止其他直接修改事实表的任务后，手动运行 XXL-JOB countRebuildJobHandler，参数为唯一 rebuildId。
+不要配置周期执行。日常检查发现差异也不要直接 SET 计数。
+
+== 首次升级
+
+. 停止所有旧版关系、笔记、计数实例和直接写事实表的任务。
+. 在共享事实库执行 xiaohashu-data-align/src/main/resources/db/count-recovery.sql 一次。
+. 统一部署新版。历史 Outbox JSON 缺失代次时固定解释为第一代；历史互动结果迁移为第一代。
+. 第一代保留原 Redis Key；新事件在事实事务内持久化代次。禁止旧版本混跑。
+
+== 手动恢复
+
+. 关闭业务写入口，确保不存在绕过恢复屏障的 SQL/旧版应用。
+. 在 XXL-JOB 手动执行 countRebuildJobHandler，填写例如 recovery_20261029_01。
+. PREPARED 状态已经提交暂停标记；加载失败保留 REBUILDING，使用相同 ID 重试。
+. 独立代次逐项覆盖快照，所有目标成功后同一数据库事务切换 generation 并标记 COMPLETED。
+. 确认 t_count_generation 为 READY、任务 COMPLETED 后恢复业务入口。
+. 已落库旧事件被跳过；未执行的互动命令恢复执行时取得新代次。无需清空 MQ 或删除处理结果。
+. 旧代次暂保留，未实现自动回收；不要删除当前代次 seen。Redis 在加载或切换过程中再次丢失时，保持业务停止并发起新的完整重建。
+
+== Redis 持久化
+
+在实际 Redis 服务端配置（不是 Spring application.yml）设置：
+
+----
+appendonly yes
+appendfsync everysec
+----
+
+计数 data 和 seen 在同一 Redis 实例中，都受 AOF 持久化保护。everysec 仍可能丢失最近约一秒数据。
+计数不设 TTL。推荐独立计数实例配置 maxmemory-policy noeviction；共享缓存实例时该策略影响全部键，不能直接未经评估修改。
+上线前用 CONFIG GET appendonly、CONFIG GET appendfsync、CONFIG GET maxmemory-policy 和 INFO persistence 验证实际生效。
+这里提供部署要求，不自动修改开发机器或远程 Redis 配置，也不宣称配置已生效。
+
+== 删除笔记的缓存失效
+
+删除事务在原作品 Outbox 中增加 CACHE_INVALIDATE 任务。投递器只能领取已经提交的任务：先删除 Redis 详情，再发送本地缓存失效广播。
+任一步失败任务保留重试；重复删除缓存和广播均可安全执行。该修改解决提交前失效窗口，不承诺解决所有慢查询并发回填情形。

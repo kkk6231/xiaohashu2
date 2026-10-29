@@ -31,6 +31,10 @@ class CountReadTest {
             return Arrays.asList(null, data);
         }).when(redis).executePipelined(any(RedisCallback.class), any(RedisSerializer.class));
         var service = new CountServiceImpl();
+        var generationJdbc = org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);
+        org.mockito.Mockito.when(generationJdbc.queryForObject(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.eq(Long.class))).thenReturn(1L);
+        ReflectionTestUtils.setField(service, "countJdbcTemplate", generationJdbc);
         ReflectionTestUtils.setField(service, "redisTemplate", redis);
 
         var counts = service.findNotes(List.of(10L, 20L));
