@@ -21,7 +21,18 @@ public class NoteInteractionService {
     @Resource
     private NoteInteractionMapper interactionMapper;
 
-    /** 事实和处理结果一起提交，RPC 重试时直接复用原结果。 */
+    /** 同批非法消息与有效互动一起持久化；任一步失败均回滚，消费者不得确认消息。 */
+    @Transactional(rollbackFor = Exception.class)
+    public void executeBatch(List<NoteInteractionCommandDTO> commands, List<NoteInteractionFailureDO> failures) {
+        if (!failures.isEmpty()) {
+            interactionMapper.saveFailures(failures);
+        }
+        if (!commands.isEmpty()) {
+            execute(commands);
+        }
+    }
+
+    /** 事实、请求结果及待处理计数状态同事务提交，重试复用原始增量。 */
     @Transactional(rollbackFor = Exception.class)
     public List<NoteInteractionResultDO> execute(List<NoteInteractionCommandDTO> commands) {
         long countGeneration = CountGenerationUtils.lockCurrent(countJdbcTemplate);
@@ -44,10 +55,12 @@ public class NoteInteractionService {
         }
         // 批内后续命令读取前一条命令更新后的状态，保证“点赞→取消”连续计算。
         Map<String, Integer> states = new HashMap<>();
-        interactionMapper.findLikes(commands).forEach(r ->
-                states.put(stateKey(r.getUserId(), r.getNoteId(), "LIKE"), r.getStatus()));
-        interactionMapper.findCollections(commands).forEach(r ->
-                states.put(stateKey(r.getUserId(), r.getNoteId(), "COLLECT"), r.getStatus()));
+        for (NoteLikeDO relation : interactionMapper.findLikes(commands)) {
+            states.put(stateKey(relation.getUserId(), relation.getNoteId(), "LIKE"), relation.getStatus());
+        }
+        for (NoteCollectionDO relation : interactionMapper.findCollections(commands)) {
+            states.put(stateKey(relation.getUserId(), relation.getNoteId(), "COLLECT"), relation.getStatus());
+        }
         // 事实表只写每个用户/笔记的最终状态，结果表则保留每条请求的实际增量。
         Map<String, NoteLikeDO> likes = new LinkedHashMap<>();
         Map<String, NoteCollectionDO> collections = new LinkedHashMap<>();
@@ -106,7 +119,7 @@ public class NoteInteractionService {
             newResults.add(result);
             batchResults.add(result);
         }
-        // 事实和结果同事务提交。之后计数 RPC 失败时，下一次消费仍能拿到相同增量。
+        // 结果表同时保存待处理计数状态；提交后即可确认 MQ，计数失败由定时任务补偿。
         if (!likes.isEmpty()) {
             interactionMapper.saveLikes(new ArrayList<>(likes.values()));
         }
@@ -119,6 +132,7 @@ public class NoteInteractionService {
         return batchResults;
     }
 
+    /** 生成批内关系状态键，分别合并点赞和收藏的最终状态。 */
     private String stateKey(long userId, long noteId, String action) {
         return userId + ":" + noteId + ":" + action;
     }

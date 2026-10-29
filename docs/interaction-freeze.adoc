@@ -1,0 +1,58 @@
+= 点赞收藏冻结方案
+
+== 已确定的链路
+
+请求同步发送顺序 MQ，接口返回 ACCEPTED。消费者按原顺序计算实际增量，
+在同一个 MySQL 事务内保存互动关系、幂等结果、计数待处理状态及本批非法消息。
+事务提交后才确认 MQ；不在消费线程调用计数服务。
+
+`t_note_interaction_result.count_status` 使用两个状态：0 待处理，2 已完成。
+无增量、无变化及业务拒绝直接记为已完成。定时补偿每批最多读取 100 条到期任务，
+复用原 requestId、actualDelta 和 countGeneration 调用计数服务，成功后标记完成。
+失败保留任务，记录错误与重试次数，默认 5 秒后再次尝试。
+RPC 成功但完成标记写回失败、进程退出及多实例重复扫描，均通过 Redis 原事件键去重。
+补偿不持有跨 RPC 的数据库事务，也不依赖进程内缓冲。
+
+只把 JSON 解析错误、命令参数错误归类为永久非法，原始消息及来源写入
+`t_note_interaction_failure`。异常记录使用摘要键去重。记录失败或有效命令的
+数据库事务失败，整批不确认，保留顺序重试。数据库、补偿失败输出 ERROR 日志；
+不新增告警平台或异常管理后台。
+
+== 上线前必要步骤
+
+停止旧版笔记消费者后，在已有 count-interaction.sql、count-recovery.sql 的基础上执行：
+`xiaohashu-note/xiaohashu-note-biz/src/main/resources/db/interaction-mq-reliability.sql`。
+新库先执行前述基础脚本，再执行该升级脚本。升级脚本可重复执行。
+已有非零增量进入待补偿状态，保留原代次和 Redis 去重记录，避免历史增量重复生效。
+此处新增任务字段和异常表是功能依赖；用户列表索引的实际部署仍暂缓。
+
+诊断积压：
+
+[source,sql]
+----
+SELECT count_status, COUNT(*)
+FROM t_note_interaction_result GROUP BY count_status;
+SELECT user_id, request_id, count_retry_count, count_last_error
+FROM t_note_interaction_result
+WHERE count_status = 0 ORDER BY count_next_retry_time LIMIT 100;
+SELECT message_key, topic, queue_id, queue_offset, reason_code, created_at
+FROM t_note_interaction_failure ORDER BY created_at DESC LIMIT 100;
+----
+
+== 冻结边界
+
+* 保留 MQ 顺序消费、MySQL 批量写入和请求幂等。
+* 点赞、收藏不对笔记行加锁；删除使用条件更新防止重复删除事件。
+* 接受删除与互动并发导致的计数偏差。
+* 保留现有列表分页和单篇状态查询，不添加批量状态接口、Redis 关系缓存或游标分页。
+* 不新增结果查询接口、管理后台、业务模块或压测指标。
+* 简历只描述实际实现的异步处理、批内合并、批量落库、幂等补偿和异常隔离。
+* 本轮测试不等于真实 MySQL + RocketMQ 的整套部署验收，也不代表吞吐量验证。
+
+== 本轮验证结果
+
+2026-10-29：笔记模块 37 项、用户关系 17 项、计数 13 项、数据重建 3 项，
+合计 70 项测试通过，未跳过。其中计数模块的 7 项 Redis 集成测试连接独立的
+本机 Redis 7.2.3 临时实例，测试后已停止该实例。SQL 和事务测试使用 H2 MySQL 模式，
+MQ 使用实际消费监听器直接调用并注入故障，未启动真实 RocketMQ Broker。
+数据库升级脚本尚未部署到业务 MySQL；部署新版前必须执行必要的表结构迁移。
