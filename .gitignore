@@ -57,3 +57,12 @@ build/
 *.key
 *.jks
 *.p12
+
+# Local application configuration: never publish
+**/application*.yml
+**/application*.yaml
+**/application*.properties
+**/bootstrap*.yml
+**/bootstrap*.yaml
+**/bootstrap*.properties
+**/generatorConfig.xml
