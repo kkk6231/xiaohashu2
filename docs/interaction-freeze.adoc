@@ -8,7 +8,7 @@
 
 `t_note_interaction_result.count_status` 使用两个状态：0 待处理，2 已完成。
 无增量、无变化及业务拒绝直接记为已完成。定时补偿每批最多读取 100 条到期任务，
-复用原 requestId、actualDelta 和 countGeneration 调用计数服务，成功后标记完成。
+复用原 requestId 和 actualDelta 调用计数服务，成功后标记完成。
 失败保留任务，记录错误与重试次数，默认 5 秒后再次尝试。
 RPC 成功但完成标记写回失败、进程退出及多实例重复扫描，均通过 Redis 原事件键去重。
 补偿不持有跨 RPC 的数据库事务，也不依赖进程内缓冲。
@@ -20,10 +20,10 @@ RPC 成功但完成标记写回失败、进程退出及多实例重复扫描，�
 
 == 上线前必要步骤
 
-停止旧版笔记消费者后，在已有 count-interaction.sql、count-recovery.sql 的基础上执行：
+停止旧版笔记消费者后，在已有 count-interaction.sql 的基础上执行：
 `xiaohashu-note/xiaohashu-note-biz/src/main/resources/db/interaction-mq-reliability.sql`。
 新库先执行前述基础脚本，再执行该升级脚本。升级脚本可重复执行。
-已有非零增量进入待补偿状态，保留原代次和 Redis 去重记录，避免历史增量重复生效。
+已有非零增量进入待补偿状态，保留原事件身份和 Redis 去重记录，避免历史增量重复生效。
 此处新增任务字段和异常表是功能依赖；用户列表索引的实际部署仍暂缓。
 
 诊断积压：
@@ -49,7 +49,7 @@ FROM t_note_interaction_failure ORDER BY created_at DESC LIMIT 100;
 * 简历只描述实际实现的异步处理、批内合并、批量落库、幂等补偿和异常隔离。
 * 本轮测试不等于真实 MySQL + RocketMQ 的整套部署验收，也不代表吞吐量验证。
 
-== 本轮验证结果
+== 历史验证记录（移除数据对齐之前）
 
 2026-10-29：笔记模块 37 项、用户关系 17 项、计数 13 项、数据重建 3 项，
 合计 70 项测试通过，未跳过。其中计数模块的 7 项 Redis 集成测试连接独立的

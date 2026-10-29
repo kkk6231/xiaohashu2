@@ -1,8 +1,5 @@
 package com.quanxiaoha.xiaohashu.note.biz.service.impl;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import com.quanxiaoha.framework.common.util.CountGenerationUtils;
-
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.*;
 import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteInteractionMapper;
 import com.quanxiaoha.xiaohashu.note.biz.model.dto.NoteInteractionCommandDTO;
@@ -16,8 +13,6 @@ import java.util.*;
 
 @Service
 public class NoteInteractionService {
-    @Resource
-    private JdbcTemplate countJdbcTemplate;
     @Resource
     private NoteInteractionMapper interactionMapper;
 
@@ -35,7 +30,6 @@ public class NoteInteractionService {
     /** 事实、请求结果及待处理计数状态同事务提交，重试复用原始增量。 */
     @Transactional(rollbackFor = Exception.class)
     public List<NoteInteractionResultDO> execute(List<NoteInteractionCommandDTO> commands) {
-        long countGeneration = CountGenerationUtils.lockCurrent(countJdbcTemplate);
         for (NoteInteractionCommandDTO command : commands) {
             command.validate();
         }
@@ -78,7 +72,6 @@ public class NoteInteractionService {
                 continue;
             }
             NoteInteractionResultDO result = new NoteInteractionResultDO();
-            result.setCountGeneration(countGeneration);
             result.setUserId(command.getUserId());
             result.setRequestId(command.getRequestId());
             result.setNoteId(command.getNoteId());

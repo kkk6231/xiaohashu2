@@ -24,10 +24,6 @@ class CountRedisTest {
         factory.afterPropertiesSet();
         redis = new StringRedisTemplate(factory);
         service = new CountServiceImpl();
-        var generationJdbc = org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);
-        org.mockito.Mockito.when(generationJdbc.queryForObject(org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.eq(Long.class))).thenReturn(1L);
-        ReflectionTestUtils.setField(service, "countJdbcTemplate", generationJdbc);
         ReflectionTestUtils.setField(service, "redisTemplate", redis);
         ReflectionTestUtils.setField(service, "objectMapper", new ObjectMapper());
         redis.delete(List.of("counter:{note:" + id + "}:data", "counter:{note:" + id + "}:seen",

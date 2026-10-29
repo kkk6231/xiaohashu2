@@ -2,10 +2,10 @@ package com.quanxiaoha.xiaohashu.count.api.event;
 
 import lombok.Data;
 
+// 兼容旧消息中的已移除字段，不参与当前计数逻辑。
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties("countGeneration")
 @Data
 public class NoteCountEvent {
-    /** 历史事件固定归属第一代；新事件在事实事务中设置代次。 */
-    private Long countGeneration = 1L;
     public static final String TOPIC = "NoteCountChangedV1";
     private String source = "note";
     private Long eventId;

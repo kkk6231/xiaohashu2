@@ -22,10 +22,6 @@ class NoteInteractionTest {
     void setup() {
         mapper = mock(NoteInteractionMapper.class);
         service = new NoteInteractionService();
-        var generationJdbc = org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);
-        org.mockito.Mockito.when(generationJdbc.queryForObject(org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.eq(Long.class))).thenReturn(1L);
-        ReflectionTestUtils.setField(service, "countJdbcTemplate", generationJdbc);
         ReflectionTestUtils.setField(service, "interactionMapper", mapper);
         when(mapper.findNote(10)).thenReturn(NoteDO.builder().id(10L).creatorId(20L).status(1).visible(0).build());
         when(mapper.findResults(anyList())).thenReturn(List.of());

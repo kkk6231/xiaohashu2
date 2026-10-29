@@ -39,7 +39,6 @@
         <!-- 计数服务 -->
         <module>xiaohashu-count</module>
         <!-- 数据对齐服务 -->
-        <module>xiaohashu-data-align</module>
         <!-- 搜索服务 -->
         <module>xiaohashu-search</module>
         <!-- 评论服务 -->

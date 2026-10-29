@@ -1,6 +1,6 @@
 -- 停止旧版笔记消费者后，在笔记服务数据库执行，再部署新版消费者和补偿任务。
--- 前置：已执行 count-interaction.sql、count-recovery.sql，保留现有 count_generation。
--- 可重复执行。历史非零增量重新进入待处理，由原代次及 Redis seen 去重；不得清空 seen。
+-- 前置：已执行 count-interaction.sql。
+-- 可重复执行。历史非零增量重新进入待处理，由原事件身份及 Redis seen 去重；不得清空 seen。
 -- 本脚本只增加必要的任务状态和异常记录，不部署可选的列表性能索引。
 
 SET @has_column = (SELECT COUNT(*) FROM information_schema.COLUMNS

@@ -26,9 +26,9 @@ public class CountRpcService {
             String eventKey = "interaction:" + result.getUserId() + ":" + result.getRequestId();
             boolean like = "LIKE".equals(result.getActionType());
             long delta = result.getActualDelta();
-            changes.add(new CountChangeDTO(result.getCountGeneration(), eventKey, "note", result.getNoteId(),
+            changes.add(new CountChangeDTO(eventKey, "note", result.getNoteId(),
                     Map.of(like ? "likeTotal" : "collectTotal", delta)));
-            changes.add(new CountChangeDTO(result.getCountGeneration(), eventKey, "user", result.getAuthorId(),
+            changes.add(new CountChangeDTO(eventKey, "user", result.getAuthorId(),
                     Map.of(like ? "likesReceivedTotal" : "collectsReceivedTotal", delta)));
         }
         // 分批部分成功也可重试整个请求，成功目标的 seen 集合会拦截重复事件。

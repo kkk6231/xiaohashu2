@@ -50,7 +50,7 @@ class NoteInteractionReliabilityTest {
         jdbc.execute("CREATE TABLE t_note(id BIGINT PRIMARY KEY,creator_id BIGINT,status INT,visible INT)");
         jdbc.execute("CREATE TABLE t_note_like(id BIGINT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,note_id BIGINT,status INT,create_time TIMESTAMP,UNIQUE(user_id,note_id))");
         jdbc.execute("CREATE TABLE t_note_collection(id BIGINT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,note_id BIGINT,status INT,create_time TIMESTAMP,UNIQUE(user_id,note_id))");
-        jdbc.execute("CREATE TABLE t_note_interaction_result(user_id BIGINT,request_id VARCHAR(36),note_id BIGINT,action_type VARCHAR(16),target_state TINYINT,author_id BIGINT,result_type VARCHAR(16),reason_code VARCHAR(32),count_generation BIGINT,actual_delta SMALLINT,created_at TIMESTAMP,count_status TINYINT DEFAULT 0,count_retry_count INT DEFAULT 0,count_next_retry_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,count_last_error VARCHAR(64),PRIMARY KEY(user_id,request_id))");
+        jdbc.execute("CREATE TABLE t_note_interaction_result(user_id BIGINT,request_id VARCHAR(36),note_id BIGINT,action_type VARCHAR(16),target_state TINYINT,author_id BIGINT,result_type VARCHAR(16),reason_code VARCHAR(32),actual_delta SMALLINT,created_at TIMESTAMP,count_status TINYINT DEFAULT 0,count_retry_count INT DEFAULT 0,count_next_retry_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,count_last_error VARCHAR(64),PRIMARY KEY(user_id,request_id))");
         jdbc.execute("CREATE TABLE t_note_interaction_failure(message_key CHAR(64) PRIMARY KEY,topic VARCHAR(255),broker_message_id VARCHAR(128),queue_id INT,queue_offset BIGINT,body BLOB,reason_code VARCHAR(32),created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
         jdbc.update("INSERT INTO t_note VALUES (10,20,1,0)");
         SqlSessionFactoryBean factory = new SqlSessionFactoryBean();
@@ -61,10 +61,7 @@ class NoteInteractionReliabilityTest {
                 new ClassPathResource("mapper/NoteInteractionMapper.xml"));
         realMapper = new SqlSessionTemplate(factory.getObject()).getMapper(NoteInteractionMapper.class);
         mapper = mock(NoteInteractionMapper.class, AdditionalAnswers.delegatesTo(realMapper));
-        JdbcTemplate generationJdbc = mock(JdbcTemplate.class);
-        when(generationJdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(1L);
         NoteInteractionService target = new NoteInteractionService();
-        ReflectionTestUtils.setField(target, "countJdbcTemplate", generationJdbc);
         ReflectionTestUtils.setField(target, "interactionMapper", mapper);
         ProxyFactory proxyFactory = new ProxyFactory(target);
         proxyFactory.setProxyTargetClass(true);

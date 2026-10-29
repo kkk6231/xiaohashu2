@@ -9,7 +9,6 @@ import com.quanxiaoha.xiaohashu.note.biz.service.impl.NoteCountEventService;
 import com.quanxiaoha.xiaohashu.note.biz.service.impl.NoteServiceImpl;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.junit.jupiter.api.*;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import static org.mockito.Mockito.*;
 
@@ -30,9 +29,6 @@ class NoteDeleteTest {
         interactionMapper = mock(NoteInteractionMapper.class);
         events = mock(NoteCountEventService.class);
         mq = mock(RocketMQTemplate.class);
-        JdbcTemplate generationJdbc = mock(JdbcTemplate.class);
-        when(generationJdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(1L);
-        ReflectionTestUtils.setField(service, "countJdbcTemplate", generationJdbc);
         ReflectionTestUtils.setField(service, "noteDOMapper", noteMapper);
         ReflectionTestUtils.setField(service, "noteInteractionMapper", interactionMapper);
         ReflectionTestUtils.setField(service, "noteCountEventService", events);

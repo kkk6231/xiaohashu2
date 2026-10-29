@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class NoteInteractionResultDO {
-    private Long countGeneration;
     private Long userId;
     private String requestId;
     private Long noteId;

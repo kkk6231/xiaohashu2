@@ -62,8 +62,8 @@ public class CountEventBatchConsumer {
         event.validate();
         long delta = event.getType() == 1 ? 1 : -1;
         String key = "relation:" + event.getEventId();
-        return List.of(new CountChangeDTO(event.getCountGeneration(), key, "user", event.getFromUserId(), Map.of("followingTotal", delta)),
-                new CountChangeDTO(event.getCountGeneration(), key, "user", event.getToUserId(), Map.of("fansTotal", delta)));
+        return List.of(new CountChangeDTO(key, "user", event.getFromUserId(), Map.of("followingTotal", delta)),
+                new CountChangeDTO(key, "user", event.getToUserId(), Map.of("fansTotal", delta)));
     }
 
     /** 删除作品按删除事务保存的互动快照扣减作者总数，重试时不重新查询快照。 */
@@ -83,6 +83,6 @@ public class CountEventBatchConsumer {
         } else {
             throw new IllegalArgumentException("未知作品计数事件");
         }
-        return List.of(new CountChangeDTO(event.getCountGeneration(), "note:" + event.getEventId(), "user", event.getAuthorId(), deltas));
+        return List.of(new CountChangeDTO("note:" + event.getEventId(), "user", event.getAuthorId(), deltas));
     }
 }

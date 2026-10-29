@@ -1,8 +1,5 @@
 package com.quanxiaoha.xiaohashu.note.biz.service.impl;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import com.quanxiaoha.framework.common.util.CountGenerationUtils;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quanxiaoha.xiaohashu.count.api.event.NoteCountEvent;
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.*;
@@ -13,8 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class NoteCountEventService {
-    @Resource
-    private JdbcTemplate countJdbcTemplate;
     @Resource
     private NoteDOMapper noteDOMapper;
     @Resource
@@ -35,12 +30,11 @@ public class NoteCountEventService {
     /** 发布事实与计数事件同事务提交。 */
     @Transactional(rollbackFor = Exception.class)
     public void publish(NoteDO note) {
-        CountGenerationUtils.lockCurrent(countJdbcTemplate);
         noteDOMapper.insert(note);
         append(note, "NOTE_PUBLISHED", 0, 0);
     }
 
-    /** 将事实事务的代次及增量快照写入原 Outbox，重发时保持不变。 */
+    /** 将事实事务的增量快照写入原 Outbox，重发时保持不变。 */
     @Transactional(rollbackFor = Exception.class)
     public void append(NoteDO note, String type, long likes, long collections) {
         NoteEventOutboxDO row = new NoteEventOutboxDO();
@@ -49,7 +43,6 @@ public class NoteCountEventService {
         row.setPayload("{}");
         outboxMapper.insert(row);
         NoteCountEvent event = new NoteCountEvent();
-        event.setCountGeneration(CountGenerationUtils.lockCurrent(countJdbcTemplate));
         event.setEventId(row.getId());
         event.setNoteId(note.getId());
         event.setAuthorId(note.getCreatorId());

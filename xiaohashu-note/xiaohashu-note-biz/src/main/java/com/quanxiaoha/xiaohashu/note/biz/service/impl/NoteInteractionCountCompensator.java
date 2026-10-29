@@ -32,7 +32,7 @@ public class NoteInteractionCountCompensator {
             return;
         }
         try {
-            // 不重新计算增量、不生成新事件键、不改变代次，沿用事实提交时的结果。
+            // 不重新计算增量、不生成新事件键，沿用事实提交时的结果。
             countRpcService.applyInteractionResults(pendingResults);
             interactionMapper.completeCounts(pendingResults);
         } catch (Exception exception) {

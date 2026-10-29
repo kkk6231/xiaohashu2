@@ -2,9 +2,6 @@ package com.quanxiaoha.xiaohashu.note.biz.service.impl;
 
 import com.quanxiaoha.framework.common.response.PageResponse;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import com.quanxiaoha.framework.common.util.CountGenerationUtils;
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -59,8 +56,6 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class NoteServiceImpl implements NoteService {
-    @Resource
-    private JdbcTemplate countJdbcTemplate;
 
     @Resource
     private NoteDOMapper noteDOMapper;
@@ -451,7 +446,6 @@ public class NoteServiceImpl implements NoteService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Response<?> deleteNote(DeleteNoteReqVO deleteNoteReqVO) {
-        CountGenerationUtils.lockCurrent(countJdbcTemplate);
         // 笔记 ID
         Long noteId = deleteNoteReqVO.getId();
 
