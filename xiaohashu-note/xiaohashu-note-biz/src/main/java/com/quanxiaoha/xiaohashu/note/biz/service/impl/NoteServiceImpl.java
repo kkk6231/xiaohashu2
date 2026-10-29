@@ -5,50 +5,45 @@ import cn.hutool.core.util.RandomUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.quanxiaoha.framework.biz.context.holder.LoginUserContextHolder;
 import com.quanxiaoha.framework.common.exception.BizException;
 import com.quanxiaoha.framework.common.response.Response;
-import com.quanxiaoha.framework.common.util.DateUtils;
 import com.quanxiaoha.framework.common.util.JsonUtils;
 import com.quanxiaoha.xiaohashu.note.biz.constant.MQConstants;
 import com.quanxiaoha.xiaohashu.note.biz.constant.RedisKeyConstants;
-import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteCollectionDO;
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteDO;
-import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteLikeDO;
 import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteCollectionDOMapper;
 import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteDOMapper;
+import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteInteractionMapper;
 import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteLikeDOMapper;
 import com.quanxiaoha.xiaohashu.note.biz.domain.mapper.TopicDOMapper;
 import com.quanxiaoha.xiaohashu.note.biz.enums.*;
-import com.quanxiaoha.xiaohashu.note.biz.model.dto.CollectUnCollectNoteMqDTO;
-import com.quanxiaoha.xiaohashu.note.biz.model.dto.LikeUnlikeNoteMqDTO;
 import com.quanxiaoha.xiaohashu.note.biz.model.dto.NoteOperateMqDTO;
 import com.quanxiaoha.xiaohashu.note.biz.model.vo.*;
 import com.quanxiaoha.xiaohashu.note.biz.rpc.DistributedIdGeneratorRpcService;
 import com.quanxiaoha.xiaohashu.note.biz.rpc.KeyValueRpcService;
 import com.quanxiaoha.xiaohashu.note.biz.rpc.UserRpcService;
+import com.quanxiaoha.xiaohashu.note.biz.rpc.CountRpcService;
+import com.quanxiaoha.xiaohashu.note.biz.rpc.RelationRpcService;
+import com.quanxiaoha.xiaohashu.count.api.dto.NoteCountDTO;
+import java.util.function.Supplier;
+import java.util.concurrent.CompletionException;
 import com.quanxiaoha.xiaohashu.note.biz.service.NoteService;
 import com.quanxiaoha.xiaohashu.user.dto.resp.FindUserByIdRspDTO;
 import jakarta.annotation.Resource;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -85,6 +80,19 @@ public class NoteServiceImpl implements NoteService {
     private NoteLikeDOMapper noteLikeDOMapper;
     @Resource
     private NoteCollectionDOMapper noteCollectionDOMapper;
+    @Resource
+    private NoteInteractionPublisher noteInteractionPublisher;
+    @Resource
+    private NoteCountEventService noteCountEventService;
+    @Resource
+    private NoteInteractionMapper noteInteractionMapper;
+    @Resource
+    private CountRpcService countRpcService;
+    @Resource
+    private RelationRpcService relationRpcService;
+
+    @org.springframework.beans.factory.annotation.Value("${note.detail.rpc-timeout-millis:3000}")
+    private long detailRpcTimeoutMillis = 3000;
 
     /**
      * 笔记详情本地缓存
@@ -193,13 +201,14 @@ public class NoteServiceImpl implements NoteService {
 
         try {
             // 笔记入库存储
-            noteDOMapper.insert(noteDO);
+            noteCountEventService.publish(noteDO);
         } catch (Exception e) {
             log.error("==> 笔记存储失败", e);
             if (StringUtils.isNotBlank(contentUuid)) {
                 // RPC: 笔记保存失败，则删除笔记内容
                 keyValueRpcService.deleteNoteContent(contentUuid);
             }
+            throw new BizException(ResponseCodeEnum.NOTE_PUBLISH_FAIL);
         }
 
         // 发送 MQ
@@ -240,7 +249,6 @@ public class NoteServiceImpl implements NoteService {
      * @return
      */
     @Override
-    @SneakyThrows
     public Response<FindNoteDetailRspVO> findNoteDetail(FindNoteDetailReqVO findNoteDetailReqVO) {
         // 查询的笔记 ID
         Long noteId = findNoteDetailReqVO.getId();
@@ -255,7 +263,7 @@ public class NoteServiceImpl implements NoteService {
             log.info("==> 命中了本地缓存；{}", findNoteDetailRspVOStrLocalCache);
             // 可见性校验
             checkNoteVisibleFromVO(userId, findNoteDetailRspVO);
-            return Response.success(findNoteDetailRspVO);
+            return Response.success(fillDetailStatus(findNoteDetailRspVO, userId));
         }
 
         // 从 Redis 缓存中获取
@@ -265,15 +273,11 @@ public class NoteServiceImpl implements NoteService {
         // 若 Redis 缓存中有该笔记的数据
         if (StringUtils.isNotBlank(noteDetailJson)) {
             FindNoteDetailRspVO findNoteDetailRspVO = JsonUtils.parseObject(noteDetailJson, FindNoteDetailRspVO.class);
-            // 异步线程中将用户信息存入本地缓存
-            threadPoolTaskExecutor.submit(() -> {
-                // 写入本地缓存
-                LOCAL_CACHE.put(noteId,
-                        Objects.isNull(findNoteDetailRspVO) ? "null" : JsonUtils.toJsonString(findNoteDetailRspVO));   // TODO:待优化
-            });
+            // 缓存原始公共详情，避免异步序列化时混入当前用户状态。
+            LOCAL_CACHE.put(noteId, noteDetailJson);
             // 可见性校验
             checkNoteVisibleFromVO(userId, findNoteDetailRspVO);
-            return Response.success(findNoteDetailRspVO);
+            return Response.success(fillDetailStatus(findNoteDetailRspVO, userId));
         }
 
         // 若 Redis 缓存中获取不到，则走数据库查询
@@ -293,70 +297,49 @@ public class NoteServiceImpl implements NoteService {
         Integer visible = noteDO.getVisible();
         checkNoteVisible(visible, userId, noteDO.getCreatorId());
 
-        // 并发查询优化
-        // RPC: 调用用户服务
-        CompletableFuture<FindUserByIdRspDTO> userResultFuture = CompletableFuture
-                .supplyAsync(() -> userRpcService.findById(userId), threadPoolTaskExecutor);
-
-        // RPC: 调用 K-V 存储服务获取内容
+        // 四个独立 RPC 同时提交，登录用户 ID 在请求线程中取得并显式传递。
+        CompletableFuture<FindUserByIdRspDTO> userResultFuture = queryDetailAsync(
+                () -> userRpcService.findById(noteDO.getCreatorId()), ResponseCodeEnum.NOTE_AUTHOR_LOAD_FAIL);
         CompletableFuture<String> contentResultFuture = CompletableFuture.completedFuture(null);
         if (Objects.equals(noteDO.getIsContentEmpty(), Boolean.FALSE)) {
-            contentResultFuture = CompletableFuture
-                    .supplyAsync(() -> keyValueRpcService.findNoteContent(noteDO.getContentUuid()), threadPoolTaskExecutor);
+            contentResultFuture = queryDetailAsync(
+                    () -> keyValueRpcService.findNoteContent(noteDO.getContentUuid()), ResponseCodeEnum.NOTE_CONTENT_LOAD_FAIL);
         }
+        CompletableFuture<NoteCountDTO> countResultFuture = queryDetailAsync(
+                () -> countRpcService.findNote(noteId), null);
+        CompletableFuture<Boolean> followingResultFuture = queryFollowingAsync(userId, noteDO.getCreatorId());
 
-        CompletableFuture<String> finalContentResultFuture = contentResultFuture; // Java 的 Lambda 表达式中，只能使用 final 或 effectively final 的局部变量
+        FindUserByIdRspDTO author = awaitDetailResult(userResultFuture);
+        String content = awaitDetailResult(contentResultFuture);
+        List<String> imgUris = null;
+        if (Objects.equals(noteDO.getType(), NoteTypeEnum.IMAGE_TEXT.getCode())
+                && StringUtils.isNotBlank(noteDO.getImgUris())) {
+            imgUris = List.of(noteDO.getImgUris().split(","));
+        }
+        FindNoteDetailRspVO detail = FindNoteDetailRspVO.builder()
+                .id(noteId)
+                .type(noteDO.getType())
+                .title(noteDO.getTitle())
+                .content(content)
+                .imgUris(imgUris)
+                .topicId(noteDO.getTopicId())
+                .topicName(noteDO.getTopicName())
+                .creatorId(noteDO.getCreatorId())
+                .creatorName(author.getNickName())
+                .avatar(author.getAvatar())
+                .videoUri(noteDO.getVideoUri())
+                .updateTime(noteDO.getUpdateTime())
+                .visible(visible)
+                .build();
 
-        CompletableFuture<FindNoteDetailRspVO> resultFuture = CompletableFuture
-                .allOf(userResultFuture, contentResultFuture)  // allOf 表示等待 userResultFuture 和 contentResultFuture 都执行完成
-                .thenApply(s -> {
-                    // 获取 Future 返回的结果
-                    FindUserByIdRspDTO findUserByIdRspDTO = userResultFuture.join();
-                    String content = finalContentResultFuture.join();
-
-                    // 笔记类型
-                    Integer noteType = noteDO.getType();
-                    // 图文笔记图片链接(字符串)
-                    String imgUrisStr = noteDO.getImgUris();
-                    // 图文笔记图片链接(集合)
-                    List<String> imgUris = null;
-                    // 如果查询的是图文笔记，需要将图片链接的逗号分隔开，转换成集合
-                    if (Objects.equals(noteType, NoteTypeEnum.IMAGE_TEXT.getCode())
-                            && StringUtils.isNotBlank(imgUrisStr)) {
-                        imgUris = List.of(imgUrisStr.split(","));
-                    }
-
-                    // 构建返参 VO 实体类
-                    return FindNoteDetailRspVO.builder()
-                            .id(noteDO.getId())
-                            .type(noteDO.getType())
-                            .title(noteDO.getTitle())
-                            .content(content)
-                            .imgUris(imgUris)
-                            .topicId(noteDO.getTopicId())
-                            .topicName(noteDO.getTopicName())
-                            .creatorId(noteDO.getCreatorId())
-                            .creatorName(findUserByIdRspDTO.getNickName())
-                            .avatar(findUserByIdRspDTO.getAvatar())
-                            .videoUri(noteDO.getVideoUri())
-                            .updateTime(noteDO.getUpdateTime())
-                            .visible(noteDO.getVisible())
-                            .build();
-
-                });
-
-        // 获取拼装后的 FindNoteDetailRspVO
-        FindNoteDetailRspVO findNoteDetailRspVO = resultFuture.get();
-
-        // 异步线程中将笔记详情存入 Redis
+        // 先序列化公共详情，再补充实时计数和个人状态，避免共享缓存污染。
+        String publicDetailJson = JsonUtils.toJsonString(detail);
         threadPoolTaskExecutor.submit(() -> {
-            String noteDetailJson1 = JsonUtils.toJsonString(findNoteDetailRspVO);
-            // 过期时间（保底1天 + 随机秒数，将缓存过期时间打散，防止同一时间大量缓存失效，导致数据库压力太大）
-            long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-            redisTemplate.opsForValue().set(noteDetailRedisKey, noteDetailJson1, expireSeconds, TimeUnit.SECONDS);
+            long expireSeconds = 60 * 60 * 24 + RandomUtil.randomInt(60 * 60 * 24);
+            redisTemplate.opsForValue().set(noteDetailRedisKey, publicDetailJson, expireSeconds, TimeUnit.SECONDS);
         });
-
-        return Response.success(findNoteDetailRspVO);
+        fillDetailStatus(detail, userId, countResultFuture, followingResultFuture);
+        return Response.success(detail);
     }
 
     /**
@@ -497,7 +480,7 @@ public class NoteServiceImpl implements NoteService {
         // 笔记 ID
         Long noteId = deleteNoteReqVO.getId();
 
-        NoteDO selectNoteDO = noteDOMapper.selectByPrimaryKey(noteId);
+        NoteDO selectNoteDO = noteInteractionMapper.lockNote(noteId);
 
         // 判断笔记是否存在
         if (Objects.isNull(selectNoteDO)) {
@@ -508,6 +491,15 @@ public class NoteServiceImpl implements NoteService {
         Long currUserId = LoginUserContextHolder.getUserId();
         if (!Objects.equals(currUserId, selectNoteDO.getCreatorId())) {
             throw new BizException(ResponseCodeEnum.NOTE_CANT_OPERATE);
+        }
+
+        if (Objects.equals(selectNoteDO.getStatus(), NoteStatusEnum.DELETED.getCode())) {
+            return Response.success();
+        }
+        // 先锁作品行，再读取互动快照；此事务在锁定前没有建立一致性快照。
+        if (Objects.equals(selectNoteDO.getStatus(), NoteStatusEnum.NORMAL.getCode())) {
+            noteCountEventService.append(selectNoteDO, "NOTE_DELETED",
+                    noteInteractionMapper.countLikes(noteId), noteInteractionMapper.countCollections(noteId));
         }
 
         // 逻辑删除
@@ -657,158 +649,7 @@ public class NoteServiceImpl implements NoteService {
      */
     @Override
     public Response<?> likeNote(LikeNoteReqVO likeNoteReqVO) {
-        // 笔记ID
-        Long noteId = likeNoteReqVO.getId();
-
-        // 1. 校验被点赞的笔记是否存在，若存在，则获取发布者用户 ID
-        Long creatorId = checkNoteIsExistAndGetCreatorId(noteId);
-
-        // 2. 判断目标笔记，是否已经点赞过（布隆过滤器）
-        // 当前登录用户ID
-        Long userId = LoginUserContextHolder.getUserId();
-
-        // 布隆过滤器 Key
-        String bloomUserNoteLikeListKey = RedisKeyConstants.buildBloomUserNoteLikeListKey(userId);
-
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        // Lua 脚本路径
-        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_note_like_check.lua")));
-        // 返回值类型
-        script.setResultType(Long.class);
-
-        // 执行 Lua 脚本，拿到返回结果
-        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId);
-        NoteLikeLuaResultEnum noteLikeLuaResultEnum = NoteLikeLuaResultEnum.valueOf(result);
-
-        // 构造用户点赞列表 ZSet Key
-        String userNoteLikeZSetKey = RedisKeyConstants.buildUserNoteLikeZSetKey(userId);
-
-        // 根据 Lua 脚本的不同结果操作
-        switch (noteLikeLuaResultEnum) {
-            // A、Redis 中布隆过滤器不存在
-            case NOT_EXIST -> {
-                // 从数据库中校验该笔记是否被点赞
-                int count = noteLikeDOMapper.selectCountByUserIdAndNoteId(userId, noteId);
-
-                // 保底1天+随机秒数
-                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-
-                // 目标笔记已经被点赞（说明布隆过滤器过期了，只需要将数据库中的点赞记录批量同步到新的布隆过滤器中，然后抛出异常）
-                if (count > 0) {
-                    // 异步初始化布隆过滤器
-                    threadPoolTaskExecutor.submit(() ->
-                            batchAddNoteLike2BloomAndExpire(userId, expireSeconds, bloomUserNoteLikeListKey));
-                    throw new BizException(ResponseCodeEnum.NOTE_ALREADY_LIKED);
-                }
-
-                // 若目标笔记未被点赞，查询当前用户是否有点赞其他笔记，有则同步初始化布隆过滤器（因为要接着点赞当前笔记）
-                batchAddNoteLike2BloomAndExpire(userId, expireSeconds, bloomUserNoteLikeListKey);
-
-                // 添加当前点赞笔记 ID 到布隆过滤器中
-                // 注意，这里的点赞记录并没有添加到 ZSet 中
-                script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_add_note_like_and_expire.lua")));
-                script.setResultType(Long.class);
-                redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId, expireSeconds);
-            }
-            // B、目标笔记可能被点赞 ，可能存在误判，需要进一步确认（误判来自假阳性和被取消的点赞，因为布隆过滤器中无法删除）
-            case NOTE_LIKED -> {
-                // 校验 ZSet 列表中是否包含被点赞的笔记ID
-                Double score = redisTemplate.opsForZSet().score(userNoteLikeZSetKey, noteId);
-
-                // ZSet中有对应的点赞记录，说明确实是已经点赞了
-                if (Objects.nonNull(score)) {
-                    throw new BizException(ResponseCodeEnum.NOTE_ALREADY_LIKED);
-                }
-
-                // score 为空，不代表没点赞，因为 ZSet 可能过期，或者只缓存最近 100 条，需要查数据库确认
-                int count = noteLikeDOMapper.selectNoteIsLiked(userId, noteId);
-                // 数据库里面有点赞记录，是历史点赞
-                if (count > 0) {
-                    // 判断对应 ZSet 是否存在，如果不存在重建缓存
-                    asynInitUserNoteLikesZSet(userId, userNoteLikeZSetKey);
-                    // 抛出重复点赞异常
-                    throw new BizException(ResponseCodeEnum.NOTE_ALREADY_LIKED);
-                }
-            }
-        }
-
-        /**
-         * 走到这里的几种情况：
-         * 1、布隆过滤器存在，且判断未点过赞
-         * 2、布隆过滤器不存在，且数据库中没有点赞记录
-         *  上面两种情况只把点赞记录同步到了布隆过滤器，但是未同步到 ZSet
-         * 3、ZSet 存在，但没有当前 noteId，数据库也没有
-         * 4、ZSet 不存在，数据库也没有
-         */
-        // 3. 更新用户 ZSET 点赞列表
-        LocalDateTime now = LocalDateTime.now();
-        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/note_like_check_and_update_zset.lua")));
-        script.setResultType(Long.class);
-        result = redisTemplate.execute(script, Collections.singletonList(userNoteLikeZSetKey), noteId, DateUtils.localDateTime2Timestamp(now));
-
-        // 若 ZSet 列表不存在，需要重新初始化
-        if (Objects.equals(result, NoteLikeLuaResultEnum.NOT_EXIST.getCode())) {
-            // 查询当前用户最新点赞的 100 篇笔记
-            List<NoteLikeDO> noteLikeDOS = noteLikeDOMapper.selectLikedByUserIdAndLimit(userId, 100);
-
-            if (CollUtil.isNotEmpty(noteLikeDOS)) {
-                // 保底1天+随机秒数
-                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-                // 构建 Lua 参数
-                Object[] luaArgs = buildNoteLikeZSetLuaArgs(noteLikeDOS, expireSeconds);
-
-                // 批量同步到 ZSet
-                DefaultRedisScript<Long> script2 = new DefaultRedisScript<>();
-                script2.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/batch_add_note_like_zset_and_expire.lua")));
-                script2.setResultType(Long.class);
-                redisTemplate.execute(script2, Collections.singletonList(userNoteLikeZSetKey), luaArgs);
-
-                // 再次调用 note_like_check_and_update_zset.lua 脚本，将点赞的笔记添加到 zset 中
-                redisTemplate.execute(script, Collections.singletonList(userNoteLikeZSetKey), noteId, DateUtils.localDateTime2Timestamp(now));
-            } else{
-                // 若用户首次点赞，直接加入 ZSet
-                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-
-                DefaultRedisScript<Long> script3 = new DefaultRedisScript<>();
-                script3.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/zset_add_note_like_and_expire.lua")));
-                script3.setResultType(Long.class);
-                redisTemplate.execute(script3, Collections.singletonList(userNoteLikeZSetKey), noteId, DateUtils.localDateTime2Timestamp(now), expireSeconds);
-            }
-        }
-
-        // 4. 发送 MQ, 将点赞数据落库
-        // 构建消息体 DTO
-        LikeUnlikeNoteMqDTO likeUnlikeNoteMqDTO = LikeUnlikeNoteMqDTO.builder()
-                .userId(userId)
-                .noteId(noteId)
-                .type(LikeUnlikeNoteTypeEnum.LIKE.getCode()) // 点赞笔记
-                .createTime(now)
-                .noteCreatorId(creatorId) // 笔记发布者 ID
-                .build();
-
-        // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
-        Message<String> message = MessageBuilder.withPayload(JsonUtils.toJsonString(likeUnlikeNoteMqDTO))
-                .build();
-
-        // 通过冒号连接, 可让 MQ 发送给主题 Topic 时，携带上标签 Tag
-        String destination = MQConstants.TOPIC_LIKE_OR_UNLIKE + ":" + MQConstants.TAG_LIKE;
-
-        String hashKey = String.valueOf(userId);
-
-        // 异步发送 MQ 消息，提升接口响应速度
-        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
-                log.info("==> 【笔记点赞】MQ 发送成功，SendResult: {}", sendResult);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                log.error("==> 【笔记点赞】MQ 发送异常: ", throwable);
-            }
-        });
-
-        return Response.success();
+        return noteInteractionPublisher.submit(likeNoteReqVO.getRequestId(), likeNoteReqVO.getId(), "LIKE", true);
     }
 
     /**
@@ -819,90 +660,7 @@ public class NoteServiceImpl implements NoteService {
      */
     @Override
     public Response<?> unlikeNote(UnlikeNoteReqVO unlikeNoteReqVO) {
-        // 笔记ID
-        Long noteId = unlikeNoteReqVO.getId();
-
-        // 1. 校验笔记是否真实存在，若存在，则获取发布者用户 ID
-        Long creatorId = checkNoteIsExistAndGetCreatorId(noteId);
-
-        // 2. 校验笔记是否被点赞过
-        // 当前登录用户ID
-        Long userId = LoginUserContextHolder.getUserId();
-
-        // 布隆过滤器 Key
-        String bloomUserNoteLikeListKey = RedisKeyConstants.buildBloomUserNoteLikeListKey(userId);
-
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_note_unlike_check.lua")));
-        script.setResultType(Long.class);
-        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), noteId);
-
-        NoteUnlikeLuaResultEnum noteUnlikeLuaResultEnum = NoteUnlikeLuaResultEnum.valueOf(result);
-
-        switch (noteUnlikeLuaResultEnum) {
-            // A、布隆过滤器不存在（-1）
-            case NOT_EXIST -> {
-                // 异步初始化布隆过滤器
-                threadPoolTaskExecutor.submit(() -> {
-                    // 保底1天+随机秒数
-                    long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-                    batchAddNoteLike2BloomAndExpire(userId, expireSeconds, bloomUserNoteLikeListKey);
-                });
-
-                // 从数据库中校验笔记是否被点赞
-                int count = noteLikeDOMapper.selectCountByUserIdAndNoteId(userId, noteId);
-
-                // 未点赞，无法取消点赞操作，抛出业务异常
-                if (count == 0) throw new BizException(ResponseCodeEnum.NOTE_NOT_LIKED);
-            }
-            // B、布隆过滤器校验目标笔记未被点赞（判断绝对正确）
-            case NOTE_NOT_LIKED -> throw new BizException(ResponseCodeEnum.NOTE_NOT_LIKED);
-        }
-
-        /**
-         * 3. 能走到这里，有两种情况
-         *  a、布隆过滤器不存在，但是数据库存在
-         *  b、布隆过滤器存在且判断已点赞（这里的误判可以忽略，）
-         */
-        // 说明布隆过滤器判断已点赞，直接删除 ZSET 中已点赞的笔记 ID
-        // 用户点赞列表 ZSet Key
-        String userNoteLikeZSetKey = RedisKeyConstants.buildUserNoteLikeZSetKey(userId);
-
-        redisTemplate.opsForZSet().remove(userNoteLikeZSetKey, noteId);
-
-        // 4. 发送 MQ, 数据更新落库
-        // 构建消息体 DTO
-        LikeUnlikeNoteMqDTO likeUnlikeNoteMqDTO = LikeUnlikeNoteMqDTO.builder()
-                .userId(userId)
-                .noteId(noteId)
-                .type(LikeUnlikeNoteTypeEnum.UNLIKE.getCode()) // 取消点赞笔记
-                .createTime(LocalDateTime.now())
-                .noteCreatorId(creatorId) // 笔记发布者 ID
-                .build();
-
-        // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
-        Message<String> message = MessageBuilder.withPayload(JsonUtils.toJsonString(likeUnlikeNoteMqDTO))
-                .build();
-
-        // 通过冒号连接, 可让 MQ 发送给主题 Topic 时，携带上标签 Tag
-        String destination = MQConstants.TOPIC_LIKE_OR_UNLIKE + ":" + MQConstants.TAG_UNLIKE;
-
-        String hashKey = String.valueOf(userId);
-
-        // 异步发送 MQ 消息，提升接口响应速度
-        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
-                log.info("==> 【笔记取消点赞】MQ 发送成功，SendResult: {}", sendResult);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                log.error("==> 【笔记取消点赞】MQ 发送异常: ", throwable);
-            }
-        });
-
-        return Response.success();
+        return noteInteractionPublisher.submit(unlikeNoteReqVO.getRequestId(), unlikeNoteReqVO.getId(), "LIKE", false);
     }
 
     /**
@@ -913,156 +671,7 @@ public class NoteServiceImpl implements NoteService {
      */
     @Override
     public Response<?> collectNote(CollectNoteReqVO collectNoteReqVO) {
-        // 笔记ID
-        Long noteId = collectNoteReqVO.getId();
-
-        // 1. 校验被点赞的笔记是否存在，若存在，则获取发布者用户 ID
-        Long creatorId = checkNoteIsExistAndGetCreatorId(noteId);
-
-        // 2. 判断目标笔记，是否已经收藏过
-        // 当前登录用户ID
-        Long userId = LoginUserContextHolder.getUserId();
-
-        // 布隆过滤器 Key
-        String bloomUserNoteCollectListKey = RedisKeyConstants.buildBloomUserNoteCollectListKey(userId);
-
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        // Lua 脚本路径
-        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_note_collect_check.lua")));
-        // 返回值类型
-        script.setResultType(Long.class);
-
-        // 执行 Lua 脚本，拿到返回结果
-        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteCollectListKey), noteId);
-
-        // 用户收藏列表 ZSet Key
-        String userNoteCollectZSetKey = RedisKeyConstants.buildUserNoteCollectZSetKey(userId);
-
-        NoteCollectLuaResultEnum noteCollectLuaResultEnum = NoteCollectLuaResultEnum.valueOf(result);
-
-        switch (noteCollectLuaResultEnum) {
-            // Redis 中布隆过滤器不存在
-            case NOT_EXIST -> {
-                // 从数据库中校验笔记是否被收藏，并异步初始化布隆过滤器，设置过期时间
-                int count = noteCollectionDOMapper.selectCountByUserIdAndNoteId(userId, noteId);
-
-                // 保底1天+随机秒数
-                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-
-                // 目标笔记已经被收藏
-                if (count > 0) {
-                    // 异步初始化布隆过滤器
-                    threadPoolTaskExecutor.submit(() ->
-                            batchAddNoteCollect2BloomAndExpire(userId, expireSeconds, bloomUserNoteCollectListKey));
-                    throw new BizException(ResponseCodeEnum.NOTE_ALREADY_COLLECTED);
-                }
-
-                // 若目标笔记未被收藏，查询当前用户是否有收藏其他笔记，有则同步初始化布隆过滤器
-                batchAddNoteCollect2BloomAndExpire(userId, expireSeconds, bloomUserNoteCollectListKey);
-
-                // 添加当前收藏笔记 ID 到布隆过滤器中
-                // Lua 脚本路径
-                script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_add_note_collect_and_expire.lua")));
-                // 返回值类型
-                script.setResultType(Long.class);
-                redisTemplate.execute(script, Collections.singletonList(bloomUserNoteCollectListKey), noteId, expireSeconds);
-            }
-            // 目标笔记已经被收藏 (可能存在误判，需要进一步确认)
-            case NOTE_COLLECTED -> {
-                // 校验 ZSet 列表中是否包含被收藏的笔记ID
-                Double score = redisTemplate.opsForZSet().score(userNoteCollectZSetKey, noteId);
-
-                if (Objects.nonNull(score)) {
-                    throw new BizException(ResponseCodeEnum.NOTE_ALREADY_COLLECTED);
-                }
-
-                // 若 Score 为空，则表示 ZSet 收藏列表中不存在，查询数据库校验
-                int count = noteCollectionDOMapper.selectNoteIsCollected(userId, noteId);
-
-                if (count > 0) {
-                    // 数据库里面有收藏记录，而 Redis 中 ZSet 未初始化，需要重新异步初始化 ZSet
-                    asynInitUserNoteCollectsZSet(userId, userNoteCollectZSetKey);
-
-                    throw new BizException(ResponseCodeEnum.NOTE_ALREADY_COLLECTED);
-                }
-            }
-        }
-
-        // 3. 更新用户 ZSET 收藏列表
-        LocalDateTime now = LocalDateTime.now();
-        // Lua 脚本路径
-        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/note_collect_check_and_update_zset.lua")));
-        // 返回值类型
-        script.setResultType(Long.class);
-
-        // 执行 Lua 脚本，拿到返回结果
-        result = redisTemplate.execute(script, Collections.singletonList(userNoteCollectZSetKey), noteId, DateUtils.localDateTime2Timestamp(now));
-
-        // 若 ZSet 列表不存在，需要重新初始化
-        if (Objects.equals(result, NoteCollectLuaResultEnum.NOT_EXIST.getCode())) {
-            // 查询当前用户最新收藏的 300 篇笔记
-            List<NoteCollectionDO> noteCollectionDOS = noteCollectionDOMapper.selectCollectedByUserIdAndLimit(userId, 300);
-
-            if (CollUtil.isNotEmpty(noteCollectionDOS)) {
-                // 保底1天+随机秒数
-                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-                // 构建 Lua 参数
-                Object[] luaArgs = buildNoteCollectZSetLuaArgs(noteCollectionDOS, expireSeconds);
-
-                DefaultRedisScript<Long> script2 = new DefaultRedisScript<>();
-                // Lua 脚本路径
-                script2.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/batch_add_note_collect_zset_and_expire.lua")));
-                // 返回值类型
-                script2.setResultType(Long.class);
-
-                redisTemplate.execute(script2, Collections.singletonList(userNoteCollectZSetKey), luaArgs);
-
-                // 再次调用 note_collect_check_and_update_zset.lua 脚本，将当前收藏的笔记添加到 zset 中
-                redisTemplate.execute(script, Collections.singletonList(userNoteCollectZSetKey), noteId, DateUtils.localDateTime2Timestamp(now));
-            } else {
-                // 若用户首次收藏，直接加入 ZSet
-                long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-
-                DefaultRedisScript<Long> script3 = new DefaultRedisScript<>();
-                script3.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/zset_add_note_collect_and_expire.lua")));
-                script3.setResultType(Long.class);
-                redisTemplate.execute(script3, Collections.singletonList(userNoteCollectZSetKey), noteId, DateUtils.localDateTime2Timestamp(now), expireSeconds);
-            }
-        }
-
-        // 4. 发送 MQ, 将收藏数据落库
-        // 构建消息体 DTO
-        CollectUnCollectNoteMqDTO collectUnCollectNoteMqDTO = CollectUnCollectNoteMqDTO.builder()
-                .userId(userId)
-                .noteId(noteId)
-                .type(CollectUnCollectNoteTypeEnum.COLLECT.getCode()) // 收藏笔记
-                .createTime(now)
-                .noteCreatorId(creatorId) // 笔记发布者 ID
-                .build();
-
-        // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
-        Message<String> message = MessageBuilder.withPayload(JsonUtils.toJsonString(collectUnCollectNoteMqDTO))
-                .build();
-
-        // 通过冒号连接, 可让 MQ 发送给主题 Topic 时，携带上标签 Tag
-        String destination = MQConstants.TOPIC_COLLECT_OR_UN_COLLECT + ":" + MQConstants.TAG_COLLECT;
-
-        String hashKey = String.valueOf(userId);
-
-        // 异步发送顺序 MQ 消息，提升接口响应速度
-        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
-                log.info("==> 【笔记收藏】MQ 发送成功，SendResult: {}", sendResult);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                log.error("==> 【笔记收藏】MQ 发送异常: ", throwable);
-            }
-        });
-
-        return Response.success();
+        return noteInteractionPublisher.submit(collectNoteReqVO.getRequestId(), collectNoteReqVO.getId(), "COLLECT", true);
     }
 
     /**
@@ -1073,298 +682,7 @@ public class NoteServiceImpl implements NoteService {
      */
     @Override
     public Response<?> unCollectNote(UnCollectNoteReqVO unCollectNoteReqVO) {
-        // 笔记ID
-        Long noteId = unCollectNoteReqVO.getId();
-
-        // 1. 校验被点赞的笔记是否存在，若存在，则获取发布者用户 ID
-        Long creatorId = checkNoteIsExistAndGetCreatorId(noteId);
-
-        // 2. 校验笔记是否被收藏过
-        // 当前登录用户ID
-        Long userId = LoginUserContextHolder.getUserId();
-
-        // 布隆过滤器 Key
-        String bloomUserNoteCollectListKey = RedisKeyConstants.buildBloomUserNoteCollectListKey(userId);
-
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        // Lua 脚本路径
-        script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_note_uncollect_check.lua")));
-        // 返回值类型
-        script.setResultType(Long.class);
-
-        // 执行 Lua 脚本，拿到返回结果
-        Long result = redisTemplate.execute(script, Collections.singletonList(bloomUserNoteCollectListKey), noteId);
-
-        NoteUnCollectLuaResultEnum noteUnCollectLuaResultEnum = NoteUnCollectLuaResultEnum.valueOf(result);
-
-        switch (noteUnCollectLuaResultEnum) {
-            // 布隆过滤器不存在
-            case NOT_EXIST -> {
-                // 异步初始化布隆过滤器
-                threadPoolTaskExecutor.submit(() -> {
-                    // 保底1天+随机秒数
-                    long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-                    batchAddNoteCollect2BloomAndExpire(userId, expireSeconds, bloomUserNoteCollectListKey);
-                });
-
-                // 从数据库中校验笔记是否被收藏
-                int count = noteCollectionDOMapper.selectCountByUserIdAndNoteId(userId, noteId);
-
-                // 未收藏，无法取消收藏操作，抛出业务异常
-                if (count == 0) throw new BizException(ResponseCodeEnum.NOTE_NOT_COLLECTED);
-            }
-            // 布隆过滤器校验目标笔记未被收藏（判断绝对正确）
-            case NOTE_NOT_COLLECTED -> throw new BizException(ResponseCodeEnum.NOTE_NOT_COLLECTED);
-        }
-
-        // 3. 删除 ZSET 中已收藏的笔记 ID
-        // 能走到这里，说明布隆过滤器判断已收藏，直接删除 ZSET 中已收藏的笔记 ID
-        // 用户收藏列表 ZSet Key
-        String userNoteCollectZSetKey = RedisKeyConstants.buildUserNoteCollectZSetKey(userId);
-
-        redisTemplate.opsForZSet().remove(userNoteCollectZSetKey, noteId);
-
-        // 4. 发送 MQ, 数据更新落库
-        // 构建消息体 DTO
-        CollectUnCollectNoteMqDTO unCollectNoteMqDTO = CollectUnCollectNoteMqDTO.builder()
-                .userId(userId)
-                .noteId(noteId)
-                .type(CollectUnCollectNoteTypeEnum.UN_COLLECT.getCode()) // 取消收藏笔记
-                .createTime(LocalDateTime.now())
-                .noteCreatorId(creatorId) // 笔记发布者 ID
-                .build();
-
-        // 构建消息对象，并将 DTO 转成 Json 字符串设置到消息体中
-        Message<String> message = MessageBuilder.withPayload(JsonUtils.toJsonString(unCollectNoteMqDTO))
-                .build();
-
-        // 通过冒号连接, 可让 MQ 发送给主题 Topic 时，携带上标签 Tag
-        String destination = MQConstants.TOPIC_COLLECT_OR_UN_COLLECT + ":" + MQConstants.TAG_UN_COLLECT;
-
-        String hashKey = String.valueOf(userId);
-
-        // 异步发送顺序 MQ 消息，提升接口响应速度
-        rocketMQTemplate.asyncSendOrderly(destination, message, hashKey, new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
-                log.info("==> 【笔记取消收藏】MQ 发送成功，SendResult: {}", sendResult);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                log.error("==> 【笔记取消收藏】MQ 发送异常: ", throwable);
-            }
-        });
-
-        return Response.success();
-    }
-
-    /**
-     * 异步初始化用户收藏笔记 ZSet
-     * @param userId
-     * @param userNoteCollectZSetKey
-     */
-    private void asynInitUserNoteCollectsZSet(Long userId, String userNoteCollectZSetKey) {
-        threadPoolTaskExecutor.execute(() -> {
-            // 判断用户笔记收藏 ZSET 是否存在
-            boolean hasKey = redisTemplate.hasKey(userNoteCollectZSetKey);
-
-            // 不存在，则重新初始化
-            if (!hasKey) {
-                // 查询当前用户最新收藏的 300 篇笔记
-                List<NoteCollectionDO> noteCollectionDOS = noteCollectionDOMapper.selectCollectedByUserIdAndLimit(userId, 300);
-                if (CollUtil.isNotEmpty(noteCollectionDOS)) {
-                    // 保底1天+随机秒数
-                    long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-                    // 构建 Lua 参数
-                    Object[] luaArgs = buildNoteCollectZSetLuaArgs(noteCollectionDOS, expireSeconds);
-
-                    DefaultRedisScript<Long> script2 = new DefaultRedisScript<>();
-                    // Lua 脚本路径
-                    script2.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/batch_add_note_collect_zset_and_expire.lua")));
-                    // 返回值类型
-                    script2.setResultType(Long.class);
-
-                    redisTemplate.execute(script2, Collections.singletonList(userNoteCollectZSetKey), luaArgs);
-                }
-            }
-        });
-    }
-
-    /**
-     * 异步初始化用户点赞笔记 ZSet
-     * @param userId
-     * @param userNoteLikeZSetKey
-     */
-    private void asynInitUserNoteLikesZSet(Long userId, String userNoteLikeZSetKey) {
-        threadPoolTaskExecutor.execute(() -> {
-            // 判断用户笔记点赞 ZSET 是否存在
-            boolean hasKey = redisTemplate.hasKey(userNoteLikeZSetKey);
-
-            // 不存在，则重新初始化
-            if (!hasKey) {
-                // 查询当前用户最新点赞的 100 篇笔记
-                List<NoteLikeDO> noteLikeDOS = noteLikeDOMapper.selectLikedByUserIdAndLimit(userId, 100);
-                if (CollUtil.isNotEmpty(noteLikeDOS)) {
-                    // 保底1天+随机秒数
-                    long expireSeconds = 60*60*24 + RandomUtil.randomInt(60*60*24);
-                    // 构建 Lua 参数
-                    Object[] luaArgs = buildNoteLikeZSetLuaArgs(noteLikeDOS, expireSeconds);
-
-                    DefaultRedisScript<Long> script2 = new DefaultRedisScript<>();
-                    // Lua 脚本路径
-                    script2.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/batch_add_note_like_zset_and_expire.lua")));
-                    // 返回值类型
-                    script2.setResultType(Long.class);
-
-                    redisTemplate.execute(script2, Collections.singletonList(userNoteLikeZSetKey), luaArgs);
-                }
-            }
-        });
-    }
-
-    /**
-     * 构建笔记收藏 ZSET Lua 脚本参数
-     *
-     * @param noteCollectionDOS
-     * @param expireSeconds
-     * @return
-     */
-    private static Object[] buildNoteCollectZSetLuaArgs(List<NoteCollectionDO> noteCollectionDOS, long expireSeconds) {
-        int argsLength = noteCollectionDOS.size() * 2 + 1; // 每个笔记收藏关系有 2 个参数（score 和 value），最后再跟一个过期时间
-        Object[] luaArgs = new Object[argsLength];
-
-        int i = 0;
-        for (NoteCollectionDO noteCollectionDO : noteCollectionDOS) {
-            luaArgs[i] = DateUtils.localDateTime2Timestamp(noteCollectionDO.getCreateTime()); // 收藏时间作为 score
-            luaArgs[i + 1] = noteCollectionDO.getNoteId();          // 笔记ID 作为 ZSet value
-            i += 2;
-        }
-
-        luaArgs[argsLength - 1] = expireSeconds; // 最后一个参数是 ZSet 的过期时间
-        return luaArgs;
-    }
-
-    /**
-     * 构建笔记点赞 ZSET Lua 脚本参数
-     *
-     * @param noteLikeDOS
-     * @param expireSeconds
-     * @return
-     */
-    private static Object[] buildNoteLikeZSetLuaArgs(List<NoteLikeDO> noteLikeDOS, long expireSeconds) {
-        int argsLength = noteLikeDOS.size() * 2 + 1; // 每个笔记点赞关系有 2 个参数（score 和 value），最后再跟一个过期时间
-        Object[] luaArgs = new Object[argsLength];
-
-        int i = 0;
-        for (NoteLikeDO noteLikeDO : noteLikeDOS) {
-            luaArgs[i] = DateUtils.localDateTime2Timestamp(noteLikeDO.getCreateTime()); // 点赞时间作为 score
-            luaArgs[i + 1] = noteLikeDO.getNoteId();          // 笔记ID 作为 ZSet value
-            i += 2;
-        }
-
-        luaArgs[argsLength - 1] = expireSeconds; // 最后一个参数是 ZSet 的过期时间
-        return luaArgs;
-    }
-
-    /**
-     * 初始化笔记收藏布隆过滤器
-     * @param userId
-     * @param expireSeconds
-     * @param bloomUserNoteCollectListKey
-     */
-    private void batchAddNoteCollect2BloomAndExpire(Long userId, long expireSeconds, String bloomUserNoteCollectListKey) {
-        try {
-            // 异步全量同步一下，并设置过期时间
-            List<NoteCollectionDO> noteCollectionDOS = noteCollectionDOMapper.selectByUserId(userId);
-
-            if (CollUtil.isNotEmpty(noteCollectionDOS)) {
-                DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-                // Lua 脚本路径
-                script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_batch_add_note_collect_and_expire.lua")));
-                // 返回值类型
-                script.setResultType(Long.class);
-
-                // 构建 Lua 参数
-                List<Object> luaArgs = Lists.newArrayList();
-                noteCollectionDOS.forEach(noteCollectionDO -> luaArgs.add(noteCollectionDO.getNoteId())); // 将每个收藏的笔记 ID 传入
-                luaArgs.add(expireSeconds);  // 最后一个参数是过期时间（秒）
-                redisTemplate.execute(script, Collections.singletonList(bloomUserNoteCollectListKey), luaArgs.toArray());
-            }
-        } catch (Exception e) {
-            log.error("## 异步初始化【笔记收藏】布隆过滤器异常: ", e);
-        }
-    }
-
-    /**
-     * 初始化笔记点赞布隆过滤器
-     * @param userId
-     * @param expireSeconds
-     * @param bloomUserNoteLikeListKey
-     */
-    private void batchAddNoteLike2BloomAndExpire(Long userId, long expireSeconds, String bloomUserNoteLikeListKey) {
-        try {
-            // 异步全量同步一下，并设置过期时间
-            List<NoteLikeDO> noteLikeDOS = noteLikeDOMapper.selectByUserId(userId);
-
-            if (CollUtil.isNotEmpty(noteLikeDOS)) {
-                DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-                // Lua 脚本路径
-                script.setScriptSource(new ResourceScriptSource(new ClassPathResource("/lua/bloom_batch_add_note_like_and_expire.lua")));
-                // 返回值类型
-                script.setResultType(Long.class);
-
-                // 构建 Lua 参数
-                List<Object> luaArgs = Lists.newArrayList();
-                noteLikeDOS.forEach(noteLikeDO -> luaArgs.add(noteLikeDO.getNoteId())); // 将每个点赞的笔记 ID 传入
-                luaArgs.add(expireSeconds);  // 最后一个参数是过期时间（秒）
-                redisTemplate.execute(script, Collections.singletonList(bloomUserNoteLikeListKey), luaArgs.toArray());
-            }
-        } catch (Exception e) {
-            log.error("## 异步初始化【笔记点赞】布隆过滤器异常: ", e);
-        }
-    }
-
-    /**
-     * 校验笔记是否存在，若存在，则获取笔记的发布者 ID
-     * @param noteId
-     */
-    private Long checkNoteIsExistAndGetCreatorId(Long noteId) {
-        // 先从本地缓存校验
-        String findNoteDetailRspVOStrLocalCache = LOCAL_CACHE.getIfPresent(noteId);
-        // 解析 Json 字符串为 VO 对象
-        FindNoteDetailRspVO findNoteDetailRspVO = JsonUtils.parseObject(findNoteDetailRspVOStrLocalCache, FindNoteDetailRspVO.class);
-
-        // 若本地缓存没有
-        if (Objects.isNull(findNoteDetailRspVO)) {
-            // 再从 Redis 中校验
-            String noteDetailRedisKey = RedisKeyConstants.buildNoteDetailKey(noteId);
-
-            String noteDetailJson = redisTemplate.opsForValue().get(noteDetailRedisKey);
-
-            // 解析 Json 字符串为 VO 对象
-            findNoteDetailRspVO = JsonUtils.parseObject(noteDetailJson, FindNoteDetailRspVO.class);
-
-            // 都不存在，再查询数据库校验是否存在
-            if (Objects.isNull(findNoteDetailRspVO)) {
-                // 笔记发布者用户 ID
-                Long creatorId = noteDOMapper.selectCreatorIdByNoteId(noteId);
-
-                // 若数据库中也不存在，提示用户
-                if (Objects.isNull(creatorId)) {
-                    throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
-                }
-
-                // 若数据库中存在，异步 同步一下缓存
-                threadPoolTaskExecutor.submit(() -> {
-                    FindNoteDetailReqVO findNoteDetailReqVO = FindNoteDetailReqVO.builder().id(noteId).build();
-                    findNoteDetail(findNoteDetailReqVO);
-                });
-                return creatorId;
-            }
-        }
-
-        return findNoteDetailRspVO.getCreatorId();
+        return noteInteractionPublisher.submit(unCollectNoteReqVO.getRequestId(), unCollectNoteReqVO.getId(), "COLLECT", false);
     }
 
     /**
@@ -1393,4 +711,69 @@ public class NoteServiceImpl implements NoteService {
     }
 
 
+    /** 缓存命中时复用正文和作者资料，仅并发补充计数与当前用户的关注状态。 */
+    private FindNoteDetailRspVO fillDetailStatus(FindNoteDetailRspVO detail, Long userId) {
+        if (detail == null) {
+            throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
+        }
+        CompletableFuture<NoteCountDTO> countFuture = queryDetailAsync(
+                () -> countRpcService.findNote(detail.getId()), null);
+        CompletableFuture<Boolean> followingFuture = queryFollowingAsync(userId, detail.getCreatorId());
+        fillDetailStatus(detail, userId, countFuture, followingFuture);
+        return detail;
+    }
+
+    /** 在请求线程统一组装动态字段；不可用的计数和关注状态不伪装成零或未关注。 */
+    private void fillDetailStatus(FindNoteDetailRspVO detail, Long userId,
+            CompletableFuture<NoteCountDTO> countFuture, CompletableFuture<Boolean> followingFuture) {
+        NoteCountDTO counts = awaitDetailResult(countFuture);
+        detail.setCountsAvailable(counts != null);
+        detail.setLikeTotal(counts == null ? null : counts.getLikeTotal());
+        detail.setCollectTotal(counts == null ? null : counts.getCollectTotal());
+        Boolean following = awaitDetailResult(followingFuture);
+        detail.setFollowing(following);
+        detail.setFollowingAvailable(following != null);
+        detail.setLiked(userId != null && noteLikeDOMapper.selectCountByUserIdAndNoteId(userId, detail.getId()) > 0);
+        detail.setCollected(userId != null && noteCollectionDOMapper.selectCountByUserIdAndNoteId(userId, detail.getId()) > 0);
+    }
+
+    /** 未登录和查看自己的笔记无需调用关系服务，其他情况显式传递访问者和作者 ID。 */
+    private CompletableFuture<Boolean> queryFollowingAsync(Long userId, Long authorId) {
+        if (userId == null || Objects.equals(userId, authorId)) {
+            return CompletableFuture.completedFuture(false);
+        }
+        return queryDetailAsync(() -> relationRpcService.isFollowing(userId, authorId), null);
+    }
+
+    /** 提交有时限的详情查询；指定错误码的核心任务失败时报错，其余任务降级为未知。 */
+    private <T> CompletableFuture<T> queryDetailAsync(Supplier<T> query, ResponseCodeEnum requiredError) {
+        CompletableFuture<T> queryFuture;
+        try {
+            queryFuture = CompletableFuture.supplyAsync(query, threadPoolTaskExecutor);
+        } catch (RuntimeException exception) {
+            queryFuture = CompletableFuture.failedFuture(exception);
+        }
+        return queryFuture.orTimeout(detailRpcTimeoutMillis, TimeUnit.MILLISECONDS).handle((result, exception) -> {
+            if (exception != null || result == null) {
+                log.warn("笔记详情下游查询失败，核心任务错误码：{}", requiredError, exception);
+                if (requiredError != null) {
+                    throw new BizException(requiredError);
+                }
+                return null;
+            }
+            return result;
+        });
+    }
+
+    /** 解包异步业务异常，让全局异常处理器返回明确的正文或作者加载错误。 */
+    private <T> T awaitDetailResult(CompletableFuture<T> future) {
+        try {
+            return future.join();
+        } catch (CompletionException exception) {
+            if (exception.getCause() instanceof BizException) {
+                throw (BizException) exception.getCause();
+            }
+            throw exception;
+        }
+    }
 }

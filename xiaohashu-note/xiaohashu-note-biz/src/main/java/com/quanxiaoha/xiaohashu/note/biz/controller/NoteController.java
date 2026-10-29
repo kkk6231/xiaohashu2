@@ -63,24 +63,28 @@ public class NoteController {
     }
 
     @PostMapping(value = "/like")
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.ACCEPTED)
     @ApiOperationLog(description = "点赞笔记")
     public Response<?> likeNote(@Validated @RequestBody LikeNoteReqVO likeNoteReqVO) {
         return noteService.likeNote(likeNoteReqVO);
     }
 
     @PostMapping(value = "/unlike")
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.ACCEPTED)
     @ApiOperationLog(description = "取消点赞笔记")
     public Response<?> unlikeNote(@Validated @RequestBody UnlikeNoteReqVO unlikeNoteReqVO) {
         return noteService.unlikeNote(unlikeNoteReqVO);
     }
 
     @PostMapping(value = "/collect")
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.ACCEPTED)
     @ApiOperationLog(description = "收藏笔记")
     public Response<?> collectNote(@Validated @RequestBody CollectNoteReqVO collectNoteReqVO) {
         return noteService.collectNote(collectNoteReqVO);
     }
 
     @PostMapping(value = "/uncollect")
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.ACCEPTED)
     @ApiOperationLog(description = "取消收藏笔记")
     public Response<?> unCollectNote(@Validated @RequestBody UnCollectNoteReqVO unCollectNoteReqVO) {
         return noteService.unCollectNote(unCollectNoteReqVO);

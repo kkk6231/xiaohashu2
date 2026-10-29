@@ -8,3 +8,6 @@ spring:
 mybatis:
   # MyBatis xml 配置文件路径
   mapper-locations: classpath:/mapper/**/*.xml
+# 笔记服务和计数服务使用相同的内部调用凭据
+count:
+  internal-token: ${COUNT_INTERNAL_TOKEN}

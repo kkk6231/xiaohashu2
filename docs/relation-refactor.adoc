@@ -1,0 +1,129 @@
+= 用户关系服务重构：开发与运行说明
+
+分支：`codex/user-relation-outbox`。本次实现 Following + Outbox 同事务、RocketMQ 投递、Follower 投影、两个列表缓存及关系查询。无历史数据迁移。
+
+== 启动准备
+
+. 使用独立的开发数据库执行关系模块 `src/main/resources/db/relation-v1.sql`。这是初始化建表脚本，不会自动执行。
+. 计数服务使用 Redis 二进制 String 与 seen Set，不再创建关系计数 inbox 或写入 t_user_count；新开发环境从空事实与空计数开始。详细契约见 link:计数服务重构开发文档.md[计数服务重构开发文档]。
+. 配置现有 MySQL、Redis、Nacos、RocketMQ 连接，启动用户、计数、关系服务。
+. 在 RocketMQ 创建 `RelationChangedV1` Topic。关注缓存、粉丝投影、关系计数分别使用 `relation-following-cache-v1`、`relation-follower-projection-v1`、`counter-relation-v1` 三个消费组。先启动消费者，再开放写入。
+. 关系计数只走 RelationChangedV1 新事件链路；评论相关消费者仍服务评论业务，不属于七类计数重构的删除范围。
+
+关系计数已接入统一计数服务：每个用户目标通过一次 Lua 原子执行去重与增量聚合，两个用户目标之间通过重试收敛；查询读取 Redis 二进制计数。不再使用数据库关系计数 inbox，不发送第二层计数 MQ。点赞、收藏及作品计数现已接入同一计数引擎。
+
+== 数据与流程
+
+* 关注、取关：事务内数据库用户行锁 → Following 有效状态变更与 Outbox 同事务 → 提交后尝试异步投递。重复操作不生成事件。上限以主库有效关注数判断。
+* Outbox：数据库自增生成 eventId，回填完整 payload 后一起提交；relationVersion 决定顺序。领取时锁关系行，只领取未发送的最小版本；确认 SEND_OK 才标记已发送。租约超时可重领，旧领取者不能覆盖新状态。
+* 粉丝投影：目标用户列表锁 → 按版本写 Follower → 提交 → 读取当前状态维护粉丝 ZSet。数据库已成功、Redis 失败时仍重试缓存步骤。
+* 关注缓存：持列表锁读取 Following 当前状态，再增量维护；未初始化时跳过。
+* 缓存初始化与消费者共用列表锁。Lua 校验锁归属并原子更新列表和元数据，保持固定到期时间。粉丝只保留最近 N 条，取关时按时间和 ID 边界查询补齐。
+* DB 时间为 DATETIME(3)，事件保留毫秒。Redis score 以 UTC 编码无时区数据库时间；数据库/连接时区必须统一。ID 补零至 19 位，保证同分排序一致。
+* 关系写事务与状态查询不依赖 Redis；Redis 不可用时列表查询及缓存消费者仍受影响；MQ 不可用时已提交事件留在 Outbox。异步列表和计数是最终一致，分页不提供跨页快照。
+
+== 接口
+
+保留 `POST /relation/follow`、`/unfollow`、`/following/list`、`/fans/list`。关注参数兼容 `followUserId` / `unfollowUserId`，也支持 `targetUserId`。
+
+接口参数：
+
+[cols="1,2"]
+|===
+|接口 |参数
+|POST /relation/following/list、/fans/list |JSON 请求体：userId、pageNo、pageSize
+|GET /relation/status |fromUserId、toUserId
+|POST /relation/following/status/batch |userId、targetUserIds
+|POST /relation/followers/status/batch |userId、candidateUserIds（也支持 targetUserIds）
+|GET /relation/count |userId
+|===
+
+分页默认 20，最大 100；批量最多 100 个 ID。粉丝列表不再返回伪造的粉丝数、笔记数 0，未接入的个人统计字段为 null。完整列表缓存直接提供总数；粉丝缓存截断或深分页时，总数取计数服务，允许与列表短暂不同步。截断缓存的 ZCARD 不作为总数，也不再查询 Follower COUNT。
+
+== 配置
+
+本地开发配置中的密码改为环境变量：必须设置 RELATION_DB_PASSWORD；数据库用户名使用 RELATION_DB_USERNAME（默认 root）；Redis 有密码时设置 RELATION_REDIS_PASSWORD。Druid 管理页面默认关闭，需要使用时同时设置 RELATION_DRUID_ENABLED、RELATION_DRUID_USERNAME 和 RELATION_DRUID_PASSWORD。这里只修改当前关系模块配置，没有改写 Git 历史中的凭据。
+
+可在现有配置文件或 Nacos 中覆盖：
+
+[source,yaml]
+----
+relation:
+  max-following: 2000
+  fans-cache-size: 10000
+  cache-ttl-seconds: 3600
+  lock-lease-millis: 30000
+  lock-wait-millis: 200
+  outbox-lease-millis: 30000
+  send-timeout-millis: 5000
+  dispatch-batch-size: 100
+  scan-delay-millis: 1000
+  database-query-permits-per-second: 50
+----
+
+回源限流按服务实例计算。关注/粉丝列表初始化和分页回源共用 RelationDatabaseRateLimiter。初始化在获取列表锁并二次确认缓存未命中后、查询数据库前扣一次额度；分页回源也在查询前扣额度。缓存命中（包括锁内二次命中）不扣额度，计数 RPC 不消耗关系列表回源额度。关注上限由 t_relation_user_lock 用户行锁保护：事务必须先取得行锁，再查询关系和人数，直到关系与 Outbox 一起提交后释放。已删除重复的 Redis 操作锁，关注写入只保留数据库事务行锁。
+
+== 可靠性修复记录（2026-10-28）
+
+* 状态查询不再初始化或全量读取 ZSet。关注状态使用 Following 联合索引批量查询；粉丝状态使用 Follower 联合索引批量查询。删除单对关系 Hash、Lua 脚本和消费者的 Hash 失效步骤。
+* 锁竞争默认随机退避并最多等待 200ms，配置允许 0 到 5000ms。等待超时明确失败；中断信号保留，MQ 消费失败仍触发重试，不能吞异常确认成功。此等待预算不包含单次 Redis 网络超时，部署时仍须配置客户端命令超时。
+* 续约调度器立即移除取消任务，避免短操作形成大量延迟队列残留。保留安全释放、租约丢失检查与 Lua 归属校验。
+* 初始化脚本增加 t_relation_user_lock，保护上限检查与写入事务；没有加入历史数据迁移代码。
+* 增加只使用数据库行锁的关注上限并发测试、状态查询不创建列表测试、锁等待/中断/取消任务测试和 MQ 发送连接异常测试。
+
+本轮验证结果：Java 17、MySQL 8.0.31、Redis 7.2.3，29 项测试通过（关系流程 14、列表查询 4、发送器 3、锁与查询回归 6、计数 2），无失败、无跳过。MQ 发送使用测试替身，未计作真实 Broker 验证。隔离数据库与 Redis 实例已关闭。
+
+生产验收仍须验证真实 RocketMQ 重投、Broker 重启和消费积压恢复，并按目标并发压测锁等待、Redis 延迟与数据库回源。单元测试通过不代表这些验收已完成。Outbox 与 Redis seen 继续保留；计数代次与重建流程实施前不自动清理计数幂等记录。
+
+== 粉丝缓存优化与旧代码清理（2026-10-28）
+
+* 粉丝增量更新通过同一 Lua 读取元数据、尾部两条和目标成员，最多返回三个成员，不再全量读取 ZSet。人数使用元数据，不能以这个局部快照的大小代替。
+* 删除尾部成员时用剩余尾部确定补齐边界；只有截断列表有缺口才查库补齐。完整列表正常减员，无需补齐。
+* 查库和计算完成后，继续用原写入 Lua 一次性删除、补入、裁剪并更新元数据。补齐查询失败时不修改缓存，重试不会暴露半更新的列表。
+* 清理旧 Following/Fans DO、Mapper 与 XML、五个旧 Lua 脚本、LuaResultEnum、旧 Redis key 方法及重复操作错误码。删除旧限流配置、旧代码生成配置和对应 Maven 插件，以及已删除关系对账任务留下的四个查询。
+* 新增尾部删除与重新关注、重复事件、补齐失败保持原列表、固定大小边界快照和单成员缓存窗口回归覆盖。
+
+本轮干净构建通过，关系、计数和受影响的数据对齐模块编译成功。使用隔离 MySQL 8.0.31 与 Redis 7.2.3，33 项测试全部通过（关系流程 18、列表查询 4、发送器 3、锁与查询回归 6、计数 2），无失败、无跳过。MQ 仍使用测试替身，未新增真实 Broker 或吞吐测试结论。
+
+== 重试与排查
+
+本次读路径修复验证：40 项专项测试全部通过，无失败、无跳过（关系流程 21、列表查询 6、发送器 3、读路径辅助组件 2、锁与状态查询 6、计数 2）。使用真实隔离 MySQL/Redis；计数 RPC 和 MQ 发送使用测试替身。覆盖截断缓存命中不做 COUNT/不扣额度、冷列表查库前限流、锁内二次命中不扣额度、深分页先限流及计数 RPC 失败不返回伪造总数。
+
+[source,sql]
+----
+SELECT status, COUNT(*) FROM t_relation_outbox GROUP BY status;
+SELECT event_id, relation_id, relation_version, retry_count, next_retry_time,
+       lease_until, last_error
+FROM t_relation_outbox WHERE status <> 2 ORDER BY create_time LIMIT 100;
+----
+
+未发送事件不自动清理；修复故障后扫描器继续重试。消费者异常会交给 RocketMQ 重试，不能吞异常确认成功。消费重试耗尽或积压超过消息保留期限时，需要通过 RocketMQ 管理工具重投原始事件，保持 eventId、relationVersion 不变。Outbox 的已发送状态只证明 Broker 当时接受，不能证明三个下游都完成；应监控消费积压和死信。
+
+本次不提供无鉴权的管理重放 HTTP 接口。保留 Outbox 与 Redis seen，便于核查和幂等补发。当前代次的 seen 不可在仍接受该代次事件时清除。
+
+== 验证
+
+`RelationPublisherTest` 不依赖外部服务。`RelationFlowTest` 与 `RelationCountTest` 使用专用 MySQL/Redis，设置 `RELATION_TEST_MYSQL_URL`（库名须包含 relation_refactor_test）和 `RELATION_TEST_REDIS_PORT`；未设置则跳过集成测试。测试会重建该专用库内测试表，仅用于隔离实例。
+
+[source,shell]
+----
+mvn -pl xiaohashu-user-relation/xiaohashu-user-relation-biz,xiaohashu-count/xiaohashu-count-biz -am test -Dtest=Relation*Test -Dsurefire.failIfNoSpecifiedTests=false
+----
+
+覆盖：重复操作、事务回滚、Outbox 领取与旧 owner 确认、旧版本消息、缓存初始化/过期/淘汰、同分排序、粉丝补齐、锁丢失、计数重复与乱序及失败回滚。Broker 发送结果由 mock 注入；完整 RocketMQ/Nacos 服务联调需在部署环境继续验收。
+
+本机 Windows 若出现 `Unable to establish loopback connection`，可仅在测试 JVM 加 `-DargLine=-Djdk.net.unixdomain.tmpdir=C:/codex-nonexistent-socket-dir`，让 JDK 回退至 TCP；该目录应保持不存在，不修改生产配置。
+
+本次验证（2026-10-28）：Java 17 编译通过；MySQL 8.0.31 + Redis 7.2.3 隔离实例中，12 项关系流程测试、2 项发送器测试、2 项计数测试通过，无失败或跳过。数据对齐模块及受影响依赖同时编译通过。
+
+== 原项目风格与复用
+
+接口统一在原 RelationController，业务通过 RelationService 调用；实现放入 service/impl，外部调用封装在 rpc。组件使用 @Resource 注入，SQL 使用 domain/mapper + resources/mapper XML，数据库对象放入 domain/dataobject 并以 DO 命名，缓存中间对象放入 model/dto。
+
+继续复用 UserRpcService、PageResponse.getOffset、Response、BizException、ResponseCodeEnum、ApiOperationLog、RedisKeyConstants、MQConstants，并保留 FollowUnfollowConsumer 文件承载粉丝投影。FollowUnfollowTypeEnum 的取关值按新表契约调整为 2；旧版取关值 0 不作为新事件契约使用。旧 CRUD 的表字段不兼容新模型，新增关系与消息 DOMapper，未强行复用错误的旧 SQL。
+
+风格调整后已重新运行同一组 16 项专项测试（含真实 XML Mapper 与 Redis Lua），全部通过。
+
+== 实习项目范围
+
+不实现历史数据迁移、双写、灰度发布或旧链路切换。开发时初始化数据库并使用新链路即可。Outbox 补偿投递、消费幂等、版本判断和缓存一致性属于本项目核心功能，继续保留。

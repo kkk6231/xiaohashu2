@@ -2,16 +2,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.quanxiaoha.xiaohashu.data.align.domain.mapper.SelectMapper">
 
-    <select id="selectBatchFromDataAlignFollowingCountTempTable" resultType="long" parameterType="map">
-        select user_id from `t_data_align_following_count_temp_${tableNameSuffix}` order by id
-        limit #{batchSize}
-    </select>
-
-    <select id="selectBatchFromDataAlignFansCountTempTable" resultType="long" parameterType="map">
-        select user_id from `t_data_align_fans_count_temp_${tableNameSuffix}` order by id
-            limit #{batchSize}
-    </select>
-
     <select id="selectBatchFromDataAlignUserLikeCountTempTable" resultType="long" parameterType="map">
         select user_id from `t_data_align_user_like_count_temp_${tableNameSuffix}` order by id
             limit #{batchSize}
@@ -32,14 +22,6 @@
         select count(*) from t_note_collection where status = 1 and note_id in (
             select note_id from t_note where creator_id = #{userId}
             )
-    </select>
-
-    <select id="selectCountFromFollowingTableByUserId" parameterType="map" resultType="int">
-        select count(*) from t_following where user_id = #{userId}
-    </select>
-
-    <select id="selectCountFromFansTableByUserId" parameterType="map" resultType="int">
-        select count(*) from t_fans where user_id = #{userId}
     </select>
 
     <select id="selectBatchFromDataAlignNoteLikeCountTempTable" resultType="long" parameterType="map">

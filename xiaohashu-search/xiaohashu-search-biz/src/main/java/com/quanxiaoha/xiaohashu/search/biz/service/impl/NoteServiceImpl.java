@@ -53,6 +53,8 @@ import java.util.Objects;
 @Service
 @Slf4j
 public class NoteServiceImpl implements NoteService {
+    @Resource
+    private com.quanxiaoha.xiaohashu.search.biz.rpc.CountRpcService countRpcService;
 
     @Resource
     private RestHighLevelClient restHighLevelClient;
@@ -278,7 +280,7 @@ public class NoteServiceImpl implements NoteService {
                 Map<String, Object> sourceAsMap = hit.getSourceAsMap();
 
                 // 提取特定字段值
-                Long noteId = (Long) sourceAsMap.get(NoteIndex.FIELD_NOTE_ID);
+                Long noteId = ((Number) sourceAsMap.get(NoteIndex.FIELD_NOTE_ID)).longValue();
                 String cover = (String) sourceAsMap.get(NoteIndex.FIELD_NOTE_COVER);
                 String title = (String) sourceAsMap.get(NoteIndex.FIELD_NOTE_TITLE);
                 String avatar = (String) sourceAsMap.get(NoteIndex.FIELD_NOTE_AVATAR);
@@ -286,9 +288,9 @@ public class NoteServiceImpl implements NoteService {
                 // 获取更新时间
                 String updateTimeStr = (String) sourceAsMap.get(NoteIndex.FIELD_NOTE_UPDATE_TIME);
                 LocalDateTime updateTime = LocalDateTime.parse(updateTimeStr, DateConstants.DATE_FORMAT_Y_M_D_H_M_S);
-                Integer likeTotal = (Integer) sourceAsMap.get(NoteIndex.FIELD_NOTE_LIKE_TOTAL);
+                long likeTotal = ((Number) sourceAsMap.getOrDefault(NoteIndex.FIELD_NOTE_LIKE_TOTAL, 0)).longValue();
                 Integer commentTotal = (Integer) sourceAsMap.get(NoteIndex.FIELD_NOTE_COMMENT_TOTAL);
-                Integer collectTotal = (Integer) sourceAsMap.get(NoteIndex.FIELD_NOTE_COLLECT_TOTAL);
+                long collectTotal = ((Number) sourceAsMap.getOrDefault(NoteIndex.FIELD_NOTE_COLLECT_TOTAL, 0)).longValue();
 
                 // 获取高亮字段
                 String highlightedTitle = null;
@@ -316,6 +318,7 @@ public class NoteServiceImpl implements NoteService {
             log.error("==> 查询 Elasticserach 异常: ", e);
         }
 
+        countRpcService.fillNotes(searchNoteRspVOS);
         return PageResponse.success(searchNoteRspVOS, pageNo, total);
     }
 
@@ -331,6 +334,7 @@ public class NoteServiceImpl implements NoteService {
 
         // 从数据库查询 Elasticsearch 索引数据
         List<Map<String, Object>> result = selectMapper.selectEsNoteIndexData(noteId, null);
+        countRpcService.fillNoteIndex(result);
 
         // 遍历查询结果，将每条记录同步到 Elasticsearch
         for (Map<String, Object> recordMap : result) {

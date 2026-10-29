@@ -88,6 +88,14 @@ public class GlobalExceptionHandler {
         return Response.fail(errorCode, errorMessage);
     }
 
+    @ExceptionHandler({org.springframework.validation.BindException.class,
+            jakarta.validation.ConstraintViolationException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class})
+    @ResponseBody
+    public Response<Object> handleQueryValidation(Exception exception) {
+        return Response.fail(ResponseCodeEnum.PARAM_NOT_VALID.getErrorCode(), exception.getMessage());
+    }
+
     /**
      * 其他类型异常
      * @param request

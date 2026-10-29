@@ -45,7 +45,7 @@ public class SearchUserRspVO {
     /**
      * 笔记发布总数
      */
-    private Integer noteTotal;
+    private Long noteTotal;
 
     /**
      * 粉丝总数

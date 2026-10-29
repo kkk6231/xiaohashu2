@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.quanxiaoha.xiaohashu.user.relation.biz.domain.mapper.RelationOutboxDOMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="eventId">
+        INSERT INTO t_relation_outbox(relation_id,relation_version,event_type,payload,next_retry_time)
+        VALUES(#{relationId},#{relationVersion},#{eventType},#{payload},CURRENT_TIMESTAMP(3))
+    </insert>
+
+    <update id="payload">
+        UPDATE t_relation_outbox
+        SET payload=#{payload}
+        WHERE event_id=#{eventId}
+    </update>
+
+    <!-- 只扫描每段关系最早的未发送版本，不能跳过仍在等待重试的前序消息 -->
+    <select id="candidates" resultType="java.lang.Long">
+        SELECT pending.relation_id
+        FROM t_relation_outbox pending
+        WHERE (
+            (pending.status = 0 AND pending.next_retry_time &lt;= CURRENT_TIMESTAMP(3))
+            OR (pending.status = 1 AND pending.lease_until &lt;= CURRENT_TIMESTAMP(3))
+        )
+        AND NOT EXISTS (
+            SELECT 1
+            FROM t_relation_outbox previous
+            WHERE previous.relation_id = pending.relation_id
+              AND previous.relation_version &lt; pending.relation_version
+              AND previous.status &lt;&gt; 2
+        )
+        ORDER BY pending.next_retry_time, pending.event_id
+        LIMIT #{limit}
+    </select>
+
+    <select id="lockRelation" resultType="java.lang.Long">
+        SELECT id
+        FROM t_following
+        WHERE id=#{id} FOR UPDATE
+    </select>
+
+    <!-- 必须先取最早未发送版本，再检查是否可领取，不能绕过等待重试的前序消息 -->
+    <select id="head" resultType="com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.RelationOutboxDO">
+        SELECT event_id AS eventId,relation_id AS relationId,relation_version AS relationVersion,event_type AS eventType,payload,retry_count AS retryCount
+        FROM t_relation_outbox
+        WHERE relation_id=#{id} AND status&lt;&gt;2
+        ORDER BY relation_version
+        LIMIT 1 FOR UPDATE
+    </select>
+
+    <update id="claim">
+        UPDATE t_relation_outbox
+        SET status = 1,
+            claim_token = #{token},
+            lease_until = TIMESTAMPADD(MICROSECOND, #{leaseMicros}, CURRENT_TIMESTAMP(3))
+        WHERE event_id = #{id}
+          AND (
+              (status = 0 AND next_retry_time &lt;= CURRENT_TIMESTAMP(3))
+              OR (status = 1 AND lease_until &lt;= CURRENT_TIMESTAMP(3))
+          )
+    </update>
+
+    <!-- Broker 已接受不代表下游已消费；此状态只表示投递器完成发送 -->
+    <update id="sent">
+        UPDATE t_relation_outbox
+        SET status = 2,
+            sent_time = CURRENT_TIMESTAMP(3),
+            claim_token = NULL,
+            lease_until = NULL,
+            last_error = NULL
+        WHERE event_id = #{id}
+          AND status = 1
+          AND claim_token = #{token}
+    </update>
+
+    <update id="failed">
+        UPDATE t_relation_outbox
+        SET status = 0,
+            retry_count = retry_count + 1,
+            next_retry_time = TIMESTAMPADD(SECOND, #{delay}, CURRENT_TIMESTAMP(3)),
+            last_error = #{error},
+            claim_token = NULL,
+            lease_until = NULL
+        WHERE event_id = #{id}
+          AND status = 1
+          AND claim_token = #{token}
+    </update>
+</mapper>

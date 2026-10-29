@@ -40,4 +40,15 @@ public interface RelationService {
      * @return
      */
     PageResponse<FindFansUserRspVO> findFansList(FindFansListReqVO findFansListReqVO);
+    /** 查询关注数和粉丝数。 */
+    Response<?> findCount(long userId);
+
+    /** 查询指定用户之间的关注状态。 */
+    Response<?> findFollowingStatus(long fromUserId, long toUserId);
+
+    /** 批量查询关注状态。 */
+    Response<?> findFollowingStatuses(RelationBatchReqVO request);
+
+    /** 批量查询粉丝状态。 */
+    Response<?> findFansStatuses(RelationBatchReqVO request);
 }

@@ -42,6 +42,8 @@ import java.util.Map;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
+    @Resource
+    private com.quanxiaoha.xiaohashu.search.biz.rpc.CountRpcService countRpcService;
 
     @Resource
     private RestHighLevelClient restHighLevelClient;
@@ -123,8 +125,8 @@ public class UserServiceImpl implements UserService {
                 String nickname = (String) sourceAsMap.get(UserIndex.FIELD_USER_NICKNAME);
                 String avatar = (String) sourceAsMap.get(UserIndex.FIELD_USER_AVATAR);
                 String xiaohashuId = (String) sourceAsMap.get(UserIndex.FIELD_USER_XIAOHASHU_ID);
-                Integer noteTotal = (Integer) sourceAsMap.get(UserIndex.FIELD_USER_NOTE_TOTAL);
-                Integer fansTotal = (Integer) sourceAsMap.get(UserIndex.FIELD_USER_FANS_TOTAL);
+                long noteTotal = ((Number) sourceAsMap.getOrDefault(UserIndex.FIELD_USER_NOTE_TOTAL, 0)).longValue();
+                long fansTotal = ((Number) sourceAsMap.getOrDefault(UserIndex.FIELD_USER_FANS_TOTAL, 0)).longValue();
 
                 // 获取高亮字段
                 String highlightedNickname = null;
@@ -149,6 +151,7 @@ public class UserServiceImpl implements UserService {
             log.error("==> 查询 Elasticserach 异常: ", e);
         }
 
+        countRpcService.fillUsers(searchUserRspVOS);
         return PageResponse.success(searchUserRspVOS, pageNo, total);
     }
 
@@ -164,6 +167,7 @@ public class UserServiceImpl implements UserService {
 
         // 从数据库查询 Elasticsearch 索引数据
         List<Map<String, Object>> result = selectMapper.selectEsUserIndexData(userId);
+        countRpcService.fillUserIndex(result);
 
         // 遍历查询结果，将每条记录同步到 Elasticsearch
         for (Map<String, Object> recordMap : result) {
