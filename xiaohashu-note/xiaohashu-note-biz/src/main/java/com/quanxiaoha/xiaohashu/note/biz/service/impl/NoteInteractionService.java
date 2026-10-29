@@ -25,11 +25,18 @@ public class NoteInteractionService {
     @Transactional(rollbackFor = Exception.class)
     public List<NoteInteractionResultDO> execute(List<NoteInteractionCommandDTO> commands) {
         long countGeneration = CountGenerationUtils.lockCurrent(countJdbcTemplate);
-        commands.forEach(NoteInteractionCommandDTO::validate);
-        // 按笔记 ID 排序加锁，与删除作品共用行锁，避免快照与互动写入交叉。
+        for (NoteInteractionCommandDTO command : commands) {
+            command.validate();
+        }
+        // 每篇笔记只普通读取一次，不让不同用户的互动竞争笔记排他锁。
+        // 读取后笔记可能被删除，仍允许本次互动提交；删除并发下作者汇总计数可有偏差。
         Map<Long, NoteDO> notes = new HashMap<>();
-        commands.stream().map(NoteInteractionCommandDTO::getNoteId).distinct().sorted()
-                .forEach(id -> notes.put(id, interactionMapper.lockNote(id)));
+        for (NoteInteractionCommandDTO command : commands) {
+            Long noteId = command.getNoteId();
+            if (!notes.containsKey(noteId)) {
+                notes.put(noteId, interactionMapper.findNote(noteId));
+            }
+        }
         // 已提交的请求复用原始结果，包括原始增量；不能依据当前状态重新计算。
         Map<String, NoteInteractionResultDO> results = new LinkedHashMap<>();
         for (NoteInteractionResultDO row : interactionMapper.findResults(commands)) {

@@ -227,4 +227,10 @@
 
 
 
+  <!-- 条件更新自身保证原子性，不再预先 SELECT FOR UPDATE。 -->
+  <update id="markDeletedIfStatus">
+    UPDATE t_note SET status = 2, update_time = #{updateTime}
+    WHERE id = #{noteId} AND creator_id = #{creatorId}
+      AND status = #{expectedStatus} AND status &lt;&gt; 2
+  </update>
 </mapper>

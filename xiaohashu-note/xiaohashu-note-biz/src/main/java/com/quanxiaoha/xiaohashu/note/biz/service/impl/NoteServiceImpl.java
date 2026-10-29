@@ -1,5 +1,7 @@
 package com.quanxiaoha.xiaohashu.note.biz.service.impl;
 
+import com.quanxiaoha.framework.common.response.PageResponse;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import com.quanxiaoha.framework.common.util.CountGenerationUtils;
 
@@ -486,7 +488,7 @@ public class NoteServiceImpl implements NoteService {
         // 笔记 ID
         Long noteId = deleteNoteReqVO.getId();
 
-        NoteDO selectNoteDO = noteInteractionMapper.lockNote(noteId);
+        NoteDO selectNoteDO = noteInteractionMapper.findNote(noteId);
 
         // 判断笔记是否存在
         if (Objects.isNull(selectNoteDO)) {
@@ -502,20 +504,18 @@ public class NoteServiceImpl implements NoteService {
         if (Objects.equals(selectNoteDO.getStatus(), NoteStatusEnum.DELETED.getCode())) {
             return Response.success();
         }
-        // 先锁作品行，再读取互动快照；此事务在锁定前没有建立一致性快照。
+        // 只有条件更新成功的请求才产生删除事件，避免并发删除重复扣减。
+        int updatedRows = noteDOMapper.markDeletedIfStatus(noteId, currUserId,
+                selectNoteDO.getStatus(), LocalDateTime.now());
+        if (updatedRows == 0) {
+            // 可能已被另一请求删除，或者状态被其他操作改变；均不再生成删除事件。
+            return Response.success();
+        }
+        // 互动不锁笔记，删除快照允许遗漏并发提交的互动，接受作者汇总计数偏差。
         if (Objects.equals(selectNoteDO.getStatus(), NoteStatusEnum.NORMAL.getCode())) {
             noteCountEventService.append(selectNoteDO, "NOTE_DELETED",
                     noteInteractionMapper.countLikes(noteId), noteInteractionMapper.countCollections(noteId));
         }
-
-        // 逻辑删除
-        NoteDO noteDO = NoteDO.builder()
-                .id(noteId)
-                .status(NoteStatusEnum.DELETED.getCode())
-                .updateTime(LocalDateTime.now())
-                .build();
-
-        noteDOMapper.updateByPrimaryKeySelective(noteDO);
 
         // 与删除事实同事务记录；投递器仅能看到已提交的任务，失败会自动重试。
         noteCountEventService.appendCacheInvalidation(noteId);
@@ -776,5 +776,46 @@ public class NoteServiceImpl implements NoteService {
             }
             throw exception;
         }
+    }
+
+    /** 分页读取我的点赞笔记，总数与当前页在同一个只读事务快照内查询。 */
+    @Override
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public PageResponse<FindInteractionNoteListRspVO> findLikedNotes(FindInteractionNoteListReqVO request) {
+        Long userId = validateInteractionListRequest(request);
+        long totalCount = noteLikeDOMapper.countVisibleNotes(userId);
+        long offset = PageResponse.getOffset(request.getPageNo(), request.getPageSize());
+        List<FindInteractionNoteListRspVO> notes = java.util.Collections.emptyList();
+        if (offset < totalCount) {
+            notes = noteLikeDOMapper.selectVisibleNotesPage(userId, offset, request.getPageSize());
+        }
+        return PageResponse.success(notes, request.getPageNo(), totalCount, request.getPageSize());
+    }
+
+    /** 分页读取我的收藏笔记，总数与当前页在同一个只读事务快照内查询。 */
+    @Override
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public PageResponse<FindInteractionNoteListRspVO> findCollectedNotes(FindInteractionNoteListReqVO request) {
+        Long userId = validateInteractionListRequest(request);
+        long totalCount = noteCollectionDOMapper.countVisibleNotes(userId);
+        long offset = PageResponse.getOffset(request.getPageNo(), request.getPageSize());
+        List<FindInteractionNoteListRspVO> notes = java.util.Collections.emptyList();
+        if (offset < totalCount) {
+            notes = noteCollectionDOMapper.selectVisibleNotesPage(userId, offset, request.getPageSize());
+        }
+        return PageResponse.success(notes, request.getPageNo(), totalCount, request.getPageSize());
+    }
+
+    /** 校验分页边界和登录身份，避免内部调用绕过 Controller 校验或查询其他用户的数据。 */
+    private Long validateInteractionListRequest(FindInteractionNoteListReqVO request) {
+        if (request == null || request.getPageNo() == null || request.getPageNo() < 1
+                || request.getPageSize() == null || request.getPageSize() < 1 || request.getPageSize() > 100) {
+            throw new BizException(ResponseCodeEnum.PARAM_NOT_VALID);
+        }
+        Long userId = LoginUserContextHolder.getUserId();
+        if (userId == null || userId <= 0) {
+            throw new BizException(ResponseCodeEnum.NOTE_CANT_OPERATE);
+        }
+        return userId;
     }
 }

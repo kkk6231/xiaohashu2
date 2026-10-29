@@ -1,5 +1,7 @@
 package com.quanxiaoha.xiaohashu.note.biz.controller;
 
+import com.quanxiaoha.framework.common.response.PageResponse;
+
 import com.quanxiaoha.framework.biz.operationlog.aspect.ApiOperationLog;
 import com.quanxiaoha.framework.common.response.Response;
 import com.quanxiaoha.xiaohashu.note.biz.model.vo.*;
@@ -90,4 +92,20 @@ public class NoteController {
         return noteService.unCollectNote(unCollectNoteReqVO);
     }
 
+
+    /** 查询我的点赞笔记列表；用户身份由登录上下文提供。 */
+    @PostMapping("/like/list")
+    @ApiOperationLog(description = "查询点赞笔记列表")
+    public PageResponse<FindInteractionNoteListRspVO> findLikedNotes(
+            @Validated @RequestBody FindInteractionNoteListReqVO request) {
+        return noteService.findLikedNotes(request);
+    }
+
+    /** 查询我的收藏笔记列表；用户身份由登录上下文提供。 */
+    @PostMapping("/collect/list")
+    @ApiOperationLog(description = "查询收藏笔记列表")
+    public PageResponse<FindInteractionNoteListRspVO> findCollectedNotes(
+            @Validated @RequestBody FindInteractionNoteListReqVO request) {
+        return noteService.findCollectedNotes(request);
+    }
 }

@@ -14,8 +14,9 @@
         <result column="actual_delta" property="actualDelta"/>
         <result column="created_at" property="createdAt"/>
     </resultMap>
-    <select id="lockNote" resultMap="com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteDOMapper.BaseResultMap">
-        SELECT * FROM t_note WHERE id = #{noteId} FOR UPDATE
+    <!-- 互动只做普通读取，不锁笔记行；关系及处理结果的锁仍然保留。 -->
+    <select id="findNote" resultMap="com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteDOMapper.BaseResultMap">
+        SELECT id, creator_id, status, visible FROM t_note WHERE id = #{noteId}
     </select>
     <select id="findResults" resultMap="ResultMap">
         SELECT * FROM t_note_interaction_result WHERE (user_id, request_id) IN

@@ -1,5 +1,7 @@
 package com.quanxiaoha.xiaohashu.note.biz.domain.mapper;
 
+import com.quanxiaoha.xiaohashu.note.biz.model.vo.FindInteractionNoteListRspVO;
+
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteCollectionDO;
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteLikeDO;
 import org.apache.ibatis.annotations.Param;
@@ -64,4 +66,11 @@ public interface NoteCollectionDOMapper {
      */
     int update2UnCollectByUserIdAndNoteId(NoteCollectionDO noteCollectionDO);
 
+
+    /** 统计当前用户仍可访问的有效互动笔记数量。 */
+    long countVisibleNotes(@Param("userId") Long userId);
+
+    /** 按互动时间和关系 ID 倒序分页，直接关联笔记信息，避免逐条查询详情。 */
+    List<FindInteractionNoteListRspVO> selectVisibleNotesPage(@Param("userId") Long userId,
+            @Param("offset") long offset, @Param("limit") int limit);
 }

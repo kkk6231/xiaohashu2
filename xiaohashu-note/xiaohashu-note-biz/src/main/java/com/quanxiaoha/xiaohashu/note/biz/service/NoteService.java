@@ -1,5 +1,7 @@
 package com.quanxiaoha.xiaohashu.note.biz.service;
 
+import com.quanxiaoha.framework.common.response.PageResponse;
+
 import com.quanxiaoha.framework.common.response.Response;
 import com.quanxiaoha.xiaohashu.note.biz.model.vo.*;
 
@@ -86,4 +88,10 @@ public interface NoteService {
      * @return
      */
     Response<?> unCollectNote(UnCollectNoteReqVO unCollectNoteReqVO);
+
+    /** 分页查询当前登录用户点赞过且仍可访问的笔记。 */
+    PageResponse<FindInteractionNoteListRspVO> findLikedNotes(FindInteractionNoteListReqVO request);
+
+    /** 分页查询当前登录用户收藏过且仍可访问的笔记。 */
+    PageResponse<FindInteractionNoteListRspVO> findCollectedNotes(FindInteractionNoteListReqVO request);
 }

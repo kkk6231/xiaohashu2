@@ -6,7 +6,8 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 public interface NoteInteractionMapper {
-    NoteDO lockNote(@Param("noteId") long noteId);
+    /** 互动时普通读取笔记状态，不与删除事务互斥；允许删除并发下的计数偏差。 */
+    NoteDO findNote(@Param("noteId") long noteId);
     List<NoteInteractionResultDO> findResults(@Param("commands") List<NoteInteractionCommandDTO> commands);
     NoteInteractionResultDO findResult(@Param("userId") long userId, @Param("requestId") String requestId);
     List<NoteLikeDO> findLikes(@Param("commands") List<NoteInteractionCommandDTO> commands);

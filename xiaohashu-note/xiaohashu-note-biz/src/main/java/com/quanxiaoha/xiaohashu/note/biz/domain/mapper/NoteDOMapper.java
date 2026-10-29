@@ -1,8 +1,16 @@
 package com.quanxiaoha.xiaohashu.note.biz.domain.mapper;
 
 import com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteDO;
+import org.apache.ibatis.annotations.Param;
+import java.time.LocalDateTime;
 
 public interface NoteDOMapper {
+    /** 按读取到的状态条件删除，返回 1 才代表本次请求完成状态迁移。 */
+    int markDeletedIfStatus(@Param("noteId") Long noteId,
+            @Param("creatorId") Long creatorId,
+            @Param("expectedStatus") Integer expectedStatus,
+            @Param("updateTime") LocalDateTime updateTime);
+
     int deleteByPrimaryKey(Long id);
 
     int insert(NoteDO record);

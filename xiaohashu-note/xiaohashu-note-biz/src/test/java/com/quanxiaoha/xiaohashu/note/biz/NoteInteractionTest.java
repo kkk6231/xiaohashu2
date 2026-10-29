@@ -27,7 +27,7 @@ class NoteInteractionTest {
                 org.mockito.ArgumentMatchers.eq(Long.class))).thenReturn(1L);
         ReflectionTestUtils.setField(service, "countJdbcTemplate", generationJdbc);
         ReflectionTestUtils.setField(service, "interactionMapper", mapper);
-        when(mapper.lockNote(10)).thenReturn(NoteDO.builder().id(10L).creatorId(20L).status(1).visible(0).build());
+        when(mapper.findNote(10)).thenReturn(NoteDO.builder().id(10L).creatorId(20L).status(1).visible(0).build());
         when(mapper.findResults(anyList())).thenReturn(List.of());
         when(mapper.findLikes(anyList())).thenReturn(List.of());
         when(mapper.findCollections(anyList())).thenReturn(List.of());
@@ -54,7 +54,7 @@ class NoteInteractionTest {
         var result = service.execute(List.of(command)).get(0);
         clearInvocations(mapper);
         when(mapper.findResults(anyList())).thenReturn(List.of(result));
-        when(mapper.lockNote(10)).thenReturn(NoteDO.builder().id(10L).creatorId(20L).status(2).build());
+        when(mapper.findNote(10)).thenReturn(NoteDO.builder().id(10L).creatorId(20L).status(2).build());
         var retry = service.execute(List.of(command));
         assertSame(result, retry.get(0));
         assertEquals(1, retry.get(0).getActualDelta());
@@ -67,7 +67,7 @@ class NoteInteractionTest {
         var command = command(true);
         var results = service.execute(List.of(command, command));
         assertSame(results.get(0), results.get(1));
-        when(mapper.lockNote(10)).thenReturn(NoteDO.builder().id(10L).creatorId(20L).status(2).build());
+        when(mapper.findNote(10)).thenReturn(NoteDO.builder().id(10L).creatorId(20L).status(2).build());
         var rejected = service.execute(List.of(command(false))).get(0);
         assertEquals("REJECTED", rejected.getResultType());
         assertEquals(0, rejected.getActualDelta());
