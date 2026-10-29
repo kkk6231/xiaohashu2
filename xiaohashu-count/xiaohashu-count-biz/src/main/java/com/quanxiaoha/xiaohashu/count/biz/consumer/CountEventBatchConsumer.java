@@ -17,18 +17,29 @@ import java.util.*;
 public class CountEventBatchConsumer {
     // 关系事件最多拆为两个目标，100 条消息对应最多 200 条计数变更。
     private static final int CONSUME_BATCH_SIZE = 100;
+    /**
+     * 注册关系事件消费者（消费组 counter-relation-v1）。
+     * 每批最多 100 条，所有目标写成功才确认消息。
+     */
     @Bean(initMethod = "start", destroyMethod = "shutdown")
     public DefaultMQPushConsumer relationCounterConsumer(@Value("${rocketmq.name-server}") String server,
             ObjectMapper mapper, CountService service) throws Exception {
         return create("counter-relation-v1", RelationEvent.TOPIC, server, mapper, service, true);
     }
 
+    /**
+     * 注册作品事件消费者（消费组 counter-note-v1），处理笔记发布与删除事件。
+     */
     @Bean(initMethod = "start", destroyMethod = "shutdown")
     public DefaultMQPushConsumer noteCounterConsumer(@Value("${rocketmq.name-server}") String server,
             ObjectMapper mapper, CountService service) throws Exception {
         return create("counter-note-v1", NoteCountEvent.TOPIC, server, mapper, service, false);
     }
 
+    /**
+     * 创建消费者：并发消费、每批 100 条，只有本批全部目标成功才返回成功。
+     * 关系与作品事件的增量可以交换累加，因此不需要顺序消费；失败整批重投，靠 seen 去重。
+     */
     private DefaultMQPushConsumer create(String group, String topic, String server, ObjectMapper mapper,
             CountService service, boolean relationEvent) throws Exception {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(group);

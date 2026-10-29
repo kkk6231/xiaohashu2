@@ -14,6 +14,9 @@ public class RelationCountRpcService {
     @Resource
     private RelationCountFeignApi relationCountFeignApi;
 
+    /**
+     * 查询用户的关注数与粉丝数，直接转调计数服务。
+     */
     public Response<RelationCountDTO> findCount(long userId) {
         return relationCountFeignApi.find(userId);
     }

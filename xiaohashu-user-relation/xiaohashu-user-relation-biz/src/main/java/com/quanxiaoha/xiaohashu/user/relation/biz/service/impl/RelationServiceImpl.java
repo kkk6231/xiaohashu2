@@ -80,6 +80,10 @@ public class RelationServiceImpl implements RelationService {
         return Response.success(Collections.singletonMap("following", following));
     }
 
+    /**
+     * 从登录上下文取当前用户 ID，取不到就抛“未登录”业务异常。
+     * 关系写操作都以它作为发起人，不能信任客户端传入的用户 ID。
+     */
     private Long getLoginUserId() {
         Long userId = LoginUserContextHolder.getUserId();
         if (Objects.isNull(userId)) {
@@ -162,6 +166,9 @@ public class RelationServiceImpl implements RelationService {
         return PageResponse.success(fansUsers, pageNo, fansTotal, pageSize);
     }
 
+    /**
+     * 把缓存条目转换成用户 ID 列表，保持缓存里已经排好的顺序。
+     */
     private List<Long> extractUserIds(RelationCacheSnapshotDTO cacheSnapshot) {
         List<Long> userIds = new ArrayList<>(cacheSnapshot.getEntries().size());
         for (RelationCacheEntryDTO cacheEntry : cacheSnapshot.getEntries()) {
@@ -170,6 +177,10 @@ public class RelationServiceImpl implements RelationService {
         return userIds;
     }
 
+    /**
+     * 深分页时回源数据库查粉丝 ID。
+     * 查询前先扣一次限流额度：缓存整体失效时，这里是唯一会打到数据库的入口。
+     */
     private List<Long> findFansUserIdsFromDatabase(Long userId, long offset, int pageSize) {
         relationDatabaseRateLimiter.acquire();
         List<RelationDO> fansRelations = relationDOMapper.followerPage(userId, offset, pageSize);
@@ -206,11 +217,18 @@ public class RelationServiceImpl implements RelationService {
         return orderedUserInfos;
     }
 
+    /**
+     * 查询用户的关注数与粉丝数，转调计数服务。
+     */
     @Override
     public Response<?> findCount(long userId) {
         return relationCountRpcService.findCount(userId);
     }
 
+    /**
+     * 查询“我是否关注了某个人”。
+     * 只查这一对关系，不加载整份关注列表。
+     */
     @Override
     public Response<?> findFollowingStatus(long fromUserId, long toUserId) {
         List<Long> targetUserIds = Collections.singletonList(toUserId);
@@ -218,6 +236,10 @@ public class RelationServiceImpl implements RelationService {
         return Response.success(Collections.singletonMap("following", followingStatuses.get(toUserId)));
     }
 
+    /**
+     * 批量查询关注状态：这批目标里，我关注了谁。
+     * 结果按入参顺序返回，缺失的按“未关注”处理。
+     */
     @Override
     public Response<?> findFollowingStatuses(RelationBatchReqVO relationBatchReqVO) {
         Map<Long, Boolean> followingStatuses = relationListCache.followingStatuses(
@@ -225,6 +247,10 @@ public class RelationServiceImpl implements RelationService {
         return Response.success(followingStatuses);
     }
 
+    /**
+     * 批量查询粉丝状态：这批候选人里，谁关注了我。
+     * 走粉丝投影表，避免在关注主表上反向查询。
+     */
     @Override
     public Response<?> findFansStatuses(RelationBatchReqVO relationBatchReqVO) {
         Map<Long, Boolean> fansStatuses = relationListCache.followerStatuses(

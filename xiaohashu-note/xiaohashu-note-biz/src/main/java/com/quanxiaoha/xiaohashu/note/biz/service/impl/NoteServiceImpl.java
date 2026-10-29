@@ -101,10 +101,12 @@ public class NoteServiceImpl implements NoteService {
             .build();
 
     /**
-     * 笔记发布
+     * 发布笔记。
+     * 流程：按类型校验图片/视频 → 用分布式 ID 生成笔记 ID → 正文写入 KV 存储（Cassandra）
+     * → 元数据写 t_note，并在同一个事务里登记 NOTE_PUBLISHED 事件（供计数服务加作品数）。
+     * 正文和元数据分库存放：正文大、元数据小，查询模式也不同。
      *
-     * @param publishNoteReqVO
-     * @return
+     * @param publishNoteReqVO 标题、类型、图片/视频地址、正文、话题
      */
     @Override
     public Response<?> publishNote(PublishNoteReqVO publishNoteReqVO) {
@@ -212,10 +214,13 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 笔记详情
+     * 查询笔记详情。
+     * 读路径是三级缓存：Caffeine 本地 → Redis → MySQL；回源后用 CompletableFuture 并发拉
+     * 作者、正文、计数、关注状态四个下游，把多次 RTT 压成一次。
+     * 缓存里只放“公共详情”（不含计数和个人状态），否则会把 A 用户的“已点赞”污染给 B。
+     * 笔记不存在时写一个短 TTL 的空值，防止缓存穿透。
      *
-     * @param findNoteDetailReqVO
-     * @return
+     * @param findNoteDetailReqVO 笔记 ID
      */
     @Override
     public Response<FindNoteDetailRspVO> findNoteDetail(FindNoteDetailReqVO findNoteDetailReqVO) {
@@ -312,10 +317,13 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 笔记更新
+     * 更新笔记。
+     * 事务内更新元数据、更新 KV 里的正文，然后删 Redis 缓存并广播清本地缓存。
+     * 注意这里的失效动作发生在事务提交之前，属于已知的一致性问题：
+     * 并发读可能在提交前回源读到旧值并回填缓存，删除链路已经用 Outbox 修掉这个窗口，
+     * 更新链路还没改。正文更新失败会抛异常让事务回滚。
      *
-     * @param updateNoteReqVO
-     * @return
+     * @param updateNoteReqVO 笔记 ID、标题、正文、图片/视频、话题
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -430,18 +438,22 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 删除本地笔记缓存
-     * @param noteId
+     * 清掉本实例的笔记详情本地缓存。
+     * 由广播模式的消费者调用：缓存失效消息要让每个实例都收到，只清自己进程内的 Caffeine。
+     *
+     * @param noteId 笔记 ID
      */
     public void deleteNoteLocalCache(Long noteId) {
         LOCAL_CACHE.invalidate(noteId);
     }
 
     /**
-     * 删除笔记
+     * 删除笔记。
+     * 用带状态条件的 UPDATE 防止并发重复删除；删除事实、计数事件（含删除时的互动快照）
+     * 和缓存失效任务在同一个事务里提交，提交后才由投递器去清缓存。
      *
-     * @param deleteNoteReqVO
-     * @return
+     * @param deleteNoteReqVO 笔记 ID
+     * @return 成功即表示删除事实已提交，不代表缓存已清完
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -485,10 +497,11 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 笔记仅对自己可见
+     * 把笔记设为“仅自己可见”。
+     * 只改可见性字段，不改正文；改完同样要清 Redis 详情缓存并广播清各实例的本地缓存，
+     * 否则别的用户可能还在缓存里看到这篇笔记。
      *
-     * @param updateNoteVisibleOnlyMeReqVO
-     * @return
+     * @param updateNoteVisibleOnlyMeReqVO 笔记 ID
      */
     @Override
     public Response<?> visibleOnlyMe(UpdateNoteVisibleOnlyMeReqVO updateNoteVisibleOnlyMeReqVO) {
@@ -535,10 +548,10 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 笔记置顶 / 取消置顶
+     * 置顶 / 取消置顶笔记。
+     * 只改置顶标记，不改正文；置顶状态会随详情一起返回，所以更新后同样要失效缓存。
      *
-     * @param topNoteReqVO
-     * @return
+     * @param topNoteReqVO 笔记 ID + 是否置顶
      */
     @Override
     public Response<?> topNote(TopNoteReqVO topNoteReqVO) {
@@ -576,10 +589,11 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 点赞笔记
+     * 点赞笔记。
+     * 接口只发一条顺序消息（路由键 userId:noteId）就返回 ACCEPTED，不写库；
+     * 真正的互动事实和计数由消费端异步完成，客户端用同一个 requestId 重试。
      *
-     * @param likeNoteReqVO
-     * @return
+     * @param likeNoteReqVO 笔记 ID + 本次操作的 requestId
      */
     @Override
     public Response<?> likeNote(LikeNoteReqVO likeNoteReqVO) {
@@ -587,10 +601,10 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 取消点赞笔记
+     * 取消点赞笔记。
+     * 与点赞共用同一条链路和同一个顺序队列，保证“点赞→取消”按发送顺序被计算。
      *
-     * @param unlikeNoteReqVO
-     * @return
+     * @param unlikeNoteReqVO 笔记 ID + 本次操作的 requestId
      */
     @Override
     public Response<?> unlikeNote(UnlikeNoteReqVO unlikeNoteReqVO) {
@@ -598,10 +612,10 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 收藏笔记
+     * 收藏笔记。
+     * 与点赞同一套异步模型：先受理、后算事实，收藏数由计数服务维护。
      *
-     * @param collectNoteReqVO
-     * @return
+     * @param collectNoteReqVO 笔记 ID + 本次操作的 requestId
      */
     @Override
     public Response<?> collectNote(CollectNoteReqVO collectNoteReqVO) {
@@ -609,10 +623,10 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
-     * 取消收藏笔记
+     * 取消收藏笔记。
+     * 与收藏共用队列，避免同一用户对同一篇笔记的收藏状态被乱序计算。
      *
-     * @param unCollectNoteReqVO
-     * @return
+     * @param unCollectNoteReqVO 笔记 ID + 本次操作的 requestId
      */
     @Override
     public Response<?> unCollectNote(UnCollectNoteReqVO unCollectNoteReqVO) {
@@ -711,7 +725,13 @@ public class NoteServiceImpl implements NoteService {
         }
     }
 
-    /** 分页读取我的点赞笔记，总数与当前页在同一个只读事务快照内查询。 */
+    /**
+     * 分页读取“我点赞过的笔记”。
+     * 只读事务用 REPEATABLE_READ：总数和当前页取自同一个快照，避免翻页时总数变化导致错位；
+     * 只返回仍然可见的笔记（已删除/私密的会被过滤）。
+     *
+     * @param request 页码与每页条数（最多 100）
+     */
     @Override
     @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public PageResponse<FindInteractionNoteListRspVO> findLikedNotes(FindInteractionNoteListReqVO request) {
@@ -725,7 +745,12 @@ public class NoteServiceImpl implements NoteService {
         return PageResponse.success(notes, request.getPageNo(), totalCount, request.getPageSize());
     }
 
-    /** 分页读取我的收藏笔记，总数与当前页在同一个只读事务快照内查询。 */
+    /**
+     * 分页读取“我收藏过的笔记”。
+     * 与点赞列表同构：同一快照内取总数和当前页，只返回仍然可见的笔记。
+     *
+     * @param request 页码与每页条数（最多 100）
+     */
     @Override
     @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public PageResponse<FindInteractionNoteListRspVO> findCollectedNotes(FindInteractionNoteListReqVO request) {
@@ -739,7 +764,12 @@ public class NoteServiceImpl implements NoteService {
         return PageResponse.success(notes, request.getPageNo(), totalCount, request.getPageSize());
     }
 
-    /** 校验分页边界和登录身份，避免内部调用绕过 Controller 校验或查询其他用户的数据。 */
+    /**
+     * 校验互动列表的分页参数和登录身份。
+     * 用户 ID 只从登录态取，不接受客户端传参，避免查到别人的列表。
+     *
+     * @return 当前登录用户 ID
+     */
     private Long validateInteractionListRequest(FindInteractionNoteListReqVO request) {
         if (request == null || request.getPageNo() == null || request.getPageNo() < 1
                 || request.getPageSize() == null || request.getPageSize() < 1 || request.getPageSize() > 100) {

@@ -13,6 +13,10 @@ public class NoteInteractionController {
     private NoteInteractionMapper interactionMapper;
 
     @GetMapping("/note/interaction/result")
+    /**
+     * 查询某次互动请求的处理结果，只允许查询自己的 requestId。
+     * 尚未生成处理记录时返回 UNKNOWN，不能据此判断消息丢失或失败。
+     */
     public Response<?> findResult(@RequestParam String requestId) {
         var result = interactionMapper.findResult(LoginUserContextHolder.getUserId(), requestId);
         if (result == null) return Response.success(Map.of("requestId", requestId, "status", "UNKNOWN"));

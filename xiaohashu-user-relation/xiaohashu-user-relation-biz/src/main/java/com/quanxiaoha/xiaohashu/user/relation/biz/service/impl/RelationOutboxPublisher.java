@@ -41,6 +41,9 @@ public class RelationOutboxPublisher {
             2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(256),
             this::createPublishThread, new ThreadPoolExecutor.AbortPolicy());
 
+    /**
+     * 创建投递线程，设为守护线程，避免阻塞应用关闭。
+     */
     private Thread createPublishThread(Runnable publishTask) {
         Thread publishThread = new Thread(publishTask, "relation-outbox");
         publishThread.setDaemon(true);
@@ -87,6 +90,13 @@ public class RelationOutboxPublisher {
         }
     }
 
+    /**
+     * 在当前关系下领取最早的一条未发送事件。
+     * 先锁关系行让即时投递与多实例扫描串行，再用 claimToken + 租约标记“发送中”；
+     * 只能按版本顺序推进，前一条没发出去就不能跳过它领后一条。
+     *
+     * @return 领取到的事件；没有可发消息或领取失败时返回 null
+     */
     private RelationOutboxDO claimPendingMessage(long relationId) {
         // 锁定关系行，使即时投递和多实例扫描串行领取同一关系的消息
         Long lockedRelationId = relationOutboxDOMapper.lockRelation(relationId);
@@ -109,6 +119,11 @@ public class RelationOutboxPublisher {
         return pendingMessage;
     }
 
+    /**
+     * 发送一条已领取的事件，并按 claimToken 回写发送状态。
+     * 只有 Broker 明确返回 SEND_OK 才算发送成功；超时、异常一律按“结果不确定”处理，
+     * 消息保留等待重试。发送成功后继续唤醒下一条，让同一关系的事件串行推进。
+     */
     private void sendClaimedMessage(RelationOutboxDO outboxDO) {
         try {
             Message<String> message = MessageBuilder.withPayload(outboxDO.getPayload())
@@ -133,6 +148,13 @@ public class RelationOutboxPublisher {
         }
     }
 
+    /**
+     * 记录一次发送失败，并按 1、2、4…最长 300 秒的间隔退避。
+     * 这里只改状态和下次重试时间：消息永不删除，也不存在“重试够了就丢弃”的分支。
+     *
+     * @param outboxDO  本次领取到的事件
+     * @param exception 发送失败或结果不确定的原因
+     */
     private void recordSendFailure(RelationOutboxDO outboxDO, Exception exception) {
         // 重试间隔按 1、2、4……秒增长，保持与已有退避策略一致
         int retryExponent = Math.min(outboxDO.getRetryCount(), 8);
@@ -146,6 +168,9 @@ public class RelationOutboxPublisher {
         log.warn("==> 关系消息发送结果不确定，保留消息等待重试，eventId: {}", outboxDO.getEventId(), exception);
     }
 
+    /**
+     * 应用关闭时停止接收新的投递任务，已提交到线程池的任务继续执行。
+     */
     @PreDestroy
     public void close() {
         publishExecutor.shutdown();

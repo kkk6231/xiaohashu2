@@ -16,6 +16,10 @@ public class NoteInteractionPublisher {
     @Resource
     private RocketMQTemplate rocketMQTemplate;
 
+    /**
+     * 校验并发送一条互动命令，等 Broker 确认后返回 ACCEPTED。
+     * 接口不写库：发送失败或结果未知时，由客户端用同一个 requestId 重试，不能生成新 ID 冒充重试。
+     */
     public Response<?> submit(String requestId, long noteId, String action, boolean targetState) {
         Long userId = LoginUserContextHolder.getUserId();
         NoteInteractionCommandDTO command = new NoteInteractionCommandDTO(requestId, userId, noteId, action, targetState);

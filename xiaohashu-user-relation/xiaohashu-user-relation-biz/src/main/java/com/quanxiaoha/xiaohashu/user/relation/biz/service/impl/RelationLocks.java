@@ -29,6 +29,10 @@ public class RelationLocks implements AutoCloseable {
 
     private final ScheduledThreadPoolExecutor renewalExecutor = createRenewalExecutor();
 
+    /**
+     * 创建锁续约线程池。
+     * 开启“取消即移除”，避免大量短操作结束后取消任务堆在延迟队列里。
+     */
     private ScheduledThreadPoolExecutor createRenewalExecutor() {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2, this::createRenewalThread);
         // 短操作结束后立即移除续约任务，避免大量取消任务滞留在延迟队列。
@@ -40,12 +44,22 @@ public class RelationLocks implements AutoCloseable {
     private static final DefaultRedisScript<Long> RELEASE_SCRIPT = new DefaultRedisScript<>(
             "if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end", Long.class);
 
+    /**
+     * 创建续约线程，设为守护线程，避免应用关闭时被阻塞。
+     */
     private Thread createRenewalThread(Runnable renewalTask) {
         Thread renewalThread = new Thread(renewalTask, "relation-lock-renewal");
         renewalThread.setDaemon(true);
         return renewalThread;
     }
 
+    /**
+     * 生成某类列表的 key 前缀。
+     * 前缀里带 hash tag（如 relation:{following:123}:），保证锁、列表、元数据落在同一个 Redis 槽。
+     *
+     * @param lockType following（关注列表）或 followers（粉丝列表）
+     * @param userId   列表归属的用户
+     */
     public static String prefix(String lockType, long userId) {
         return RedisKeyConstants.buildRelationKeyPrefix(lockType, userId);
     }
@@ -87,6 +101,10 @@ public class RelationLocks implements AutoCloseable {
         private final ScheduledFuture<?> renewalTask;
         private volatile boolean leaseLost;
 
+        /**
+         * 记录本次持锁的 key 与 token，并按租约的 1/3 周期启动续约任务。
+         * 周期小于租约，保证网络抖动时也来得及续上。
+         */
         private Handle(String lockKey, String lockToken) {
             this.lockKey = lockKey;
             this.lockToken = lockToken;
@@ -95,6 +113,11 @@ public class RelationLocks implements AutoCloseable {
                     this::renewLease, renewalIntervalMillis, renewalIntervalMillis, TimeUnit.MILLISECONDS);
         }
 
+        /**
+         * 续约一次：Lua 内先比对 token，确认锁还是自己的再延长过期时间。
+         * 比对失败或执行异常都标记“租约已丢失”，此后 token() 会直接抛异常，
+         * 防止已经失去锁的线程继续往缓存里写数据。
+         */
         private void renewLease() {
             try {
                 String leaseMillis = String.valueOf(relationProperties.getLockLeaseMillis());
@@ -118,10 +141,17 @@ public class RelationLocks implements AutoCloseable {
             return lockToken;
         }
 
+        /**
+         * 返回锁的 key，便于日志排查。
+         */
         public String key() {
             return lockKey;
         }
 
+        /**
+         * 释放锁：先取消续约任务，再用 Lua 只删除属于本次持有者的锁。
+         * 直接 DEL 会误删已过期后由别人拿到的锁，所以必须比对 token。
+         */
         @Override
         public void close() {
             renewalTask.cancel(false);
@@ -134,6 +164,9 @@ public class RelationLocks implements AutoCloseable {
         }
     }
 
+    /**
+     * 应用关闭时立即停止续约线程池。
+     */
     @PreDestroy
     public void close() {
         renewalExecutor.shutdownNow();

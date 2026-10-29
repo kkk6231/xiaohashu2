@@ -32,6 +32,11 @@ public class FollowUnfollowConsumer implements RocketMQListener<String> {
     @Resource
     private RelationListCache relationListCache;
 
+    /**
+     * 顺序消费一条关系变更事件：先写粉丝投影，再同步粉丝列表缓存。
+     * 任一步失败都抛异常交给 MQ 重试，不越序确认；
+     * 重试时即使投影已是同一版本，后面的缓存修复也必须继续执行。
+     */
     @Override
     public void onMessage(String body) {
         // 解析并校验业务事件，异常向外抛出，由 RocketMQ 重试

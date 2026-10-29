@@ -37,6 +37,10 @@ public class RelationListCache {
     private static final DefaultRedisScript<List> READ_LIST_SCRIPT = loadScript("relation-list-read.lua", List.class);
     private static final DefaultRedisScript<Long> WRITE_LIST_SCRIPT = loadScript("relation-list-write.lua", Long.class);
 
+    /**
+     * 从 classpath 加载 Lua 脚本并指定返回类型。
+     * 脚本在类加载时只读一次，之后复用同一个 DefaultRedisScript 实例。
+     */
     private static <T> DefaultRedisScript<T> loadScript(String scriptName, Class<T> resultType) {
         DefaultRedisScript<T> redisScript = new DefaultRedisScript<>();
         redisScript.setLocation(new ClassPathResource("lua/" + scriptName));
@@ -57,6 +61,10 @@ public class RelationListCache {
         return updateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
+    /**
+     * 生成锁、列表、元数据三个 key。
+     * 顺序必须与 Lua 的 KEYS[1..3] 一致；三者共用 hash tag，保证同一槽位、能被一个脚本原子操作。
+     */
     private List<String> buildCacheKeys(String cacheType, long userId) {
         String keyPrefix = RelationLocks.prefix(cacheType, userId);
         // 顺序必须与 Lua 的 KEYS[1..3] 保持一致，所有 key 使用同一 Redis Cluster 槽
@@ -143,12 +151,19 @@ public class RelationListCache {
         }
     }
 
+    /**
+     * 把一条关系记录转换成缓存条目。
+     * 粉丝列表取发起人 ID，关注列表取被关注人 ID；分数统一用关注时间。
+     */
     private RelationCacheEntryDTO buildCacheEntry(RelationDO relationDO, boolean fansCache) {
         Long memberUserId = fansCache ? relationDO.getFromUserId() : relationDO.getToUserId();
         long followTimeMillis = score(relationDO.getUpdateTime());
         return new RelationCacheEntryDTO(memberUserId, followTimeMillis);
     }
 
+    /**
+     * 判断这条关系记录当前是否为“关注”状态（type=1）。
+     */
     private boolean isFollowing(RelationDO relationDO) {
         return Objects.nonNull(relationDO)
                 && FollowUnfollowTypeEnum.FOLLOW.getCode().equals(relationDO.getType());
@@ -191,6 +206,11 @@ public class RelationListCache {
 
     }
 
+    /**
+     * 根据最新的关系状态算粉丝列表要增删什么，并补齐被截断的空缺。
+     * 人数以元数据为准，不能用这次读回来的几个成员来推算；
+     * 只有“缓存被截断且人数不足”时才从数据库按边界补人。
+     */
     private void updateFansList(long fromUserId, long toUserId, RelationDO followerDO,
                                RelationCacheSnapshotDTO cacheSnapshot, RelationLocks.Handle cacheLock) {
         // 快照只包含尾部两条与目标成员；人数以元数据为准，不能使用该 Map 的大小。
@@ -253,6 +273,10 @@ public class RelationListCache {
         return relationDOMapper.followerAfter(userId, boundaryTime, lastEntry.getId(), missingCount + 1);
     }
 
+    /**
+     * 比较两个缓存条目谁更早：先比时间，时间相同再比 ID。
+     * 用于在剩余成员里找“最末一个”，作为从数据库补齐的查询边界。
+     */
     private boolean isEarlierEntry(RelationCacheEntryDTO cacheEntry, RelationCacheEntryDTO otherEntry) {
         if (cacheEntry.getMillis() != otherEntry.getMillis()) {
             return cacheEntry.getMillis() < otherEntry.getMillis();
@@ -293,6 +317,10 @@ public class RelationListCache {
         // 返回 0 表示缓存已失效，交给下次查询初始化，不发布局部列表
     }
 
+    /**
+     * 批量查询关注状态：这批目标用户里，当前用户关注了哪些。
+     * 直接按联合索引点查，不加载整份关注列表，也不初始化缓存。
+     */
     public Map<Long, Boolean> followingStatuses(long userId, List<Long> targetUserIds) {
         if (targetUserIds.isEmpty()) {
             return Collections.emptyMap();
