@@ -18,6 +18,7 @@
     <description>RPC层, 供其他服务调用</description>
 
     <dependencies>
+        <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-openfeign</artifactId></dependency>
         <dependency>
             <groupId>com.quanxiaoha</groupId>
             <artifactId>xiaoha-common</artifactId>

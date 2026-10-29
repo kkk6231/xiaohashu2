@@ -21,4 +21,8 @@ public class UnCollectNoteReqVO {
     @NotNull(message = "笔记 ID 不能为空")
     private Long id;
 
+    @jakarta.validation.constraints.NotBlank(message = "请求 ID 不能为空")
+    @jakarta.validation.constraints.Pattern(regexp = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", message = "请求 ID 必须为 UUID")
+    private String requestId;
+
 }

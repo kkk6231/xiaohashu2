@@ -19,5 +19,7 @@ import lombok.NoArgsConstructor;
 public class FollowUserReqVO {
 
     @NotNull(message = "被关注用户 ID 不能为空")
+    @jakarta.validation.constraints.Positive
+    @com.fasterxml.jackson.annotation.JsonAlias("targetUserId")
     private Long followUserId;
 }

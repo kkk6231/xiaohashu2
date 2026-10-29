@@ -22,9 +22,9 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     CANT_FOLLOW_YOUR_SELF("RELATION-20001", "无法关注自己"),
     FOLLOW_USER_NOT_EXISTED("RELATION-20002", "关注的用户不存在"),
     FOLLOWING_COUNT_LIMIT("RELATION-20003", "您关注的用户已达上限，请先取关部分用户"),
-    ALREADY_FOLLOWED("RELATION-20004", "您已经关注了该用户"),
     CANT_UNFOLLOW_YOUR_SELF("RELATION-20005", "无法取关自己"),
-    NOT_FOLLOWED("RELATION-20006", "你未关注对方，无法取关"),
+    RELATION_BUSY("RELATION-20007", "操作繁忙，请稍后重试"),
+    LOGIN_REQUIRED("RELATION-20008", "请先登录"),
     ;
 
     // 异常码

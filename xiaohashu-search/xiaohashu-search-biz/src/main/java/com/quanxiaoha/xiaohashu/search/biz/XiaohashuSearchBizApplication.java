@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+@org.springframework.cloud.openfeign.EnableFeignClients(basePackages = "com.quanxiaoha.xiaohashu.count.api")
 @SpringBootApplication
 @EnableScheduling
 @MapperScan("com.quanxiaoha.xiaohashu.search.biz.domain.mapper")

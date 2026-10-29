@@ -4,6 +4,10 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: count
+          uri: lb://xiaohashu-count
+          predicates:
+            - Path=/count/**
         - id: auth
           uri: lb://xiaohashu-auth
           predicates:

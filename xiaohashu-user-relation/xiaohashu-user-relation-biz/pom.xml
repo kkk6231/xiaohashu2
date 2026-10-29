@@ -16,6 +16,8 @@
     <description>用户关系服务业务模块</description>
 
     <dependencies>
+        <dependency><groupId>com.quanxiaoha</groupId><artifactId>xiaohashu-count-api</artifactId><version>${revision}</version></dependency>
+        <dependency><groupId>com.quanxiaoha</groupId><artifactId>xiaohashu-user-relation-api</artifactId><version>${revision}</version></dependency>
         <dependency>
             <groupId>com.quanxiaoha</groupId>
             <artifactId>xiaoha-common</artifactId>
@@ -111,14 +113,10 @@
 
     <build>
         <plugins>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.2.5</version></plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <!-- 代码生成器 -->
-            <plugin>
-                <groupId>org.mybatis.generator</groupId>
-                <artifactId>mybatis-generator-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

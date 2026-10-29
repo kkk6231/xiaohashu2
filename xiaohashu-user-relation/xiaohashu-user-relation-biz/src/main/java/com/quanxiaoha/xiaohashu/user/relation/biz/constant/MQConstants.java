@@ -8,6 +8,9 @@ package com.quanxiaoha.xiaohashu.user.relation.biz.constant;
  **/
 public interface MQConstants {
 
+    /** 关系变更事件 Topic，沿用 API 层共享的消息契约。 */
+    String TOPIC_RELATION_CHANGED = com.quanxiaoha.xiaohashu.user.relation.api.event.RelationEvent.TOPIC;
+
     /**
      * Topic: 关注、取关共用一个
      */

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.quanxiaoha.xiaohashu.user.relation.biz.domain.mapper.RelationDOMapper">
+    <!-- 首次创建锁行；已存在时执行同值更新，也持有排他行锁直到本事务结束。 -->
+    <insert id="lockUser">
+        INSERT INTO t_relation_user_lock(user_id) VALUES(#{user})
+        ON DUPLICATE KEY UPDATE user_id=VALUES(user_id)
+    </insert>
+    <select id="following" resultType="com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.RelationDO">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId, type, version, update_time AS updateTime
+        FROM t_following
+        WHERE from_user_id=#{from} AND to_user_id=#{to}
+    </select>
+
+    <select id="follower" resultType="com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.RelationDO">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId, type, version, update_time AS updateTime
+        FROM t_follower
+        WHERE from_user_id=#{from} AND to_user_id=#{to}
+    </select>
+
+    <select id="followingCount" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM t_following
+        WHERE from_user_id=#{user} AND type=1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_following(from_user_id,to_user_id,type,version,update_time)
+        VALUES(#{fromUserId},#{toUserId},#{type},#{version},#{updateTime})
+    </insert>
+
+    <!-- Java 已将 version 加一，这里用旧版本作为条件；更新 0 行时必须回滚重试 -->
+    <update id="update">
+        UPDATE t_following
+        SET type=#{type},version=#{version},update_time=#{updateTime}
+        WHERE id=#{id} AND version=#{version}-1
+    </update>
+
+    <select id="now" resultType="java.time.LocalDateTime">
+        SELECT CURRENT_TIMESTAMP(3)
+    </select>
+
+    <select id="followingList" resultType="com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.RelationDO">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId, type, version, update_time AS updateTime
+        FROM t_following
+        WHERE from_user_id=#{user} AND type=1
+        ORDER BY update_time DESC,to_user_id DESC
+    </select>
+
+    <select id="followerPage" resultType="com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.RelationDO">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId, type, version, update_time AS updateTime
+        FROM t_follower
+        WHERE to_user_id=#{user} AND type=1
+        ORDER BY update_time DESC,from_user_id DESC
+        LIMIT #{offset},#{limit}
+    </select>
+
+    <!-- 时间相同时继续比较粉丝 ID，确保边界翻页与 ZSet 的排序保持一致 -->
+    <select id="followerAfter" resultType="com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.RelationDO">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId, type, version, update_time AS updateTime
+        FROM t_follower
+        WHERE to_user_id=#{user} AND type=1 AND (update_time &lt; #{time} OR (update_time=#{time} AND from_user_id &lt; #{id}))
+        ORDER BY update_time DESC,from_user_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 只接受更高版本。MySQL 按顺序计算赋值，因此 version 必须最后更新 -->
+    <insert id="project">
+        INSERT INTO t_follower(id,from_user_id,to_user_id,type,version,update_time)
+        VALUES(#{id},#{fromUserId},#{toUserId},#{type},#{version},#{updateTime})
+        ON DUPLICATE KEY UPDATE type=IF(VALUES(version)&gt;version,VALUES(type),type), update_time=IF(VALUES(version)&gt;version,VALUES(update_time),update_time), version=GREATEST(version,VALUES(version))
+    </insert>
+
+    <!-- 状态查询只读取请求中的目标，不触发整份关注列表初始化。 -->
+    <select id="followingStatuses" resultType="java.lang.Long">
+        SELECT to_user_id FROM t_following
+        WHERE from_user_id=#{user} AND type=1 AND to_user_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <select id="followerStatuses" resultType="java.lang.Long">
+        SELECT from_user_id
+        FROM t_follower
+        WHERE to_user_id=#{user} AND type=1 AND from_user_id IN<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>
+    </select>
+</mapper>

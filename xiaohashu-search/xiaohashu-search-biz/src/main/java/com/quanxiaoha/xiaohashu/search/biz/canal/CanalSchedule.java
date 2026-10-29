@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Slf4j
 public class CanalSchedule implements Runnable {
+    @Resource
+    private com.quanxiaoha.xiaohashu.search.biz.rpc.CountRpcService countRpcService;
 
     @Resource
     private CanalProperties canalProperties;
@@ -200,6 +202,7 @@ public class CanalSchedule implements Runnable {
     private void syncUserIndex(Long userId) throws Exception {
         // 1. 同步用户索引
         List<Map<String, Object>> userResult = selectMapper.selectEsUserIndexData(userId);
+        countRpcService.fillUserIndex(userResult);
 
         // 遍历查询结果，将每条记录同步到 Elasticsearch
         for (Map<String, Object> recordMap : userResult) {
@@ -225,6 +228,7 @@ public class CanalSchedule implements Runnable {
 
         // 1. 同步用户索引
         List<Map<String, Object>> userResult = selectMapper.selectEsUserIndexData(userId);
+        countRpcService.fillUserIndex(userResult);
 
         // 遍历查询结果，将每条记录同步到 Elasticsearch
         for (Map<String, Object> recordMap : userResult) {
@@ -240,6 +244,7 @@ public class CanalSchedule implements Runnable {
 
         // 2. 同步笔记索引
         List<Map<String, Object>> noteResult = selectMapper.selectEsNoteIndexData(null, userId);
+        countRpcService.fillNoteIndex(noteResult);
         for (Map<String, Object> recordMap : noteResult) {
             // 创建索引请求对象，指定索引名称
             IndexRequest indexRequest = new IndexRequest(NoteIndex.NAME);
@@ -287,6 +292,7 @@ public class CanalSchedule implements Runnable {
     private void syncNoteIndex(Long noteId) throws Exception {
         // 从数据库查询 Elasticsearch 索引数据
         List<Map<String, Object>> result = selectMapper.selectEsNoteIndexData(noteId, null);
+        countRpcService.fillNoteIndex(result);
 
         // 遍历查询结果，将每条记录同步到 Elasticsearch
         for (Map<String, Object> recordMap : result) {

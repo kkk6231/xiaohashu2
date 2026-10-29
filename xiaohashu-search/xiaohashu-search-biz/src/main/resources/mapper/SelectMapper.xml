@@ -8,8 +8,8 @@
                DATE_FORMAT(n.create_time, '%Y-%m-%d %H:%i:%s') AS create_time,
                DATE_FORMAT(n.update_time, '%Y-%m-%d %H:%i:%s') AS update_time,
                u.nickname AS creator_nickname, u.avatar AS creator_avatar,
-                IFNULL(nc.like_total, 0) as like_total,
-                IFNULL(nc.collect_total, 0) as collect_total,
+                0 as like_total,
+                0 as collect_total,
                 IFNULL(nc.comment_total, 0) as comment_total
         from t_note n left join t_user u on n.creator_id = u.id
                       left join t_note_count nc on n.id = nc.note_id
@@ -24,9 +24,9 @@
 
     <select id="selectEsUserIndexData" resultType="map" parameterType="map">
         select u.id, u.nickname, u.avatar, u.xiaohashu_id,
-        IFNULL(uc.note_total, 0) as note_total,
-        IFNULL(uc.fans_total, 0) as fans_total
-        from t_user u left join t_user_count uc on u.id = uc.user_id
+        0 as note_total,
+        0 as fans_total
+        from t_user u
         where u.`status` = 0 and u.is_deleted = 0
         <if test="userId != null">
             and u.id = #{userId}

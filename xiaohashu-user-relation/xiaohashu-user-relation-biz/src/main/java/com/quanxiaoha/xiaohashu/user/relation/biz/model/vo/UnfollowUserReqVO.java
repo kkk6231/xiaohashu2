@@ -19,5 +19,7 @@ import lombok.NoArgsConstructor;
 public class UnfollowUserReqVO {
 
     @NotNull(message = "被取关用户 ID 不能为空")
+    @jakarta.validation.constraints.Positive
+    @com.fasterxml.jackson.annotation.JsonAlias("targetUserId")
     private Long unfollowUserId;
 }

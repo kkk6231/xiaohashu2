@@ -22,6 +22,16 @@ import java.util.List;
 public class FindNoteDetailRspVO {
 
     private Long id;
+    private Long likeTotal;
+    private Long collectTotal;
+    /** 计数查询是否成功；失败时点赞数和收藏数为空。 */
+    private boolean countsAvailable;
+    /** 当前访问者是否关注作者；查询失败时为空。 */
+    private Boolean following;
+    /** 关注状态是否可用，前端据此决定是否启用关注按钮。 */
+    private boolean followingAvailable;
+    private boolean liked;
+    private boolean collected;
 
     private Integer type;
 

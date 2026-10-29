@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteInteractionMapper">
+    <resultMap id="ResultMap" type="com.quanxiaoha.xiaohashu.note.biz.domain.dataobject.NoteInteractionResultDO">
+        <id column="user_id" property="userId"/>
+        <id column="request_id" property="requestId"/>
+        <result column="note_id" property="noteId"/>
+        <result column="action_type" property="actionType"/>
+        <result column="target_state" property="targetState"/>
+        <result column="author_id" property="authorId"/>
+        <result column="result_type" property="resultType"/>
+        <result column="reason_code" property="reasonCode"/>
+        <result column="actual_delta" property="actualDelta"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+    <select id="lockNote" resultMap="com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteDOMapper.BaseResultMap">
+        SELECT * FROM t_note WHERE id = #{noteId} FOR UPDATE
+    </select>
+    <select id="findResults" resultMap="ResultMap">
+        SELECT * FROM t_note_interaction_result WHERE (user_id, request_id) IN
+        <foreach collection="commands" item="c" open="(" close=")" separator=",">(#{c.userId}, #{c.requestId})</foreach>
+        FOR UPDATE
+    </select>
+    <select id="findResult" resultMap="ResultMap">
+        SELECT * FROM t_note_interaction_result WHERE user_id = #{userId} AND request_id = #{requestId}
+    </select>
+    <select id="findLikes" resultMap="com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteLikeDOMapper.BaseResultMap">
+        SELECT * FROM t_note_like WHERE (user_id, note_id) IN
+        <foreach collection="commands" item="c" open="(" close=")" separator=",">(#{c.userId}, #{c.noteId})</foreach>
+        FOR UPDATE
+    </select>
+    <select id="findCollections" resultMap="com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteCollectionDOMapper.BaseResultMap">
+        SELECT * FROM t_note_collection WHERE (user_id, note_id) IN
+        <foreach collection="commands" item="c" open="(" close=")" separator=",">(#{c.userId}, #{c.noteId})</foreach>
+        FOR UPDATE
+    </select>
+    <insert id="saveResults">
+        INSERT INTO t_note_interaction_result
+        (user_id, request_id, note_id, action_type, target_state, author_id, result_type, reason_code, actual_delta, created_at)
+        VALUES
+        <foreach collection="results" item="r" separator=",">
+            (#{r.userId}, #{r.requestId}, #{r.noteId}, #{r.actionType}, #{r.targetState},
+             #{r.authorId}, #{r.resultType}, #{r.reasonCode}, #{r.actualDelta}, #{r.createdAt})
+        </foreach>
+    </insert>
+    <insert id="saveLikes">
+        INSERT INTO t_note_like (user_id, note_id, status, create_time) VALUES
+        <foreach collection="rows" item="r" separator=",">(#{r.userId}, #{r.noteId}, #{r.status}, #{r.createTime})</foreach>
+        ON DUPLICATE KEY UPDATE status = VALUES(status), create_time = VALUES(create_time)
+    </insert>
+    <insert id="saveCollections">
+        INSERT INTO t_note_collection (user_id, note_id, status, create_time) VALUES
+        <foreach collection="rows" item="r" separator=",">(#{r.userId}, #{r.noteId}, #{r.status}, #{r.createTime})</foreach>
+        ON DUPLICATE KEY UPDATE status = VALUES(status), create_time = VALUES(create_time)
+    </insert>
+    <select id="countLikes" resultType="long">SELECT COUNT(*) FROM t_note_like WHERE note_id = #{noteId} AND status = 1</select>
+    <select id="countCollections" resultType="long">SELECT COUNT(*) FROM t_note_collection WHERE note_id = #{noteId} AND status = 1</select>
+</mapper>
