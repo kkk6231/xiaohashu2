@@ -36,4 +36,8 @@ public interface NoteDOMapper {
 
     int updateIsTop(NoteDO noteDO);
 
+    /** 批量读取当前用户可见的笔记摘要，供互动列表缓存使用。 */
+    java.util.List<com.quanxiaoha.xiaohashu.note.biz.model.vo.FindInteractionNoteListRspVO> selectVisibleNotesByIds(
+            @Param("userId") Long userId, @Param("noteIds") java.util.List<Long> noteIds);
+
 }

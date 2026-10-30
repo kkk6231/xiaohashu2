@@ -150,7 +150,7 @@ public class CountServiceImpl implements CountService {
             throw new IllegalArgumentException("计数查询 ID 必须为正数，且数量在 1 到 100 之间");
         }
         List<String> fields = fieldNamesFor(type);
-        // pipeline 仅批量发送 HMGET，不承担一致性保证；单个目标缺失时按零处理。
+        // pipeline 批量发送单目标读取脚本；首次使用返回零，已处理记录存在但数据丢失返回 null。
         List<Object> results = redisTemplate.executePipelined(new SessionCallback<Object>() {
             @Override
             @SuppressWarnings("unchecked")

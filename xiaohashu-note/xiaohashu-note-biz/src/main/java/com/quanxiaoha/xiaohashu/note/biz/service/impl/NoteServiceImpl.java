@@ -72,6 +72,8 @@ public class NoteServiceImpl implements NoteService {
     @Resource
     private RedisTemplate<String, String> redisTemplate;
     @Resource
+    private org.springframework.data.redis.core.StringRedisTemplate interactionRedisTemplate;
+    @Resource
     private RocketMQTemplate rocketMQTemplate;
     @Resource
     private NoteLikeDOMapper noteLikeDOMapper;
@@ -590,47 +592,46 @@ public class NoteServiceImpl implements NoteService {
 
     /**
      * 点赞笔记。
-     * 接口只发一条顺序消息（路由键 userId:noteId）就返回 ACCEPTED，不写库；
-     * 真正的互动事实和计数由消费端异步完成，客户端用同一个 requestId 重试。
+     * 入口更新最近点赞缓存，发送顺序事件后返回；事实和计数由消费端异步处理。
      *
-     * @param likeNoteReqVO 笔记 ID + 本次操作的 requestId
+     * @param likeNoteReqVO 笔记 ID
      */
     @Override
     public Response<?> likeNote(LikeNoteReqVO likeNoteReqVO) {
-        return noteInteractionPublisher.submit(likeNoteReqVO.getRequestId(), likeNoteReqVO.getId(), "LIKE", true);
+        return noteInteractionPublisher.submit(likeNoteReqVO.getId(), "LIKE", true);
     }
 
     /**
      * 取消点赞笔记。
      * 与点赞共用同一条链路和同一个顺序队列，保证“点赞→取消”按发送顺序被计算。
      *
-     * @param unlikeNoteReqVO 笔记 ID + 本次操作的 requestId
+     * @param unlikeNoteReqVO 笔记 ID
      */
     @Override
     public Response<?> unlikeNote(UnlikeNoteReqVO unlikeNoteReqVO) {
-        return noteInteractionPublisher.submit(unlikeNoteReqVO.getRequestId(), unlikeNoteReqVO.getId(), "LIKE", false);
+        return noteInteractionPublisher.submit(unlikeNoteReqVO.getId(), "LIKE", false);
     }
 
     /**
      * 收藏笔记。
-     * 与点赞同一套异步模型：先受理、后算事实，收藏数由计数服务维护。
+     * 先更新最近收藏缓存，再发送事件；收藏事实和计数异步维护。
      *
-     * @param collectNoteReqVO 笔记 ID + 本次操作的 requestId
+     * @param collectNoteReqVO 笔记 ID
      */
     @Override
     public Response<?> collectNote(CollectNoteReqVO collectNoteReqVO) {
-        return noteInteractionPublisher.submit(collectNoteReqVO.getRequestId(), collectNoteReqVO.getId(), "COLLECT", true);
+        return noteInteractionPublisher.submit(collectNoteReqVO.getId(), "COLLECT", true);
     }
 
     /**
      * 取消收藏笔记。
-     * 与收藏共用队列，避免同一用户对同一篇笔记的收藏状态被乱序计算。
+     * 与收藏共用顺序队列，按消息发送顺序更新事实。
      *
-     * @param unCollectNoteReqVO 笔记 ID + 本次操作的 requestId
+     * @param unCollectNoteReqVO 笔记 ID
      */
     @Override
     public Response<?> unCollectNote(UnCollectNoteReqVO unCollectNoteReqVO) {
-        return noteInteractionPublisher.submit(unCollectNoteReqVO.getRequestId(), unCollectNoteReqVO.getId(), "COLLECT", false);
+        return noteInteractionPublisher.submit(unCollectNoteReqVO.getId(), "COLLECT", false);
     }
 
     /**
@@ -738,9 +739,13 @@ public class NoteServiceImpl implements NoteService {
         Long userId = validateInteractionListRequest(request);
         long totalCount = noteLikeDOMapper.countVisibleNotes(userId);
         long offset = PageResponse.getOffset(request.getPageNo(), request.getPageSize());
-        List<FindInteractionNoteListRspVO> notes = java.util.Collections.emptyList();
-        if (offset < totalCount) {
-            notes = noteLikeDOMapper.selectVisibleNotesPage(userId, offset, request.getPageSize());
+        List<FindInteractionNoteListRspVO> notes = readInteractionCache(userId, true, offset, request.getPageSize(), totalCount);
+        if (notes == null) {
+            notes = offset < totalCount ? noteLikeDOMapper.selectVisibleNotesPage(userId, offset, request.getPageSize())
+                    : java.util.Collections.emptyList();
+        } else if (!notes.isEmpty()) {
+            // 缓存可能先于数据库落库，保证总数不小于当前已经展示的记录数。
+            totalCount = Math.max(totalCount, offset + notes.size());
         }
         return PageResponse.success(notes, request.getPageNo(), totalCount, request.getPageSize());
     }
@@ -757,11 +762,46 @@ public class NoteServiceImpl implements NoteService {
         Long userId = validateInteractionListRequest(request);
         long totalCount = noteCollectionDOMapper.countVisibleNotes(userId);
         long offset = PageResponse.getOffset(request.getPageNo(), request.getPageSize());
-        List<FindInteractionNoteListRspVO> notes = java.util.Collections.emptyList();
-        if (offset < totalCount) {
-            notes = noteCollectionDOMapper.selectVisibleNotesPage(userId, offset, request.getPageSize());
+        List<FindInteractionNoteListRspVO> notes = readInteractionCache(userId, false, offset, request.getPageSize(), totalCount);
+        if (notes == null) {
+            notes = offset < totalCount ? noteCollectionDOMapper.selectVisibleNotesPage(userId, offset, request.getPageSize())
+                    : java.util.Collections.emptyList();
+        } else if (!notes.isEmpty()) {
+            // 缓存可能先于数据库落库，保证总数不小于当前已经展示的记录数。
+            totalCount = Math.max(totalCount, offset + notes.size());
         }
         return PageResponse.success(notes, request.getPageNo(), totalCount, request.getPageSize());
+    }
+
+    /** 最近记录命中时读取 ZSet，并按缓存顺序补充可见的笔记摘要；范围不足时回源。 */
+    private List<FindInteractionNoteListRspVO> readInteractionCache(Long userId, boolean like, long offset,
+            int pageSize, long totalCount) {
+        String key = like ? RedisKeyConstants.buildUserNoteLikeZSetKey(userId)
+                : RedisKeyConstants.buildUserNoteCollectZSetKey(userId);
+        Long cachedSize = interactionRedisTemplate.opsForZSet().size(key);
+        long expectedCacheSize = Math.min(totalCount, 100L);
+        if (cachedSize == null || cachedSize == 0 || cachedSize < expectedCacheSize || offset >= cachedSize
+                || (offset + pageSize > cachedSize && totalCount > cachedSize)) {
+            return null;
+        }
+        java.util.Set<org.springframework.data.redis.core.ZSetOperations.TypedTuple<String>> entries =
+                interactionRedisTemplate.opsForZSet().reverseRangeWithScores(key, offset, offset + pageSize - 1);
+        if (entries == null || entries.isEmpty()) return null;
+        List<Long> noteIds = new java.util.ArrayList<>();
+        for (var entry : entries) noteIds.add(Long.valueOf(entry.getValue()));
+        List<FindInteractionNoteListRspVO> rows = noteDOMapper.selectVisibleNotesByIds(userId, noteIds);
+        java.util.Map<Long, FindInteractionNoteListRspVO> byId = new java.util.HashMap<>();
+        for (FindInteractionNoteListRspVO row : rows) byId.put(row.getNoteId(), row);
+        List<FindInteractionNoteListRspVO> result = new java.util.ArrayList<>();
+        for (var entry : entries) {
+            FindInteractionNoteListRspVO row = byId.get(Long.valueOf(entry.getValue()));
+            if (row != null) {
+                if (entry.getScore() != null) row.setInteractionTime(java.time.LocalDateTime.ofInstant(
+                        java.time.Instant.ofEpochMilli(entry.getScore().longValue()), java.time.ZoneId.systemDefault()));
+                result.add(row);
+            }
+        }
+        return result;
     }
 
     /**

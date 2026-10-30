@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class NoteInteractionListTest {
     private JdbcTemplate jdbc;
     private NoteServiceImpl service;
+    private org.springframework.data.redis.core.ZSetOperations zset;
 
     /** 创建隔离测试库，装载两份真实 Mapper。 */
     @BeforeEach
@@ -45,9 +46,15 @@ class NoteInteractionListTest {
         SqlSessionFactoryBean factory = new SqlSessionFactoryBean();
         factory.setDataSource(dataSource);
         factory.setMapperLocations(new ClassPathResource("mapper/NoteLikeDOMapper.xml"),
-                new ClassPathResource("mapper/NoteCollectionDOMapper.xml"));
+                new ClassPathResource("mapper/NoteCollectionDOMapper.xml"),
+                new ClassPathResource("mapper/NoteDOMapper.xml"));
         SqlSessionTemplate session = new SqlSessionTemplate(factory.getObject());
         service = new NoteServiceImpl();
+        org.springframework.data.redis.core.StringRedisTemplate redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate.class);
+        zset = org.mockito.Mockito.mock(org.springframework.data.redis.core.ZSetOperations.class);
+        org.mockito.Mockito.when(redis.opsForZSet()).thenReturn(zset);
+        ReflectionTestUtils.setField(service, "interactionRedisTemplate", redis);
+        ReflectionTestUtils.setField(service, "noteDOMapper", session.getMapper(com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteDOMapper.class));
         ReflectionTestUtils.setField(service, "noteLikeDOMapper", session.getMapper(NoteLikeDOMapper.class));
         ReflectionTestUtils.setField(service, "noteCollectionDOMapper", session.getMapper(NoteCollectionDOMapper.class));
         LoginUserContextHolder.setUserId(10L);
@@ -78,6 +85,24 @@ class NoteInteractionListTest {
         assertTrue(query(liked, request).getData().isEmpty());
         LoginUserContextHolder.setUserId(888L);
         assertEquals(0, query(liked, request).getTotalCount());
+    }
+
+    /** 缓存命中仍使用真实 SQL 过滤其他用户的私有笔记。 */
+    @org.junit.jupiter.api.Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void cachedNotesAreFilteredByVisibility() {
+        org.mockito.Mockito.when(zset.size(org.mockito.ArgumentMatchers.anyString())).thenReturn(3L);
+        java.util.Set entries = new java.util.LinkedHashSet();
+        entries.add(new org.springframework.data.redis.core.DefaultTypedTuple<>("3", 3000.0));
+        entries.add(new org.springframework.data.redis.core.DefaultTypedTuple<>("2", 2000.0));
+        entries.add(new org.springframework.data.redis.core.DefaultTypedTuple<>("1", 1000.0));
+        org.mockito.Mockito.when(zset.reverseRangeWithScores(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.eq(0L), org.mockito.ArgumentMatchers.eq(9L))).thenReturn(entries);
+        FindInteractionNoteListReqVO request = new FindInteractionNoteListReqVO();
+        var page = service.findLikedNotes(request);
+        assertEquals(2, page.getData().size());
+        assertEquals(2L, page.getData().get(0).getNoteId());
+        assertEquals(1L, page.getData().get(1).getNoteId());
     }
 
     /** 取消后不再展示；重新激活并更新互动时间后排到前面。 */

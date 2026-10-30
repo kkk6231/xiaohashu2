@@ -68,7 +68,7 @@ public class RedisKeyConstants {
      * @return
      */
     public static String buildUserNoteLikeZSetKey(Long userId) {
-        return USER_NOTE_LIKE_ZSET_KEY + userId;
+        return USER_NOTE_LIKE_ZSET_KEY + "{" + userId + "}";
     }
 
     /**
@@ -77,7 +77,7 @@ public class RedisKeyConstants {
      * @return
      */
     public static String buildUserNoteCollectZSetKey(Long userId) {
-        return USER_NOTE_COLLECT_ZSET_KEY + userId;
+        return USER_NOTE_COLLECT_ZSET_KEY + "{" + userId + "}";
     }
 
 }

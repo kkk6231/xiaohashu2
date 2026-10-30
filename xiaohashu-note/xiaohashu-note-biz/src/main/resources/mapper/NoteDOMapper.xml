@@ -233,4 +233,10 @@
     WHERE id = #{noteId} AND creator_id = #{creatorId}
       AND status = #{expectedStatus} AND status &lt;&gt; 2
   </update>
+  <!-- 缓存只存笔记 ID；读取摘要时仍校验笔记状态和可见性。 -->
+  <select id="selectVisibleNotesByIds" resultType="com.quanxiaoha.xiaohashu.note.biz.model.vo.FindInteractionNoteListRspVO">
+    SELECT id AS noteId, title, creator_id AS creatorId, type, img_uris AS imgUris, video_uri AS videoUri
+    FROM t_note WHERE status = 1 AND (visible = 0 OR creator_id = #{userId}) AND id IN
+    <foreach collection="noteIds" item="noteId" open="(" close=")" separator=",">#{noteId}</foreach>
+  </select>
 </mapper>

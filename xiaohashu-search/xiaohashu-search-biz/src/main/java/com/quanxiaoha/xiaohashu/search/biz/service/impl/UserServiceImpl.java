@@ -125,8 +125,8 @@ public class UserServiceImpl implements UserService {
                 String nickname = (String) sourceAsMap.get(UserIndex.FIELD_USER_NICKNAME);
                 String avatar = (String) sourceAsMap.get(UserIndex.FIELD_USER_AVATAR);
                 String xiaohashuId = (String) sourceAsMap.get(UserIndex.FIELD_USER_XIAOHASHU_ID);
-                long noteTotal = ((Number) sourceAsMap.getOrDefault(UserIndex.FIELD_USER_NOTE_TOTAL, 0)).longValue();
-                long fansTotal = ((Number) sourceAsMap.getOrDefault(UserIndex.FIELD_USER_FANS_TOTAL, 0)).longValue();
+                Number noteTotal = (Number) sourceAsMap.get(UserIndex.FIELD_USER_NOTE_TOTAL);
+                Number fansTotal = (Number) sourceAsMap.get(UserIndex.FIELD_USER_FANS_TOTAL);
 
                 // 获取高亮字段
                 String highlightedNickname = null;
@@ -141,8 +141,8 @@ public class UserServiceImpl implements UserService {
                         .nickname(nickname)
                         .avatar(avatar)
                         .xiaohashuId(xiaohashuId)
-                        .noteTotal(noteTotal)
-                        .fansTotal(NumberUtils.formatNumberString(fansTotal))
+                        .noteTotal(noteTotal == null ? null : noteTotal.longValue())
+                        .fansTotal(fansTotal == null ? null : NumberUtils.formatNumberString(fansTotal.longValue()))
                         .highlightNickname(highlightedNickname)
                         .build();
                 searchUserRspVOS.add(searchUserRspVO);
