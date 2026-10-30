@@ -38,9 +38,6 @@ public class RelationServiceImpl implements RelationService {
     @Resource
     private RelationProperties relationProperties;
 
-    @Resource
-    private RelationDatabaseRateLimiter relationDatabaseRateLimiter;
-
     /**
      * 关注用户。操作成功表示关系主表和本地消息均已提交。
      */
@@ -122,7 +119,8 @@ public class RelationServiceImpl implements RelationService {
     }
 
     /**
-     * 查询粉丝列表。超出缓存范围或跨越缓存边界时，整页回源查询。
+     * 查询粉丝列表。粉丝数没有上限，缓存只保留最近 fansCacheSize 位；
+     * 超出缓存范围的页直接拒绝——缓存是唯一数据源，回源数据库会在缓存失效时打穿 DB。
      */
     @Override
     public PageResponse<FindFansUserRspVO> findFansList(FindFansListReqVO findFansListReqVO) {
@@ -131,27 +129,16 @@ public class RelationServiceImpl implements RelationService {
         Integer pageSize = findFansListReqVO.getPageSize();
         long offset = PageResponse.getOffset(pageNo, pageSize);
 
-        // 仅在整页落入缓存范围时读取粉丝缓存
-        RelationCacheSnapshotDTO cacheSnapshot = null;
-        if (offset + pageSize <= relationProperties.getFansCacheSize()) {
-            cacheSnapshot = relationListCache.load("followers", userId, offset, offset + pageSize - 1);
+        // 只提供最近 N 位粉丝，超出范围的页直接拒绝，不再回源数据库
+        if (offset + pageSize > relationProperties.getFansCacheSize()) {
+            throw new BizException(ResponseCodeEnum.FANS_PAGE_LIMIT_EXCEEDED);
         }
 
-        List<Long> fansUserIds;
-        long fansTotal;
-        if (Objects.nonNull(cacheSnapshot) && cacheSnapshot.isComplete()) {
-            // 完整缓存可以直接提供列表和总数，空列表也是有效结果
-            fansUserIds = extractUserIds(cacheSnapshot);
-            fansTotal = cacheSnapshot.getCount();
-        } else {
-            // 截断缓存的长度不是总数，复用异步计数，避免扫描全部有效粉丝索引。
-            fansTotal = relationCountRpcService.findFansTotal(userId);
-            if (Objects.nonNull(cacheSnapshot) && cacheSnapshot.getEntries().size() == pageSize) {
-                fansUserIds = extractUserIds(cacheSnapshot);
-            } else {
-                fansUserIds = findFansUserIdsFromDatabase(userId, offset, pageSize);
-            }
-        }
+        RelationCacheSnapshotDTO cacheSnapshot =
+                relationListCache.load("followers", userId, offset, offset + pageSize - 1);
+        List<Long> fansUserIds = extractUserIds(cacheSnapshot);
+        // 截断缓存的长度不是总数，粉丝总数一律取计数服务
+        long fansTotal = relationCountRpcService.findFansTotal(userId);
 
         List<FindUserByIdRspDTO> userInfos = findUserInfosInOrder(fansUserIds);
         List<FindFansUserRspVO> fansUsers = new ArrayList<>(userInfos.size());
@@ -175,20 +162,6 @@ public class RelationServiceImpl implements RelationService {
             userIds.add(cacheEntry.getId());
         }
         return userIds;
-    }
-
-    /**
-     * 深分页时回源数据库查粉丝 ID。
-     * 查询前先扣一次限流额度：缓存整体失效时，这里是唯一会打到数据库的入口。
-     */
-    private List<Long> findFansUserIdsFromDatabase(Long userId, long offset, int pageSize) {
-        relationDatabaseRateLimiter.acquire();
-        List<RelationDO> fansRelations = relationDOMapper.followerPage(userId, offset, pageSize);
-        List<Long> fansUserIds = new ArrayList<>(fansRelations.size());
-        for (RelationDO fansRelation : fansRelations) {
-            fansUserIds.add(fansRelation.getFromUserId());
-        }
-        return fansUserIds;
     }
 
     /**

@@ -25,14 +25,9 @@ public interface RelationOutboxDOMapper {
     List<Long> candidates(@Param("limit") int limit);
 
     /**
-     * 锁定关系行，让即时投递和多实例扫描串行领取同一关系的事件。
-     * 关系行不存在时返回 null。
-     */
-    Long lockRelation(@Param("id") long id);
-
-    /**
      * 取该关系下最早的一条未发送事件（按版本升序）。
      * 不能跳过前面的版本直接领后面的，否则投递顺序会乱。
+     * 语句本身是 FOR UPDATE，并发领取在这里串行。
      */
     RelationOutboxDO head(@Param("id") long id);
 

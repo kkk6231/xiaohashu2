@@ -55,15 +55,6 @@
         LIMIT #{offset},#{limit}
     </select>
 
-    <!-- 时间相同时继续比较粉丝 ID，确保边界翻页与 ZSet 的排序保持一致 -->
-    <select id="followerAfter" resultType="com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject.RelationDO">
-        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId, type, version, update_time AS updateTime
-        FROM t_follower
-        WHERE to_user_id=#{user} AND type=1 AND (update_time &lt; #{time} OR (update_time=#{time} AND from_user_id &lt; #{id}))
-        ORDER BY update_time DESC,from_user_id DESC
-        LIMIT #{limit}
-    </select>
-
     <!-- 只接受更高版本。MySQL 按顺序计算赋值，因此 version 必须最后更新 -->
     <insert id="project">
         INSERT INTO t_follower(id,from_user_id,to_user_id,type,version,update_time)

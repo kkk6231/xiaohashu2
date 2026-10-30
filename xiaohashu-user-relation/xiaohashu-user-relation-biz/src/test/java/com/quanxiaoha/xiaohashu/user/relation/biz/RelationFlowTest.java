@@ -108,7 +108,7 @@ class RelationFlowTest {
 
     @AfterAll
     static void close() {
-        if (locks != null) locks.close();
+        // RelationLocks 现在不再持有续约线程池，无需显式关闭
         if (connection != null) connection.destroy();
     }
 
@@ -199,7 +199,6 @@ class RelationFlowTest {
         var first =
                 tx.execute(
                         s -> {
-                            outbox.lockRelation(id);
                             var h = outbox.head(id);
                             assertEquals(1, outbox.claim(h.getEventId(), "old", 1000000));
                             return h;
@@ -240,14 +239,16 @@ class RelationFlowTest {
 
     @Test
     void emptyInitializationAndIncrementalUpdatesKeepOriginalExpiry() {
+        String meta = RelationLocks.prefix("following", 10) + "meta";
         var empty = cache.load("following", 10, 0, -1);
         assertEquals(0, empty.getCount());
-        assertTrue(empty.isComplete());
+        Object expireBefore = redis.opsForHash().get(meta, "expire_at");
         commands.change(10, 20, true);
         cache.syncFollowing(10, 20);
         var active = cache.read("following", 10, 0, -1);
         assertEquals(1, active.getCount());
-        assertEquals(empty.getExpires(), active.getExpires());
+        // 增量更新不能续期：expire_at 必须保持不变
+        assertEquals(expireBefore, redis.opsForHash().get(meta, "expire_at"));
         commands.change(10, 20, false);
         cache.syncFollowing(10, 20);
         assertEquals(0, cache.read("following", 10, 0, -1).getCount());
@@ -266,40 +267,34 @@ class RelationFlowTest {
     }
 
     @Test
-    void truncatedFansBackfillOnRemovalIncludingReplayAndNumericTieOrder() {
-        LocalDateTime time = LocalDateTime.of(2026, 1, 1, 0, 0, 0, 123000000);
+    void fansCacheKeepsOnlyMostRecentLimit() {
+        var time = LocalDateTime.of(2026, 1, 1, 0, 0);
         for (long id : List.of(2L, 9L, 10L, 100L, 200L)) project(id, 50, 1, 1, time);
-        var initial = cache.load("followers", 50, 0, -1);
+        var snapshot = cache.load("followers", 50, 0, -1);
+        // 容量 3：只保留关注时间最新的 3 个（时间相同时按用户 ID 倒序）
         assertEquals(
                 List.of(200L, 100L, 10L),
-                initial.getEntries().stream().map(RelationCacheEntryDTO::getId).toList());
-        assertFalse(initial.isComplete());
+                snapshot.getEntries().stream().map(RelationCacheEntryDTO::getId).toList());
+        assertEquals(3, snapshot.getCount());
+        // 取关一个后不补人：列表允许比真实粉丝少，等新关注或过期重建
         project(100, 50, 2, 2, time.plusSeconds(1));
         try (var lock = locks.acquire("followers", 50)) {
             cache.syncFollowerLocked(100, 50, lock);
-            cache.syncFollowerLocked(100, 50, lock);
         }
         assertEquals(
-                List.of(200L, 10L, 9L),
+                List.of(200L, 10L),
                 cache.read("followers", 50, 0, -1).getEntries().stream()
                         .map(RelationCacheEntryDTO::getId)
                         .toList());
-        project(200, 50, 2, 2, time.plusSeconds(2));
-        try (var lock = locks.acquire("followers", 50)) {
-            cache.syncFollowerLocked(200, 50, lock);
-        }
-        var complete = cache.read("followers", 50, 0, -1);
-        assertTrue(complete.isComplete());
-        assertEquals(
-                List.of(10L, 9L, 2L),
-                complete.getEntries().stream().map(RelationCacheEntryDTO::getId).toList());
+        assertEquals(2, cache.read("followers", 50, 0, -1).getCount());
     }
 
     @Test
     void fanStatusReadsDatabaseEvenWhenListCacheIsPartial() {
         var time = LocalDateTime.of(2026, 1, 1, 0, 0);
         for (long id = 1; id <= 4; id++) project(id, 50, 1, 1, time);
-        assertFalse(cache.load("followers", 50, 0, -1).isComplete());
+        // 容量 3，4 个粉丝 → 缓存里只留最近 3 个
+        assertEquals(3, cache.load("followers", 50, 0, -1).getCount());
         assertTrue(cache.followerStatuses(50, List.of(1L)).get(1L));
         assertFalse(cache.followerStatuses(50, List.of(5L)).get(5L));
         project(5, 50, 1, 1, time.plusSeconds(1));
@@ -312,7 +307,8 @@ class RelationFlowTest {
         var initial = cache.load("followers", 50, 0, -1);
         project(10, 50, 1, 1, LocalDateTime.of(2026, 1, 1, 0, 0));
         try (var lock = locks.acquire("followers", 50)) {
-            redis.opsForValue().set(lock.key(), "replacement-owner");
+            // 模拟锁被新持有者接管：写缓存时 Lua 校验 token 不匹配，必须拒绝写入
+            redis.opsForValue().set(RelationLocks.prefix("followers", 50) + "lock", "replacement-owner");
             assertThrows(IllegalStateException.class, () -> cache.syncFollowerLocked(10, 50, lock));
         }
         assertEquals(
@@ -357,94 +353,6 @@ class RelationFlowTest {
     }
 
     @Test
-    void tailRemovalRefollowAndUncachedRemovalKeepTopFans() {
-        var time = LocalDateTime.of(2026, 1, 1, 0, 0);
-        for (long id = 1; id <= 5; id++) project(id, 50, 1, 1, time);
-        cache.load("followers", 50, 0, -1);
-        // 删除窗口外成员，不应影响缓存；删除尾部必须使用倒数第二条作为补齐边界。
-        project(1, 50, 2, 2, time.plusSeconds(1));
-        project(3, 50, 2, 2, time.plusSeconds(1));
-        try (var lock = locks.acquire("followers", 50)) {
-            cache.syncFollowerLocked(1, 50, lock);
-            cache.syncFollowerLocked(3, 50, lock);
-            cache.syncFollowerLocked(3, 50, lock);
-        }
-        assertEquals(List.of(5L, 4L, 2L), fanIds());
-        assertTrue(cache.read("followers", 50, 0, -1).isComplete());
-        project(3, 50, 1, 3, time.plusSeconds(2));
-        try (var lock = locks.acquire("followers", 50)) {
-            cache.syncFollowerLocked(3, 50, lock);
-            cache.syncFollowerLocked(3, 50, lock);
-        }
-        assertEquals(List.of(3L, 5L, 4L), fanIds());
-        assertFalse(cache.read("followers", 50, 0, -1).isComplete());
-    }
-
-    @Test
-    void failedBackfillDoesNotExposePartiallyRemovedList() {
-        var time = LocalDateTime.of(2026, 1, 1, 0, 0);
-        for (long id = 1; id <= 5; id++) project(id, 50, 1, 1, time);
-        cache.load("followers", 50, 0, -1);
-        project(3, 50, 2, 2, time.plusSeconds(1));
-        RelationDOMapper failingMapper = mock(RelationDOMapper.class);
-        when(failingMapper.follower(3, 50)).thenReturn(relations.follower(3, 50));
-        doThrow(new IllegalStateException("database unavailable"))
-                .when(failingMapper).followerAfter(anyLong(), any(), anyLong(), anyInt());
-        var failingCache = wire(RelationListCache.class, redis, failingMapper, locks, properties, databaseRateLimiter);
-        try (var lock = locks.acquire("followers", 50)) {
-            assertThrows(IllegalStateException.class, () -> failingCache.syncFollowerLocked(3, 50, lock));
-            assertEquals(List.of(5L, 4L, 3L), fanIds());
-            cache.syncFollowerLocked(3, 50, lock);
-        }
-        assertEquals(List.of(5L, 4L, 2L), fanIds());
-    }
-
-    @Test
-    void boundarySnapshotReadsAtMostThreeMembers() {
-        var time = LocalDateTime.of(2026, 1, 1, 0, 0);
-        int oldLimit = properties.getFansCacheSize();
-        properties.setFansCacheSize(20);
-        try {
-            for (long id = 1; id <= 30; id++) project(id, 50, 1, 1, time);
-            cache.load("followers", 50, 0, -1);
-            com.quanxiaoha.xiaohashu.user.relation.biz.model.dto.RelationCacheSnapshotDTO snapshot =
-                    org.springframework.test.util.ReflectionTestUtils.invokeMethod(cache,
-                            "read", "followers", 50L, -2L, -1L, RelationListCache.member(30));
-            assertEquals(20, snapshot.getCount());
-            assertEquals(List.of(12L, 11L, 30L),
-                    snapshot.getEntries().stream().map(RelationCacheEntryDTO::getId).toList());
-        } finally {
-            properties.setFansCacheSize(oldLimit);
-        }
-    }
-
-    @Test
-    void singleMemberWindowBackfillsWithoutRemainingBoundary() {
-        var time = LocalDateTime.of(2026, 1, 1, 0, 0);
-        int oldLimit = properties.getFansCacheSize();
-        properties.setFansCacheSize(1);
-        try {
-            project(1, 50, 1, 1, time);
-            project(2, 50, 1, 1, time);
-            cache.load("followers", 50, 0, -1);
-            project(2, 50, 2, 2, time.plusSeconds(1));
-            try (var lock = locks.acquire("followers", 50)) {
-                cache.syncFollowerLocked(2, 50, lock);
-            }
-            assertEquals(List.of(1L), fanIds());
-            assertTrue(cache.read("followers", 50, 0, -1).isComplete());
-            project(1, 50, 2, 2, time.plusSeconds(2));
-            try (var lock = locks.acquire("followers", 50)) {
-                cache.syncFollowerLocked(1, 50, lock);
-            }
-            assertTrue(fanIds().isEmpty());
-            assertTrue(cache.read("followers", 50, 0, -1).isComplete());
-        } finally {
-            properties.setFansCacheSize(oldLimit);
-        }
-    }
-
-    @Test
     void coldListsAreRateLimitedBeforeReadingDatabase() {
         RelationDOMapper mapper = mock(RelationDOMapper.class);
         var limitedCache = wire(RelationListCache.class, redis, mapper, locks, properties, databaseRateLimiter);
@@ -472,7 +380,7 @@ class RelationFlowTest {
     @Test
     void cacheFilledBeforeLockAcquisitionDoesNotConsumePermit() {
         var empty = new com.quanxiaoha.xiaohashu.user.relation.biz.model.dto.RelationCacheSnapshotDTO(
-                true, 0, 1000, List.of());
+                0, List.of());
         RelationDOMapper mapper = mock(RelationDOMapper.class);
         var recheckedCache = spy(wire(RelationListCache.class, redis, mapper, locks, properties, databaseRateLimiter));
         doReturn(null, empty).when(recheckedCache).read("followers", 50, 0, 1);

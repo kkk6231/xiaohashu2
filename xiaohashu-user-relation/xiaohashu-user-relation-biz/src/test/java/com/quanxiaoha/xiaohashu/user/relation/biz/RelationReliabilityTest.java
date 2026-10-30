@@ -12,7 +12,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -76,15 +75,11 @@ class RelationReliabilityTest {
         when(redis.opsForValue()).thenReturn(values);
         when(values.setIfAbsent(anyString(), anyString(), any(Duration.class)))
                 .thenReturn(false, true);
-        try (RelationLocks locks = locks(redis, 1000)) {
-            try (var handle = locks.acquire("following", 1)) {
-                assertNotNull(handle.token());
-            }
-            verify(values, times(2)).setIfAbsent(anyString(), anyString(), any(Duration.class));
-            ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor)
-                    ReflectionTestUtils.getField(locks, "renewalExecutor");
-            assertTrue(executor.getQueue().isEmpty(), "释放锁后不能残留已取消的续约任务");
+        RelationLocks locks = locks(redis, 1000);
+        try (var handle = locks.acquire("following", 1)) {
+            assertNotNull(handle.token());
         }
+        verify(values, times(2)).setIfAbsent(anyString(), anyString(), any(Duration.class));
     }
 
     @Test
@@ -93,24 +88,22 @@ class RelationReliabilityTest {
         ValueOperations<String, String> values = mock(ValueOperations.class);
         when(redis.opsForValue()).thenReturn(values);
         when(values.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(false);
-        try (RelationLocks locks = locks(redis, 30)) {
-            assertTimeoutPreemptively(Duration.ofSeconds(2),
-                    () -> assertThrows(BizException.class, () -> locks.acquire("following", 1)));
-        }
+        RelationLocks locks = locks(redis, 30);
+        assertTimeoutPreemptively(Duration.ofSeconds(2),
+                () -> assertThrows(BizException.class, () -> locks.acquire("following", 1)));
     }
 
     @Test
     void interruptedRequestDoesNotAcquireLock() {
         StringRedisTemplate redis = mock(StringRedisTemplate.class);
-        try (RelationLocks locks = locks(redis, 200)) {
-            Thread.currentThread().interrupt();
-            try {
-                assertThrows(BizException.class, () -> locks.acquire("following", 1));
-                assertTrue(Thread.currentThread().isInterrupted());
-                verifyNoInteractions(redis);
-            } finally {
-                Thread.interrupted();
-            }
+        RelationLocks locks = locks(redis, 200);
+        Thread.currentThread().interrupt();
+        try {
+            assertThrows(BizException.class, () -> locks.acquire("following", 1));
+            assertTrue(Thread.currentThread().isInterrupted());
+            verifyNoInteractions(redis);
+        } finally {
+            Thread.interrupted();
         }
     }
 

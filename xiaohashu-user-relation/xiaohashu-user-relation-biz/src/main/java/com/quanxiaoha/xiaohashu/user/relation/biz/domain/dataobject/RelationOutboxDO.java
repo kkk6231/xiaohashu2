@@ -11,8 +11,7 @@ public class RelationOutboxDO {
     private Long relationId;
     /** 同一关系的业务版本，决定发送先后，不能用 eventId 代替。 */
     private Long relationVersion;
-    private String eventType;
-    /** 完整事件 JSON，重试直接使用原消息体。 */
+    /** 完整事件 JSON，重试直接使用原消息体；事件类型（关注/取关）已在 payload 里。 */
     private String payload;
     /** 已记录的发送失败次数，用于计算退避时间。 */
     private Integer retryCount;

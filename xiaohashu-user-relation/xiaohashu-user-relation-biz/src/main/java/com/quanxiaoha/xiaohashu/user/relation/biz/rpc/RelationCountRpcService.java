@@ -27,6 +27,9 @@ public class RelationCountRpcService {
         if (response == null || !response.isSuccess() || response.getData() == null) {
             throw new BizException(ResponseCodeEnum.SYSTEM_ERROR);
         }
+        if (response.getData().getFansTotal() == null) {
+            throw new BizException(ResponseCodeEnum.SYSTEM_ERROR);
+        }
         return response.getData().getFansTotal();
     }
 }

@@ -92,17 +92,12 @@ public class RelationOutboxPublisher {
 
     /**
      * 在当前关系下领取最早的一条未发送事件。
-     * 先锁关系行让即时投递与多实例扫描串行，再用 claimToken + 租约标记“发送中”；
-     * 只能按版本顺序推进，前一条没发出去就不能跳过它领后一条。
+     * head 语句自带 FOR UPDATE：并发线程在这里串行，后到的看到 status=1 就领不到；
+     * 再用 claimToken + 租约标记“发送中”。只能按版本顺序推进，前一条没发出去就不能跳过它。
      *
      * @return 领取到的事件；没有可发消息或领取失败时返回 null
      */
     private RelationOutboxDO claimPendingMessage(long relationId) {
-        // 锁定关系行，使即时投递和多实例扫描串行领取同一关系的消息
-        Long lockedRelationId = relationOutboxDOMapper.lockRelation(relationId);
-        if (lockedRelationId == null) {
-            return null;
-        }
         RelationOutboxDO pendingMessage = relationOutboxDOMapper.head(relationId);
         if (pendingMessage == null) {
             return null;

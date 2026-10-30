@@ -47,17 +47,20 @@ public class FollowUnfollowConsumer implements RocketMQListener<String> {
         } catch (Exception exception) {
             throw new IllegalArgumentException("Invalid relation event", exception);
         }
+        RelationDO relationDO = new RelationDO();
+        relationDO.setId(relationEvent.getRelationId());
+        relationDO.setFromUserId(relationEvent.getFromUserId());
+        relationDO.setToUserId(relationEvent.getToUserId());
+        relationDO.setType(relationEvent.getType());
+        relationDO.setVersion(relationEvent.getRelationVersion());
+        relationDO.setUpdateTime(relationEvent.getUpdateTime());
+        // 先提交粉丝投影：project 是"只接受更高版本"的幂等 upsert，并发写同一行也安全，
+        // 不需要用缓存锁把它也串起来。
+        transactionTemplate.executeWithoutResult(transactionStatus -> relationDOMapper.project(relationDO));
+        // 锁只保护"改缓存"这一段：syncFollowerLocked 会在锁内重新查主库再写，
+        // 持锁时间从"整个数据库事务"缩短到"两次查询 + 一次写"。
+        // 不能因为 Follower 已是同一版本就提前确认消息：上次可能只完成了数据库提交。
         try (RelationLocks.Handle cacheLock = relationLocks.acquire("followers", relationEvent.getToUserId())) {
-            RelationDO relationDO = new RelationDO();
-            relationDO.setId(relationEvent.getRelationId());
-            relationDO.setFromUserId(relationEvent.getFromUserId());
-            relationDO.setToUserId(relationEvent.getToUserId());
-            relationDO.setType(relationEvent.getType());
-            relationDO.setVersion(relationEvent.getRelationVersion());
-            relationDO.setUpdateTime(relationEvent.getUpdateTime());
-            // 先提交粉丝投影，再更新缓存；重试时仍需执行缓存步骤
-            transactionTemplate.executeWithoutResult(transactionStatus -> relationDOMapper.project(relationDO));
-            // 不能因为 Follower 已是相同版本就提前确认消息：上次可能只完成了数据库提交
             relationListCache.syncFollowerLocked(relationEvent.getFromUserId(), relationEvent.getToUserId(), cacheLock);
         }
     }

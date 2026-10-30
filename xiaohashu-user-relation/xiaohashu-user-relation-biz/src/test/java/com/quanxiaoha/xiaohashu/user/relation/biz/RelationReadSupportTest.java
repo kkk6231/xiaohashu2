@@ -31,7 +31,7 @@ class RelationReadSupportTest {
         RelationCountRpcService rpc = new RelationCountRpcService();
         ReflectionTestUtils.setField(rpc, "relationCountFeignApi", api);
         RelationCountDTO count = new RelationCountDTO();
-        count.setFansTotal(123);
+        count.setFansTotal(123L);
         when(api.find(1)).thenReturn(Response.success(count), Response.fail(), Response.success());
         assertEquals(123, rpc.findFansTotal(1));
         assertThrows(BizException.class, () -> rpc.findFansTotal(1));

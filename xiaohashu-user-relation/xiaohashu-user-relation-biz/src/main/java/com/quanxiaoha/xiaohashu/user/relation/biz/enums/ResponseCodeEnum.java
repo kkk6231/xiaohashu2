@@ -25,6 +25,7 @@ public enum ResponseCodeEnum implements BaseExceptionInterface {
     CANT_UNFOLLOW_YOUR_SELF("RELATION-20005", "无法取关自己"),
     RELATION_BUSY("RELATION-20007", "操作繁忙，请稍后重试"),
     LOGIN_REQUIRED("RELATION-20008", "请先登录"),
+    FANS_PAGE_LIMIT_EXCEEDED("RELATION-20009", "粉丝过多，仅支持查看最近的部分粉丝"),
     ;
 
     // 异常码

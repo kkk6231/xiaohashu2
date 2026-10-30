@@ -43,7 +43,6 @@ class RelationPublisherTest {
         row.setRelationId(2L);
         row.setRetryCount(0);
         row.setPayload("{}");
-        when(mapper.lockRelation(2)).thenReturn(2L);
         when(mapper.head(2)).thenReturn(row);
         when(mapper.claim(eq(1L), anyString(), anyLong())).thenReturn(1);
         SendResult result = new SendResult();

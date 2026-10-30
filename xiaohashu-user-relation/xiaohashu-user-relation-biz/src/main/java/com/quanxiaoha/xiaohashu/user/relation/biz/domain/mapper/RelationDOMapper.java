@@ -59,18 +59,14 @@ public interface RelationDOMapper {
      * @param offset 偏移量
      * @param limit  本页条数
      */
+    /**
+     * 分页查询粉丝列表：按关注时间倒序、发起人 ID 倒序，保证翻页稳定不重复。
+     *
+     * @param offset 偏移量
+     * @param limit  本页条数
+     */
     List<RelationDO> followerPage(
             @Param("user") long user, @Param("offset") long offset, @Param("limit") int limit);
-
-    /**
-     * 按“时间 + ID”边界查询某时间点之后的粉丝，用于补齐被截断的粉丝缓存。
-     * 边界条件保证与 ZSet 的排序一致，不会重复或漏人。
-     */
-    List<RelationDO> followerAfter(
-            @Param("user") long user,
-            @Param("time") LocalDateTime time,
-            @Param("id") long id,
-            @Param("limit") int limit);
 
     /**
      * 写入粉丝投影（t_follower）。

@@ -59,9 +59,6 @@ public class RelationCommandService {
     /** 在同一事务中修改关系事实并记录 Outbox 事件。 */
     private Long changeInTransaction(
             long fromUserId, long toUserId, boolean followOperation) {
-        // 只使用数据库用户行锁，使同一用户的上限检查和关系写入在事务内串行执行。
-        // 必须先取得该锁，再读取关系和计数；锁随事务提交或回滚释放。
-        relationDOMapper.lockUser(fromUserId);
         RelationDO relationDO = relationDOMapper.following(fromUserId, toUserId);
         // 已是目标状态时直接返回，避免重复生成关系事件
         boolean alreadyFollowing = relationDO != null
@@ -70,9 +67,16 @@ public class RelationCommandService {
             return null;
         }
 
-        // 上限以关系主表为准，不能依赖异步计数
-        if (followOperation && relationDOMapper.followingCount(fromUserId) >= relationProperties.getMaxFollowing()) {
-            throw new BizException(ResponseCodeEnum.FOLLOWING_COUNT_LIMIT);
+        // 只有"关注"需要用户行锁：要挡的是跨行约束（关注数上限）；
+        // 同一对关系的并发由下面的 version CAS 兜住，所以取关不必加锁。
+        if (followOperation) {
+            // 锁住该用户自己的一行，使"数上限 + 写入"在事务内串行；
+            // 不同用户锁的是不同的行，互不阻塞。锁随事务提交或回滚释放。
+            relationDOMapper.lockUser(fromUserId);
+            // 上限以关系主表为准，不能依赖异步计数
+            if (relationDOMapper.followingCount(fromUserId) >= relationProperties.getMaxFollowing()) {
+                throw new BizException(ResponseCodeEnum.FOLLOWING_COUNT_LIMIT);
+            }
         }
         // 取关保留关系记录，再次关注继续递增版本，防止旧消息覆盖新状态
         if (relationDO == null) {
@@ -113,11 +117,6 @@ public class RelationCommandService {
         RelationOutboxDO outboxDO = new RelationOutboxDO();
         outboxDO.setRelationId(relationDO.getId());
         outboxDO.setRelationVersion(relationDO.getVersion());
-        String eventType = "UNFOLLOW";
-        if (FollowUnfollowTypeEnum.FOLLOW.getCode().equals(relationDO.getType())) {
-            eventType = "FOLLOW";
-        }
-        outboxDO.setEventType(eventType);
         // 先插入以获取数据库生成的 eventId，再将它写入消息体
         // 两步都在当前事务内，投递器只能看到提交后的完整消息
         outboxDO.setPayload("{}");

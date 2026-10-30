@@ -5,12 +5,12 @@
 == 启动准备
 
 . 使用独立的开发数据库执行关系模块 `src/main/resources/db/relation-v1.sql`。这是初始化建表脚本，不会自动执行。
-. 计数服务使用 Redis 二进制 String 与 seen Set，不再创建关系计数 inbox 或写入 t_user_count；新开发环境从空事实与空计数开始。详细契约见 link:计数服务重构开发文档.md[计数服务重构开发文档]。
+. 计数服务使用 Redis Hash 与 seen Set，不再创建关系计数 inbox 或写入 t_user_count；新开发环境从空事实与空计数开始。详细契约见 link:计数服务重构开发文档.md[计数服务重构开发文档]。
 . 配置现有 MySQL、Redis、Nacos、RocketMQ 连接，启动用户、计数、关系服务。
 . 在 RocketMQ 创建 `RelationChangedV1` Topic。关注缓存、粉丝投影、关系计数分别使用 `relation-following-cache-v1`、`relation-follower-projection-v1`、`counter-relation-v1` 三个消费组。先启动消费者，再开放写入。
 . 关系计数只走 RelationChangedV1 新事件链路；评论相关消费者仍服务评论业务，不属于七类计数重构的删除范围。
 
-关系计数已接入统一计数服务：每个用户目标通过一次 Lua 原子执行去重与增量聚合，两个用户目标之间通过重试收敛；查询读取 Redis 二进制计数。不再使用数据库关系计数 inbox，不发送第二层计数 MQ。点赞、收藏及作品计数现已接入同一计数引擎。
+关系计数已接入统一计数服务：每个用户目标通过一次 Lua 原子执行去重与增量聚合，两个用户目标之间通过重试收敛；查询读取 Redis Hash 计数。不再使用数据库关系计数 inbox，不发送第二层计数 MQ。点赞、收藏及作品计数现已接入同一计数引擎。
 
 == 数据与流程
 

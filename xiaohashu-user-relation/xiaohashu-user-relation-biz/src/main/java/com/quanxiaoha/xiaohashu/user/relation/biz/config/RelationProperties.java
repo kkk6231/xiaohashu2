@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 public class RelationProperties {
     /** 关注人数上限 */
     private int maxFollowing = 2000;
-    /** 粉丝列表最大缓存人数 */
-    private int fansCacheSize = 10000;
+    /** 粉丝列表最大缓存人数；超出这个范围的页直接拒绝，不回源数据库 */
+    private int fansCacheSize = 5000;
     /** 缓存有效期，单位：秒 */
     private long cacheTtlSeconds = 3600;
     /** 列表缓存锁租约，单位：毫秒 */
@@ -27,7 +27,7 @@ public class RelationProperties {
     private long sendTimeoutMillis = 5000;
     /** 每次扫描的最大关系数 */
     private int dispatchBatchSize = 100;
-    /** 每个实例每秒允许的列表初始化和分页回源次数 */
+    /** 每个实例每秒允许的列表初始化次数（深分页不再回源，只剩冷启动这一处查库） */
     private double databaseQueryPermitsPerSecond = 50;
 
     @PostConstruct
