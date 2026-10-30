@@ -26,8 +26,8 @@ class CountRedisTest {
         service = new CountServiceImpl();
         ReflectionTestUtils.setField(service, "redisTemplate", redis);
         ReflectionTestUtils.setField(service, "objectMapper", new ObjectMapper());
-        redis.delete(List.of("counter:{note:" + id + "}:data", "counter:{note:" + id + "}:seen",
-                "counter:{user:" + id + "}:data", "counter:{user:" + id + "}:seen"));
+        redis.delete(List.of("counter:{note:" + id + "}", "counter:{note:" + id + "}:seen",
+                "counter:{user:" + id + "}", "counter:{user:" + id + "}:seen"));
     }
 
     @AfterEach
@@ -55,7 +55,7 @@ class CountRedisTest {
 
     @Test
     void partialTargetFailureResumesWithoutDoubleCounting() {
-        String userKey = "counter:{user:" + id + "}:data";
+        String userKey = "counter:{user:" + id + "}";
         redis.opsForValue().set(userKey, "broken");
         var author = new CountChangeDTO("a", "user", id, Map.of("likesReceivedTotal", 1L));
         assertThrows(Exception.class, () -> service.apply(List.of(note("a", 1), author)));
@@ -79,18 +79,19 @@ class CountRedisTest {
     }
 
     @Test
-    void largeIntegerAndMissingDataAreHandled() {
+    void largeIntegerAndMissingHashAreHandled() {
         service.apply(List.of(note("large", 4294967297L)));
         assertEquals(4294967297L, service.findNotes(List.of(id)).get(0).getLikeTotal());
-        redis.delete("counter:{note:" + id + "}:data");
-        assertThrows(org.springframework.dao.DataAccessException.class, () -> service.findNotes(List.of(id)));
+        redis.delete("counter:{note:" + id + "}");
+        // 已处理记录存在但 Hash 丢失，读时隐藏计数，写时拒绝继续累加。
+        assertNull(service.findNotes(List.of(id)).get(0).getLikeTotal());
         assertThrows(Exception.class, () -> service.apply(List.of(note("next", 1))));
     }
 
     @Test
     void uninitializedTargetReturnsZeroWithoutCreatingKeys() {
         assertEquals(0, service.findNotes(List.of(id)).get(0).getLikeTotal());
-        assertFalse(redis.hasKey("counter:{note:" + id + "}:data"));
+        assertFalse(redis.hasKey("counter:{note:" + id + "}"));
         assertFalse(redis.hasKey("counter:{note:" + id + "}:seen"));
     }
 
@@ -98,7 +99,7 @@ class CountRedisTest {
     void firstWritesAndBatchReadsCanRunConcurrently() throws Exception {
         List<Long> ids = java.util.stream.LongStream.range(id + 1, id + 65).boxed().toList();
         List<String> keys = ids.stream().flatMap(value -> java.util.stream.Stream.of(
-                "counter:{note:" + value + "}:data", "counter:{note:" + value + "}:seen")).toList();
+                "counter:{note:" + value + "}", "counter:{note:" + value + "}:seen")).toList();
         var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
         var start = new java.util.concurrent.CountDownLatch(1);
         redis.delete(keys);
@@ -128,5 +129,15 @@ class CountRedisTest {
             executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS);
             redis.delete(keys);
         }
+    }
+    @Test
+    void invalidFieldDoesNotPartiallyApplyBatch() {
+        String key = "counter:{note:" + id + "}";
+        redis.opsForHash().put(key, "collectTotal", "broken");
+        var first = new CountChangeDTO("first", "note", id, Map.of("likeTotal", 1L));
+        var second = new CountChangeDTO("second", "note", id, Map.of("collectTotal", 1L));
+        assertThrows(Exception.class, () -> service.apply(List.of(first, second)));
+        assertNull(redis.opsForHash().get(key, "likeTotal"));
+        assertFalse(redis.hasKey(key + ":seen"));
     }
 }

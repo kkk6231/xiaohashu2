@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class NoteCountDTO {
     private long noteId;
-    private long likeTotal;
-    private long collectTotal;
+    private Long likeTotal;
+    private Long collectTotal;
 }

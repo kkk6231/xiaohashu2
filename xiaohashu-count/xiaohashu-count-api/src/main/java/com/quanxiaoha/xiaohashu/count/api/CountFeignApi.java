@@ -11,9 +11,6 @@ public interface CountFeignApi {
     Response<Void> apply(@RequestBody CountChangeBatchDTO batch,
                          @RequestHeader("X-Count-Token") String token);
 
-    @GetMapping("/count/user")
-    Response<UserCountDTO> findUser(@RequestParam("userId") long userId);
-
     @GetMapping("/count/note")
     Response<NoteCountDTO> findNote(@RequestParam("noteId") long noteId);
 

@@ -2,23 +2,24 @@
 
 == 当前范围
 
-计数读写只访问 Redis，不查询数据库代次、不持有数据库恢复锁。
-计数使用固定 Key：counter:{user:用户ID}:data/seen、counter:{note:笔记ID}:data/seen。
+七类计数的读写只访问 Redis，不查询数据库代次、不持有数据库恢复锁。
+计数使用固定 Key：`counter:{user:用户ID}`（Hash）与 `counter:{user:用户ID}:seen`（Set），笔记对应 `counter:{note:笔记ID}` 与 `counter:{note:笔记ID}:seen`。同一目标的 Hash 与 seen 共用 hash tag。
+Hash 保存计数字段，写入使用 `HINCRBY`；seen 保存该目标已处理的事件键。
 业务事实及 Outbox、互动处理结果仍落 MySQL；保留消息重试、计数补偿和目标事件去重。
 不提供数据对齐、计数重建或 Redis 数据丢失后的自动恢复。已确认的计数和去重数据保留是可靠重试的前提。
 
 == 升级边界
 
 停止旧版相关服务后统一升级，避免新旧计数模型混跑。
+旧版计数键与新 Hash 结构不兼容，升级前应清空旧计数键（`counter:*`），从空 Hash 与空 seen 开始，不做旧数据迁移。
+项目未上线，旧版消息与当前实现不兼容，不保证 `countGeneration` 等旧字段可被识别。
 新库不再需要 count-recovery.sql、t_count_generation、t_count_rebuild 或 count_generation 字段。
-旧库已经存在的恢复表和字段可以暂留；本次不执行数据库删除，既有 count_generation 字段默认值应保持原脚本的 1。
-历史消息中的 countGeneration 字段仅被忽略，不参与计数。
-本版继续使用原第一代 Redis Key；若旧环境实际执行过重建并使用 counter:gN: 命名空间，不能直接切换本版，需要另行处理数据和历史消息边界。
-不清空已有 seen，也不重新生成历史事件的 eventKey。
+旧库已经存在的恢复表和字段可以暂留；本次不执行数据库删除。
+升级后不从业务事实重放历史事件，也不重新生成历史事件的 eventKey。
 
 == 存储要求
 
-计数 data 和 seen 不设 TTL，不作为普通缓存主动淘汰。
+计数 Hash 和 seen 不设 TTL，不作为普通缓存主动淘汰。
 Redis 持久化由部署环境配置，本项目不宣称可以修复持久化丢失、误删或历史错误。
 
 == 删除笔记的缓存失效

@@ -43,12 +43,6 @@ public class CountController {
         return Response.success(result);
     }
 
-    /** 查询用户的关注、粉丝、获赞、获收藏和作品数。 */
-    @GetMapping("/count/user")
-    public Response<UserCountDTO> findUser(@RequestParam long userId) {
-        return Response.success(countService.findUsers(List.of(userId)).get(0));
-    }
-
     /** 查询笔记的点赞数和收藏数。 */
     @GetMapping("/count/note")
     public Response<NoteCountDTO> findNote(@RequestParam long noteId) {

@@ -4,8 +4,6 @@ import lombok.*;
 import java.util.Map;
 
 /** 一条业务事件对一个计数对象的实际增量。 */
-// 兼容旧消息中的已移除字段，不参与当前计数逻辑。
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties("countGeneration")
 @Data
 @NoArgsConstructor
 public class CountChangeDTO {

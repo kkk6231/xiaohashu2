@@ -1,28 +1,26 @@
 package com.quanxiaoha.xiaohashu.count.biz.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quanxiaoha.xiaohashu.count.api.dto.*;
 import com.quanxiaoha.xiaohashu.count.biz.service.CountService;
 import jakarta.annotation.Resource;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
+@lombok.extern.slf4j.Slf4j
 public class CountServiceImpl implements CountService {
-    // 顺序即 Redis String 的字段布局，每个字段占 8 字节；读写必须保持一致。
+    // Hash 的字段名就是读写协议；新增字段不需要调整其他字段的存储位置。
     private static final List<String> USER_FIELDS = List.of("followingTotal", "fansTotal",
             "likesReceivedTotal", "collectsReceivedTotal", "worksTotal");
     private static final List<String> NOTE_FIELDS = List.of("likeTotal", "collectTotal");
-    // Lua 使用双精度数值，限制在可精确表示的整数范围内。
-    private static final long MAX_SAFE_INTEGER = 9007199254740991L;
     private static final int MAX_CHANGE_BATCH_SIZE = 200;
     private static final int MAX_QUERY_BATCH_SIZE = 100;
 
@@ -32,18 +30,18 @@ public class CountServiceImpl implements CountService {
     private ObjectMapper objectMapper;
 
     private final DefaultRedisScript<Long> updateScript = new DefaultRedisScript<>();
-    private final DefaultRedisScript<String> readScript = new DefaultRedisScript<>();
+    private final DefaultRedisScript<List> readScript = new DefaultRedisScript<>();
 
-    /** 加载计数读写脚本。 */
+    /** 加载计数写入脚本。 */
     public CountServiceImpl() {
         updateScript.setLocation(new ClassPathResource("lua/count-apply.lua"));
         updateScript.setResultType(Long.class);
         readScript.setLocation(new ClassPathResource("lua/count-read.lua"));
-        readScript.setResultType(String.class);
+        readScript.setResultType(List.class);
     }
 
     /**
-     * 按用户或笔记分组写入。同一目标的去重、增量聚合和写入由一次 Lua 完成。
+     * 按用户或笔记分组写入。同一目标的去重、逐字段累加和写入由一次 Lua 完成。
      * 不同目标之间不构成事务：部分成功后由上游重试，已成功的目标通过事件键去重。
      */
     @Override
@@ -71,8 +69,7 @@ public class CountServiceImpl implements CountService {
                 throw new IllegalArgumentException("计数变更参数不完整");
             }
             change.getDeltas().forEach((field, delta) -> {
-                if (!fieldNames.contains(field) || delta == null
-                        || delta < -MAX_SAFE_INTEGER || delta > MAX_SAFE_INTEGER) {
+                if (!fieldNames.contains(field) || delta == null) {
                     throw new IllegalArgumentException("计数字段或增量不合法");
                 }
             });
@@ -84,19 +81,17 @@ public class CountServiceImpl implements CountService {
 
     /** 对一个目标原子执行去重及计数更新。 */
     private void applyTargetChanges(String targetKey, List<CountChangeDTO> targetChanges) {
-        List<String> fieldNames = fieldNamesFor(targetChanges.get(0).getTargetType());
-        List<Map<String, Object>> scriptEvents = buildScriptEvents(targetChanges, fieldNames);
+        List<Map<String, Object>> scriptEvents = buildScriptEvents(targetChanges);
         try {
-            redisTemplate.execute(updateScript, List.of(targetKey + ":data", targetKey + ":seen"),
-                    String.valueOf(fieldNames.size()), objectMapper.writeValueAsString(scriptEvents));
-        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            redisTemplate.execute(updateScript, List.of(targetKey, targetKey + ":seen"),
+                    objectMapper.writeValueAsString(scriptEvents));
+        } catch (JsonProcessingException exception) {
             throw new IllegalArgumentException("计数事件序列化失败", exception);
         }
     }
 
     /** 保留每个事件的身份，不能在 Java 中直接求和，否则 Lua 无法排除已处理的事件。 */
-    private List<Map<String, Object>> buildScriptEvents(List<CountChangeDTO> targetChanges,
-                                                       List<String> fieldNames) {
+    private List<Map<String, Object>> buildScriptEvents(List<CountChangeDTO> targetChanges) {
         Map<String, Map<String, Long>> deltasByEvent = new LinkedHashMap<>();
         for (CountChangeDTO change : targetChanges) {
             Map<String, Long> previousDeltas = deltasByEvent.putIfAbsent(change.getEventKey(), change.getDeltas());
@@ -106,10 +101,10 @@ public class CountServiceImpl implements CountService {
         }
         List<Map<String, Object>> scriptEvents = new ArrayList<>();
         deltasByEvent.forEach((eventKey, deltas) -> {
-            // 按二进制字段布局补齐增量，未变更的字段传 0。
-            List<Long> orderedDeltas = fieldNames.stream()
-                    .map(field -> deltas.getOrDefault(field, 0L)).toList();
-            scriptEvents.add(Map.of("id", eventKey, "values", orderedDeltas));
+            Map<String, Object> event = new LinkedHashMap<>();
+            event.put("id", eventKey);
+            event.put("deltas", deltas);
+            scriptEvents.add(event);
         });
         return scriptEvents;
     }
@@ -117,10 +112,10 @@ public class CountServiceImpl implements CountService {
     /** 查询用户五项计数。 */
     @Override
     public List<UserCountDTO> findUsers(List<Long> ids) {
-        List<long[]> counts = readCounts("user", ids);
+        List<Long[]> counts = readCounts("user", ids);
         List<UserCountDTO> result = new ArrayList<>();
         for (int i = 0; i < ids.size(); i++) {
-            long[] values = counts.get(i);
+            Long[] values = counts.get(i);
             UserCountDTO dto = new UserCountDTO();
             dto.setUserId(ids.get(i));
             dto.setFollowingTotal(values[0]);
@@ -136,7 +131,7 @@ public class CountServiceImpl implements CountService {
     /** 查询作品点赞和收藏计数。 */
     @Override
     public List<NoteCountDTO> findNotes(List<Long> ids) {
-        List<long[]> counts = readCounts("note", ids);
+        List<Long[]> counts = readCounts("note", ids);
         List<NoteCountDTO> result = new ArrayList<>();
         for (int i = 0; i < ids.size(); i++) {
             NoteCountDTO dto = new NoteCountDTO();
@@ -149,53 +144,61 @@ public class CountServiceImpl implements CountService {
     }
 
     /** 直接从 Redis 批量读取计数，不查询数据库。 */
-    private List<long[]> readCounts(String type, List<Long> ids) {
-        if (ids == null || ids.isEmpty() || ids.size() > MAX_QUERY_BATCH_SIZE || ids.stream().anyMatch(id -> id == null || id <= 0)) {
+    private List<Long[]> readCounts(String type, List<Long> ids) {
+        if (ids == null || ids.isEmpty() || ids.size() > MAX_QUERY_BATCH_SIZE
+                || ids.stream().anyMatch(id -> id == null || id <= 0)) {
             throw new IllegalArgumentException("计数查询 ID 必须为正数，且数量在 1 到 100 之间");
         }
-        byte[] script = readScript.getScriptAsString().getBytes(StandardCharsets.UTF_8);
-        // 每个目标在 Lua 内原子读取；pipeline 仅批量发送，不承担一致性保证。
-        // 直接 EVAL 避免 pipeline 中 EVALSHA 缓存未命中，并保留原始二进制返回值。
-        List<Object> results = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
-            for (Long id : ids) {
-                String prefix = buildTargetKey(type, id);
-                connection.scriptingCommands().eval(script, ReturnType.VALUE, 2,
-                        (prefix + ":data").getBytes(StandardCharsets.UTF_8),
-                        (prefix + ":seen").getBytes(StandardCharsets.UTF_8));
+        List<String> fields = fieldNamesFor(type);
+        // pipeline 仅批量发送 HMGET，不承担一致性保证；单个目标缺失时按零处理。
+        List<Object> results = redisTemplate.executePipelined(new SessionCallback<Object>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <K, V> Object execute(RedisOperations<K, V> operations) {
+                // StringRedisTemplate 的 key/value 序列化器都是 String，这里的收窄是安全的。
+                RedisOperations<String, String> stringOperations = (RedisOperations<String, String>) operations;
+                for (Long id : ids) {
+                    String targetKey = buildTargetKey(type, id);
+                    stringOperations.execute(readScript, List.of(targetKey, targetKey + ":seen"), fields.toArray());
+                }
+                return null;
             }
-            return null;
-        }, org.springframework.data.redis.serializer.RedisSerializer.byteArray());
-        List<long[]> values = new ArrayList<>();
+        });
+        List<Long[]> values = new ArrayList<>(ids.size());
         for (int i = 0; i < ids.size(); i++) {
-            byte[] raw = (byte[]) results.get(i);
-            values.add(decode(raw, fieldNamesFor(type).size()));
+            Long[] targetCounts = decode(results.get(i), fields.size());
+            if (targetCounts[0] == null) {
+                log.error("计数数据缺失，type: {}, id: {}", type, ids.get(i));
+            }
+            values.add(targetCounts);
         }
         return values;
     }
 
-    /** 解码固定长度计数，展示时把临时负数截断为零。 */
-    public static long[] decode(byte[] raw, int fieldCount) {
-        long[] values = new long[fieldCount];
-        if (raw == null) {
+    /** 解码计数；数据丢失时返回空值供前端隐藏。 */
+    @SuppressWarnings("unchecked")
+    private static Long[] decode(Object raw, int fieldCount) {
+        Long[] values = new Long[fieldCount];
+        List<String> fields = (List<String>) raw;
+        if (fields == null || "missing".equals(fields.get(0))) {
             return values;
         }
-        if (raw.length != fieldCount * Long.BYTES) {
-            throw new IllegalStateException("计数数据长度错误");
-        }
-        ByteBuffer buffer = ByteBuffer.wrap(raw);
-        // 删除事件可能先到达，内部保留负数抵消迟到增量；展示时才截断为 0。
         for (int i = 0; i < fieldCount; i++) {
-            values[i] = Math.max(0, buffer.getLong());
+            try {
+                values[i] = Math.max(0L, Long.parseLong(fields.get(i + 1)));
+            } catch (NumberFormatException exception) {
+                throw new IllegalStateException("计数数据格式错误", exception);
+            }
         }
         return values;
     }
 
-    /** 同一目标的计数和去重 Key 共用 hash tag，支持单目标 Lua 原子操作。 */
+    /** 计数 Hash 和去重 Key 共用 hash tag，支持单目标 Lua 原子操作。 */
     private static String buildTargetKey(String targetType, long targetId) {
         return "counter:{" + targetType + ":" + targetId + "}";
     }
 
-    /** 返回与二进制布局一致的字段顺序。 */
+    /** 返回该对象允许写入的字段。 */
     private static List<String> fieldNamesFor(String type) {
         if ("user".equals(type)) {
             return USER_FIELDS;
@@ -205,6 +208,4 @@ public class CountServiceImpl implements CountService {
         }
         throw new IllegalArgumentException("不支持的计数对象");
     }
-
-
 }

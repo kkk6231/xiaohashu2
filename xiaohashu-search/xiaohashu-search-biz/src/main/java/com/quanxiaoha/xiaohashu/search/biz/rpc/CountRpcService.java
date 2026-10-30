@@ -26,8 +26,8 @@ public class CountRpcService {
             response.getData().forEach(count -> counts.put(count.getNoteId(), count));
             for (var note : page) {
                 var count = counts.get(note.getNoteId());
-                note.setLikeTotal(NumberUtils.formatNumberString(count.getLikeTotal()));
-                note.setCollectTotal(NumberUtils.formatNumberString(count.getCollectTotal()));
+                note.setLikeTotal(count.getLikeTotal() == null ? null : NumberUtils.formatNumberString(count.getLikeTotal()));
+                note.setCollectTotal(count.getCollectTotal() == null ? null : NumberUtils.formatNumberString(count.getCollectTotal()));
             }
         }
     }
@@ -45,7 +45,7 @@ public class CountRpcService {
             for (var user : page) {
                 var count = counts.get(user.getUserId());
                 user.setNoteTotal(count.getWorksTotal());
-                user.setFansTotal(NumberUtils.formatNumberString(count.getFansTotal()));
+                user.setFansTotal(count.getFansTotal() == null ? null : NumberUtils.formatNumberString(count.getFansTotal()));
             }
         }
     }

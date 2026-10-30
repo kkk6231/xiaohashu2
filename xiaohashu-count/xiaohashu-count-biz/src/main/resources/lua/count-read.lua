@@ -1,7 +1,11 @@
--- 与首次写入互斥执行，避免 GET 和 EXISTS 观察到不同时间的状态。
-local data = redis.call('GET', KEYS[1])
-if not data and redis.call('EXISTS', KEYS[2]) == 1 then
-    return redis.error_reply('counter data missing')
+-- 同一目标原子检查数据和去重记录，返回状态及各字段字符串。
+local dataType = redis.call('TYPE', KEYS[1]).ok
+local seenType = redis.call('TYPE', KEYS[2]).ok
+if dataType ~= 'none' and dataType ~= 'hash' then return redis.error_reply('invalid count type') end
+if seenType ~= 'none' and seenType ~= 'set' then return redis.error_reply('invalid seen type') end
+if dataType == 'none' and seenType ~= 'none' then return {'missing'} end
+local result = {'ok'}
+for _, field in ipairs(ARGV) do
+    result[#result + 1] = redis.call('HGET', KEYS[1], field) or '0'
 end
--- false 表示目标尚未初始化；已有 String 原样返回，不转换二进制内容。
-return data
+return result

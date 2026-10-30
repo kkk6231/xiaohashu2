@@ -5,9 +5,9 @@ import lombok.Data;
 @Data
 public class UserCountDTO {
     private long userId;
-    private long followingTotal;
-    private long fansTotal;
-    private long likesReceivedTotal;
-    private long collectsReceivedTotal;
-    private long worksTotal;
+    private Long followingTotal;
+    private Long fansTotal;
+    private Long likesReceivedTotal;
+    private Long collectsReceivedTotal;
+    private Long worksTotal;
 }
