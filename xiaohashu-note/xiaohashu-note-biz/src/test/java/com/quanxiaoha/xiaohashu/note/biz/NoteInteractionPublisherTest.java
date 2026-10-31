@@ -196,10 +196,10 @@ class NoteInteractionPublisherTest {
         assertFalse(mapper.readValue((String) capture.getAllValues().get(1).getPayload(), NoteInteractionEvent.class).getTargetState());
         assertTrue(mapper.readValue((String) capture.getAllValues().get(2).getPayload(), NoteInteractionEvent.class).getTargetState());
     }
-    /** 列表已修改但 Bloom 更新失败时，尝试失效本次缓存且不发送消息。 */
+    /** 列表脚本执行失败时，尝试失效本次缓存且不发送消息。 */
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
-    void bloomFailureAfterListWriteInvalidatesCache() {
+    void listWriteFailureInvalidatesCache() {
         NoteInteractionPublisher publisher = new NoteInteractionPublisher();
         StringRedisTemplate redis = mock(StringRedisTemplate.class);
         ZSetOperations zset = mock(ZSetOperations.class);
@@ -208,7 +208,8 @@ class NoteInteractionPublisherTest {
         when(redis.opsForValue()).thenReturn(values);
         when(zset.score(anyString(), any(Object.class))).thenReturn(null);
         when(redis.execute(any(org.springframework.data.redis.core.script.RedisScript.class), anyList(),
-                anyString(), anyString())).thenThrow(new IllegalStateException("bloom failure"));
+                anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenThrow(new IllegalStateException("list write failure"));
         NoteDOMapper noteMapper = mock(NoteDOMapper.class);
         when(noteMapper.selectByPrimaryKey(2L)).thenReturn(
                 NoteDO.builder().id(2L).creatorId(3L).status(1).visible(0).build());
@@ -221,10 +222,10 @@ class NoteInteractionPublisherTest {
         LoginUserContextHolder.setUserId(1L);
         assertThrows(IllegalStateException.class, () -> publisher.submit(2L, "LIKE", true));
         verifyNoInteractions(rocketMQ);
-        // Bloom 检查、列表写、Bloom 写、条件失效四次脚本调用。
+        // 列表写入失败后执行条件失效，共两次脚本调用。
         long scriptCalls = mockingDetails(redis).getInvocations().stream()
                 .filter(invocation -> invocation.getMethod().getName().equals("execute")).count();
-        assertEquals(4L, scriptCalls);
+        assertEquals(2L, scriptCalls);
     }
     /** 明确失败时把上一次短期目标状态传入条件失效脚本。 */
     @Test
@@ -250,5 +251,45 @@ class NoteInteractionPublisherTest {
         assertThrows(org.springframework.messaging.MessagingException.class, () -> publisher.submit(2L, "LIKE", false));
         verify(redis).execute(any(org.springframework.data.redis.core.script.RedisScript.class), anyList(),
                 anyString(), eq("previous:1"), eq("60"));
+    }
+
+    /** 最近列表未命中时以数据库事实为准，历史点赞和收藏都不能被误判为不存在。 */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"LIKE", "COLLECT"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void cacheMissChecksExistingInteractionInDatabase(String action) {
+        NoteInteractionPublisher publisher = new NoteInteractionPublisher();
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+        ZSetOperations recentInteractions = mock(ZSetOperations.class);
+        org.springframework.data.redis.core.ValueOperations pendingStates = mock(org.springframework.data.redis.core.ValueOperations.class);
+        when(redis.opsForZSet()).thenReturn(recentInteractions);
+        when(recentInteractions.score(anyString(), any(Object.class))).thenReturn(null);
+        when(redis.opsForValue()).thenReturn(pendingStates);
+        NoteDOMapper noteMapper = mock(NoteDOMapper.class);
+        when(noteMapper.selectByPrimaryKey(2L)).thenReturn(
+                NoteDO.builder().id(2L).creatorId(3L).status(1).visible(0).build());
+        NoteLikeDOMapper likeMapper = mock(NoteLikeDOMapper.class);
+        var collectionMapper = mock(com.quanxiaoha.xiaohashu.note.biz.domain.mapper.NoteCollectionDOMapper.class);
+        when(likeMapper.selectCountByUserIdAndNoteId(1L, 2L)).thenReturn(1);
+        when(collectionMapper.selectCountByUserIdAndNoteId(1L, 2L)).thenReturn(1);
+        RocketMQTemplate rocketMQ = mock(RocketMQTemplate.class);
+        ReflectionTestUtils.setField(publisher, "redisTemplate", redis);
+        ReflectionTestUtils.setField(publisher, "noteMapper", noteMapper);
+        ReflectionTestUtils.setField(publisher, "likeMapper", likeMapper);
+        ReflectionTestUtils.setField(publisher, "collectionMapper", collectionMapper);
+        ReflectionTestUtils.setField(publisher, "rocketMQTemplate", rocketMQ);
+        LoginUserContextHolder.setUserId(1L);
+        assertThrows(com.quanxiaoha.framework.common.exception.BizException.class,
+                () -> publisher.submit(2L, action, true));
+        if ("LIKE".equals(action)) {
+            verify(likeMapper).selectCountByUserIdAndNoteId(1L, 2L);
+            verifyNoInteractions(collectionMapper);
+        } else {
+            verify(collectionMapper).selectCountByUserIdAndNoteId(1L, 2L);
+            verifyNoInteractions(likeMapper);
+        }
+        verify(likeMapper, never()).selectByUserId(anyLong());
+        verify(collectionMapper, never()).selectByUserId(anyLong());
+        verifyNoInteractions(rocketMQ);
     }
 }

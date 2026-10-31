@@ -69,11 +69,9 @@ public class NoteInteractionPublisher {
         boolean like = "LIKE".equals(action);
         String listKey = like ? RedisKeyConstants.buildUserNoteLikeZSetKey(userId)
                 : RedisKeyConstants.buildUserNoteCollectZSetKey(userId);
-        String bloomKey = like ? RedisKeyConstants.buildBloomUserNoteLikeListKey(userId)
-                : RedisKeyConstants.buildBloomUserNoteCollectListKey(userId);
         String pendingKey = listKey + ":pending:" + noteId;
         String previousPending = redisTemplate.opsForValue().get(pendingKey);
-        boolean active = isActive(userId, noteId, like, listKey, bloomKey, previousPending);
+        boolean active = isActive(userId, noteId, like, listKey, previousPending);
         if (active == targetState) {
             if (like) {
                 throw new BizException(targetState ? ResponseCodeEnum.NOTE_ALREADY_LIKED : ResponseCodeEnum.NOTE_NOT_LIKED);
@@ -91,8 +89,6 @@ public class NoteInteractionPublisher {
                         String.valueOf(noteId), String.valueOf(System.currentTimeMillis()),
                         String.valueOf(CACHE_LIMIT), String.valueOf(CACHE_SECONDS), eventId,
                         String.valueOf(PENDING_SECONDS));
-                executeScript(like ? "bloom_add_note_like_and_expire.lua" : "bloom_add_note_collect_and_expire.lua",
-                        bloomKey, String.valueOf(noteId), String.valueOf(CACHE_SECONDS));
             } else {
                 executeCacheScript("interaction-zset-remove.lua", listKey, cacheVersionKey, pendingKey,
                         String.valueOf(noteId), eventId, String.valueOf(CACHE_SECONDS), String.valueOf(PENDING_SECONDS));
@@ -169,7 +165,7 @@ public class NoteInteractionPublisher {
     }
 
     /** 最近列表命中可快速判断；其余情况通过事实表确认。 */
-    private boolean isActive(long userId, long noteId, boolean like, String listKey, String bloomKey, String pending) {
+    private boolean isActive(long userId, long noteId, boolean like, String listKey, String pending) {
         if (pending != null && pending.endsWith(":1")) {
             return true;
         }
@@ -179,36 +175,9 @@ public class NoteInteractionPublisher {
         if (redisTemplate.opsForZSet().score(listKey, String.valueOf(noteId)) != null) {
             return true;
         }
-        initializeBloom(userId, like, bloomKey);
-        String script = like ? "bloom_note_like_check.lua" : "bloom_note_collect_check.lua";
-        Long bloomResult = executeScript(script, bloomKey, String.valueOf(noteId));
-        // 缓存未命中可快速排除；可能命中或尚未初始化时由数据库确认。
-        if (Objects.equals(bloomResult, 0L) && Boolean.TRUE.equals(redisTemplate.hasKey(bloomKey + ":ready"))) {
-            return false;
-        }
+        // 最近列表仅保留部分记录，未命中不能判定未互动，必须查询事实表。
         return like ? likeMapper.selectCountByUserIdAndNoteId(userId, noteId) > 0
                 : collectionMapper.selectCountByUserIdAndNoteId(userId, noteId) > 0;
-    }
-
-    /** 首次使用时从事实表加载过滤器；只追加，不覆盖并发写入的成员。 */
-    private void initializeBloom(long userId, boolean like, String bloomKey) {
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(bloomKey))) {
-            return;
-        }
-        java.util.List<String> arguments = new java.util.ArrayList<>();
-        if (like) {
-            for (NoteLikeDO row : likeMapper.selectByUserId(userId)) arguments.add(String.valueOf(row.getNoteId()));
-        } else {
-            for (NoteCollectionDO row : collectionMapper.selectByUserId(userId)) arguments.add(String.valueOf(row.getNoteId()));
-        }
-        if (arguments.isEmpty()) {
-            return;
-        }
-        arguments.add(String.valueOf(CACHE_SECONDS));
-        String script = like ? "bloom_batch_add_note_like_and_expire.lua" : "bloom_batch_add_note_collect_and_expire.lua";
-        executeScript(script, bloomKey, arguments.toArray(new String[0]));
-        // 只有历史记录全部写完后才标记过滤器可用于排除不存在的记录。
-        redisTemplate.opsForValue().set(bloomKey + ":ready", "1", Duration.ofSeconds(CACHE_SECONDS - 5));
     }
 
     /** 缓存不存在时从数据库恢复最近互动记录。 */
@@ -229,11 +198,4 @@ public class NoteInteractionPublisher {
         }
     }
 
-    /** 执行 Bloom 和列表缓存 Lua 脚本。 */
-    private Long executeScript(String file, String key, String... arguments) {
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        script.setLocation(new ClassPathResource("lua/" + file));
-        script.setResultType(Long.class);
-        return redisTemplate.execute(script, List.of(key), (Object[]) arguments);
-    }
 }
