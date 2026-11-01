@@ -47,10 +47,11 @@ class NoteCacheInvalidationTest {
 
     /** 模拟投递器从数据库读到已提交的缓存任务。 */
     private NoteOutboxPublisher publisher(NoteEventOutboxMapper mapper, StringRedisTemplate redis, RocketMQTemplate mq) {
-        NoteEventOutboxDO task = new NoteEventOutboxDO();
-        task.setId(7L);
-        task.setNoteId(10L);
-        task.setEventType("CACHE_INVALIDATE");
+        NoteEventOutboxDO task = NoteEventOutboxDO.builder()
+                .id(7L)
+                .noteId(10L)
+                .eventType("CACHE_INVALIDATE")
+                .build();
         when(mapper.candidates()).thenReturn(List.of(task));
         when(mapper.claim(eq(7L), anyString())).thenReturn(1);
         NoteOutboxPublisher publisher = new NoteOutboxPublisher();

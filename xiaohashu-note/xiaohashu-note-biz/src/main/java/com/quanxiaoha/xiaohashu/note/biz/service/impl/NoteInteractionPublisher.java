@@ -97,13 +97,14 @@ public class NoteInteractionPublisher {
             invalidateRejectedCache(listKey, cacheVersionKey, pendingKey, eventId, previousPending);
             throw exception;
         }
-        NoteInteractionEvent event = new NoteInteractionEvent();
-        event.setEventId(eventId);
-        event.setUserId(userId);
-        event.setNoteId(noteId);
-        event.setAuthorId(note.getCreatorId());
-        event.setActionType(action);
-        event.setTargetState(targetState);
+        NoteInteractionEvent event = NoteInteractionEvent.builder()
+                .eventId(eventId)
+                .userId(userId)
+                .noteId(noteId)
+                .authorId(note.getCreatorId())
+                .actionType(action)
+                .targetState(targetState)
+                .build();
         event.validate();
         try {
             var result = rocketMQTemplate.syncSendOrderly(NoteInteractionEvent.TOPIC,

@@ -38,11 +38,12 @@ class RelationPublisherTest {
                         i ->
                                 ((TransactionCallback<?>) i.getArgument(0))
                                         .doInTransaction(new SimpleTransactionStatus()));
-        RelationOutboxDO row = new RelationOutboxDO();
-        row.setEventId(1L);
-        row.setRelationId(2L);
-        row.setRetryCount(0);
-        row.setPayload("{}");
+        RelationOutboxDO row = RelationOutboxDO.builder()
+                .eventId(1L)
+                .relationId(2L)
+                .retryCount(0)
+                .payload("{}")
+                .build();
         when(mapper.head(2)).thenReturn(row);
         when(mapper.claim(eq(1L), anyString(), anyLong())).thenReturn(1);
         SendResult result = new SendResult();

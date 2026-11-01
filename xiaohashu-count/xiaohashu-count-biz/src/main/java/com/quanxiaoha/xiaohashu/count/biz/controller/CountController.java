@@ -37,9 +37,10 @@ public class CountController {
     @GetMapping("/count/relation")
     public Response<RelationCountDTO> findRelation(@RequestParam("userId") @Positive long userId) {
         UserCountDTO counts = countService.findUsers(List.of(userId)).get(0);
-        RelationCountDTO result = new RelationCountDTO();
-        result.setFollowingTotal(counts.getFollowingTotal());
-        result.setFansTotal(counts.getFansTotal());
+        RelationCountDTO result = RelationCountDTO.builder()
+                .followingTotal(counts.getFollowingTotal())
+                .fansTotal(counts.getFansTotal())
+                .build();
         return Response.success(result);
     }
 

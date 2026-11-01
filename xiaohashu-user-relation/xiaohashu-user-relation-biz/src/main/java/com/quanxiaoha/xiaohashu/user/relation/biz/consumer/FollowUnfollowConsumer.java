@@ -47,13 +47,14 @@ public class FollowUnfollowConsumer implements RocketMQListener<String> {
         } catch (Exception exception) {
             throw new IllegalArgumentException("Invalid relation event", exception);
         }
-        RelationDO relationDO = new RelationDO();
-        relationDO.setId(relationEvent.getRelationId());
-        relationDO.setFromUserId(relationEvent.getFromUserId());
-        relationDO.setToUserId(relationEvent.getToUserId());
-        relationDO.setType(relationEvent.getType());
-        relationDO.setVersion(relationEvent.getRelationVersion());
-        relationDO.setUpdateTime(relationEvent.getUpdateTime());
+        RelationDO relationDO = RelationDO.builder()
+                .id(relationEvent.getRelationId())
+                .fromUserId(relationEvent.getFromUserId())
+                .toUserId(relationEvent.getToUserId())
+                .type(relationEvent.getType())
+                .version(relationEvent.getRelationVersion())
+                .updateTime(relationEvent.getUpdateTime())
+                .build();
         // 先提交粉丝投影：project 是"只接受更高版本"的幂等 upsert，并发写同一行也安全，
         // 不需要用缓存锁把它也串起来。
         transactionTemplate.executeWithoutResult(transactionStatus -> relationDOMapper.project(relationDO));

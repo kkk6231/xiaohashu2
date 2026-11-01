@@ -10,14 +10,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class RelationCountTest {
     @Test
     void relationKeepsBothTargetsAndNegativeDeltas() {
-        var event = new RelationEvent();
-        event.setEventId(12L);
-        event.setRelationId(1L);
-        event.setFromUserId(10L);
-        event.setToUserId(20L);
-        event.setType(2);
-        event.setRelationVersion(2L);
-        event.setUpdateTime(LocalDateTime.now());
+        RelationEvent event = RelationEvent.builder()
+                .eventId(12L)
+                .relationId(1L)
+                .fromUserId(10L)
+                .toUserId(20L)
+                .type(2)
+                .relationVersion(2L)
+                .updateTime(LocalDateTime.now())
+                .build();
         var changes = CountEventBatchConsumer.relationChanges(event);
         assertEquals(2, changes.size());
         assertEquals(-1L, changes.get(0).getDeltas().get("followingTotal"));
@@ -28,13 +29,14 @@ class RelationCountTest {
 
     @Test
     void deletionCombinesAllAuthorFields() {
-        var event = new NoteCountEvent();
-        event.setEventId(1L);
-        event.setNoteId(2L);
-        event.setAuthorId(3L);
-        event.setEventType("NOTE_DELETED");
-        event.setRemovedLikeTotal(10);
-        event.setRemovedCollectTotal(4);
+        NoteCountEvent event = NoteCountEvent.builder()
+                .eventId(1L)
+                .noteId(2L)
+                .authorId(3L)
+                .eventType("NOTE_DELETED")
+                .removedLikeTotal(10)
+                .removedCollectTotal(4)
+                .build();
         var changes = CountEventBatchConsumer.noteChanges(event);
         assertEquals(1, changes.size());
         assertEquals(java.util.Map.of("worksTotal", -1L, "likesReceivedTotal", -10L,

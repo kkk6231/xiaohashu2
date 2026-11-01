@@ -1,9 +1,15 @@
 package com.quanxiaoha.xiaohashu.user.relation.biz.domain.dataobject;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /** 本地消息投递使用的数据对象；发送状态与租约由 Mapper 条件更新。 */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RelationOutboxDO {
     /** 事件唯一标识，重复发送时保持不变，供消费者去重。 */
     private Long eventId;

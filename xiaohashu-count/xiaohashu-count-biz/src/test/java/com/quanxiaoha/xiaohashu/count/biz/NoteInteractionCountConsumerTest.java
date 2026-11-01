@@ -9,13 +9,14 @@ class NoteInteractionCountConsumerTest {
     /** 同一事件对笔记和作者使用相同事件键，字段和增量分别映射。 */
     @Test
     void buildsIndependentTargetsForCollect() {
-        NoteInteractionEvent event = new NoteInteractionEvent();
-        event.setEventId("event-1");
-        event.setUserId(1L);
-        event.setNoteId(2L);
-        event.setAuthorId(3L);
-        event.setActionType("COLLECT");
-        event.setTargetState(false);
+        NoteInteractionEvent event = NoteInteractionEvent.builder()
+                .eventId("event-1")
+                .userId(1L)
+                .noteId(2L)
+                .authorId(3L)
+                .actionType("COLLECT")
+                .targetState(false)
+                .build();
         var changes = NoteInteractionCountConsumer.buildChanges(event);
         assertEquals(2, changes.size());
         assertEquals(changes.get(0).getEventKey(), changes.get(1).getEventKey());
@@ -29,9 +30,14 @@ class NoteInteractionCountConsumerTest {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var consumer = new NoteInteractionCountConsumer().interactionCountConsumer("127.0.0.1:9876", mapper, countService);
         var listener = (org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently) consumer.getMessageListener();
-        NoteInteractionEvent event = new NoteInteractionEvent();
-        event.setEventId("id"); event.setUserId(1L); event.setNoteId(2L); event.setAuthorId(3L);
-        event.setActionType("LIKE"); event.setTargetState(true);
+        NoteInteractionEvent event = NoteInteractionEvent.builder()
+                .eventId("id")
+                .userId(1L)
+                .noteId(2L)
+                .authorId(3L)
+                .actionType("LIKE")
+                .targetState(true)
+                .build();
         var invalid = new org.apache.rocketmq.common.message.MessageExt();
         invalid.setBody("not-json".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         var valid = new org.apache.rocketmq.common.message.MessageExt();

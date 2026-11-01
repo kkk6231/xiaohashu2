@@ -116,13 +116,14 @@ public class CountServiceImpl implements CountService {
         List<UserCountDTO> result = new ArrayList<>();
         for (int i = 0; i < ids.size(); i++) {
             Long[] values = counts.get(i);
-            UserCountDTO dto = new UserCountDTO();
-            dto.setUserId(ids.get(i));
-            dto.setFollowingTotal(values[0]);
-            dto.setFansTotal(values[1]);
-            dto.setLikesReceivedTotal(values[2]);
-            dto.setCollectsReceivedTotal(values[3]);
-            dto.setWorksTotal(values[4]);
+            UserCountDTO dto = UserCountDTO.builder()
+                    .userId(ids.get(i))
+                    .followingTotal(values[0])
+                    .fansTotal(values[1])
+                    .likesReceivedTotal(values[2])
+                    .collectsReceivedTotal(values[3])
+                    .worksTotal(values[4])
+                    .build();
             result.add(dto);
         }
         return result;
@@ -134,10 +135,11 @@ public class CountServiceImpl implements CountService {
         List<Long[]> counts = readCounts("note", ids);
         List<NoteCountDTO> result = new ArrayList<>();
         for (int i = 0; i < ids.size(); i++) {
-            NoteCountDTO dto = new NoteCountDTO();
-            dto.setNoteId(ids.get(i));
-            dto.setLikeTotal(counts.get(i)[0]);
-            dto.setCollectTotal(counts.get(i)[1]);
+            NoteCountDTO dto = NoteCountDTO.builder()
+                    .noteId(ids.get(i))
+                    .likeTotal(counts.get(i)[0])
+                    .collectTotal(counts.get(i)[1])
+                    .build();
             result.add(dto);
         }
         return result;

@@ -80,12 +80,13 @@ public class RelationCommandService {
         }
         // 取关保留关系记录，再次关注继续递增版本，防止旧消息覆盖新状态
         if (relationDO == null) {
-            relationDO = new RelationDO();
-            relationDO.setFromUserId(fromUserId);
-            relationDO.setToUserId(toUserId);
-            relationDO.setType(FollowUnfollowTypeEnum.FOLLOW.getCode());
-            relationDO.setVersion(1L);
-            relationDO.setUpdateTime(relationDOMapper.now());
+            relationDO = RelationDO.builder()
+                    .fromUserId(fromUserId)
+                    .toUserId(toUserId)
+                    .type(FollowUnfollowTypeEnum.FOLLOW.getCode())
+                    .version(1L)
+                    .updateTime(relationDOMapper.now())
+                    .build();
             relationDOMapper.insert(relationDO);
         } else {
             Integer relationType = FollowUnfollowTypeEnum.UNFOLLOW.getCode();
@@ -106,22 +107,23 @@ public class RelationCommandService {
 
     /** 分配事件 ID 后回填消息体；任一步失败都回滚整笔事务。 */
     private void appendEvent(RelationDO relationDO) {
-        RelationEvent relationEvent = new RelationEvent();
-        relationEvent.setRelationId(relationDO.getId());
-        relationEvent.setFromUserId(relationDO.getFromUserId());
-        relationEvent.setToUserId(relationDO.getToUserId());
-        relationEvent.setType(relationDO.getType());
-        relationEvent.setRelationVersion(relationDO.getVersion());
-        relationEvent.setUpdateTime(relationDO.getUpdateTime());
-
-        RelationOutboxDO outboxDO = new RelationOutboxDO();
-        outboxDO.setRelationId(relationDO.getId());
-        outboxDO.setRelationVersion(relationDO.getVersion());
         // 先插入以获取数据库生成的 eventId，再将它写入消息体
         // 两步都在当前事务内，投递器只能看到提交后的完整消息
-        outboxDO.setPayload("{}");
+        RelationOutboxDO outboxDO = RelationOutboxDO.builder()
+                .relationId(relationDO.getId())
+                .relationVersion(relationDO.getVersion())
+                .payload("{}")
+                .build();
         relationOutboxDOMapper.insert(outboxDO);
-        relationEvent.setEventId(outboxDO.getEventId());
+        RelationEvent relationEvent = RelationEvent.builder()
+                .eventId(outboxDO.getEventId())
+                .relationId(relationDO.getId())
+                .fromUserId(relationDO.getFromUserId())
+                .toUserId(relationDO.getToUserId())
+                .type(relationDO.getType())
+                .relationVersion(relationDO.getVersion())
+                .updateTime(relationDO.getUpdateTime())
+                .build();
         try {
             outboxDO.setPayload(objectMapper.writeValueAsString(relationEvent));
         } catch (Exception exception) {

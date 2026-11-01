@@ -394,13 +394,14 @@ class RelationFlowTest {
     }
 
     private void project(long from, long to, int type, long version, LocalDateTime time) {
-        var row = new RelationDO();
-        row.setId(from);
-        row.setFromUserId(from);
-        row.setToUserId(to);
-        row.setType(type);
-        row.setVersion(version);
-        row.setUpdateTime(time);
+        RelationDO row = RelationDO.builder()
+                .id(from)
+                .fromUserId(from)
+                .toUserId(to)
+                .type(type)
+                .version(version)
+                .updateTime(time)
+                .build();
         relations.project(row);
     }
 

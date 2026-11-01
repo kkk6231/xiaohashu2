@@ -1,9 +1,15 @@
 package com.quanxiaoha.xiaohashu.count.api.event;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /** 点赞或收藏操作事件；相同消息重投时 eventId 必须保持不变。 */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class NoteInteractionEvent {
     public static final String TOPIC = "NoteInteractionEventV2";
     private String eventId;
