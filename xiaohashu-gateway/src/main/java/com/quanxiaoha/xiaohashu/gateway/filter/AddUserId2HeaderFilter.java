@@ -1,19 +1,13 @@
 package com.quanxiaoha.xiaohashu.gateway.filter;
 
-import cn.hutool.core.collection.CollUtil;
+import cn.dev33.satoken.stp.StpUtil;
 import com.quanxiaoha.framework.common.constant.GlobalConstants;
-import com.quanxiaoha.xiaohashu.gateway.constant.RedisKeyConstants;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
-import java.util.Objects;
 
 /**
  * @author: 犬小哈
@@ -25,51 +19,39 @@ import java.util.Objects;
 @Slf4j
 public class AddUserId2HeaderFilter implements GlobalFilter {
 
-    @Resource
-    private RedisTemplate<String, Object> redisTemplate;
-
     /**
-     * Header 头中 Token 的 Key
+     * 删除客户端传入的用户 ID，并在登录状态有效时写入网关确认的用户 ID。
+     *
+     * @param exchange 当前请求上下文
+     * @param chain 网关过滤器链
+     * @return 后续过滤器执行结果
      */
-    private static final String TOKEN_HEADER_KEY = "Authorization";
-
-    /**
-     * Token 前缀
-     */
-    private static final String TOKEN_HEADER_VALUE_PREFIX = "Bearer ";
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        log.info("==================> TokenConvertFilter");
-
-        // 从请求头中获取 Token 数据
-        List<String> tokenList = exchange.getRequest().getHeaders().get(TOKEN_HEADER_KEY);
-
-        if (CollUtil.isEmpty(tokenList)) {
-            // 若请求头中未携带 Token，则直接放行
-            return chain.filter(exchange);
-        }
-
-        // 获取 Token 值
-        String tokenValue = tokenList.get(0);
-        // 将 Token 前缀去除
-        String token = tokenValue.replace(TOKEN_HEADER_VALUE_PREFIX, "");
-
-        // 构建 Redis Key
-        String tokenRedisKey = RedisKeyConstants.SA_TOKEN_TOKEN_KEY_PREFIX + token;
-        // 查询 Redis, 获取用户 ID
-        Integer userId = (Integer) redisTemplate.opsForValue().get(tokenRedisKey);
-
-        if (Objects.isNull(userId)) {
-            // 若没有登录，则直接放行
-            return chain.filter(exchange);
-        }
-
-        log.info("## 当前登录的用户 ID: {}", userId);
-
+        Long loginUserId = getLoginUserId();
         ServerWebExchange newExchange = exchange.mutate()
-                .request(builder -> builder.header(GlobalConstants.USER_ID, String.valueOf(userId))) // 将用户 ID 设置到请求头中
+                .request(builder -> builder.headers(headers -> {
+                    headers.remove(GlobalConstants.USER_ID);
+                    if (loginUserId != null) {
+                        headers.set(GlobalConstants.USER_ID, String.valueOf(loginUserId));
+                    }
+                }))
                 .build();
         return chain.filter(newExchange);
+    }
+
+    /**
+     * 从 Sa-Token 登录上下文中获取当前用户 ID。
+     *
+     * @return 已登录用户 ID，匿名请求返回 null
+     */
+    private Long getLoginUserId() {
+        if (!StpUtil.isLogin()) {
+            return null;
+        }
+
+        Long loginUserId = StpUtil.getLoginIdAsLong();
+        log.info("## 当前登录的用户 ID: {}", loginUserId);
+        return loginUserId;
     }
 }

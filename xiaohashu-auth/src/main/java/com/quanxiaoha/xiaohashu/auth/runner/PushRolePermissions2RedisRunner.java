@@ -1,8 +1,5 @@
 package com.quanxiaoha.xiaohashu.auth.runner;
 
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.quanxiaoha.framework.common.util.JsonUtils;
 import com.quanxiaoha.xiaohashu.auth.constant.RedisKeyConstants;
 import com.quanxiaoha.xiaohashu.auth.domain.dataobject.PermissionDO;
@@ -18,17 +15,15 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
- * @author: 犬小哈
- * @date: 2024/6/4 16:41
- * @version: v1.0.0
- * @description: 推送角色权限数据到 Redis 中
- **/
+ * Auth 服务启动时将有效角色及其权限同步到 Redis。
+ */
 @Component
 @Slf4j
 public class PushRolePermissions2RedisRunner implements ApplicationRunner {
@@ -42,78 +37,100 @@ public class PushRolePermissions2RedisRunner implements ApplicationRunner {
     @Resource
     private RolePermissionDOMapper rolePermissionDOMapper;
 
-    // 权限同步标记 Key
-    private static final String PUSH_PERMISSION_FLAG = "push.permission.flag";
-
+    /**
+     * 服务启动时重建有效角色的权限缓存。
+     *
+     * @param args 应用启动参数
+     */
     @Override
     public void run(ApplicationArguments args) {
         log.info("==> 服务启动，开始同步角色权限数据到 Redis 中...");
-
         try {
-            // 是否能够同步数据: 原子操作，只有在键 PUSH_PERMISSION_FLAG 不存在时，才会设置该键的值为 "1"，并设置过期时间为 1 天
-            boolean canPushed = redisTemplate.opsForValue().setIfAbsent(PUSH_PERMISSION_FLAG, "1", 1, TimeUnit.DAYS);
-
-            // 如果无法同步权限数据
-            if (!canPushed) {
-                log.warn("==> 角色权限数据已经同步至 Redis 中，不再同步...");
+            List<RoleDO> roles = roleDOMapper.selectEnabledList();
+            if (roles == null || roles.isEmpty()) {
+                log.warn("==> 未查询到有效角色，跳过角色权限同步");
                 return;
             }
 
-            // 查询出所有角色
-            List<RoleDO> roleDOS = roleDOMapper.selectEnabledList();
-
-            if (CollUtil.isNotEmpty(roleDOS)) {
-                // 拿到所有角色的 ID
-                List<Long> roleIds = roleDOS.stream().map(RoleDO::getId).toList();
-
-                // 根据角色 ID, 批量查询出所有角色对应的权限
-                List<RolePermissionDO> rolePermissionDOS = rolePermissionDOMapper.selectByRoleIds(roleIds);
-                // 按角色 ID 分组, 每个角色 ID 对应多个权限 ID
-                Map<Long, List<Long>> roleIdPermissionIdsMap = rolePermissionDOS.stream().collect(
-                        Collectors.groupingBy(RolePermissionDO::getRoleId,
-                                Collectors.mapping(RolePermissionDO::getPermissionId, Collectors.toList()))
-                );
-
-                // 查询 APP 端所有被启用的权限
-                List<PermissionDO> permissionDOS = permissionDOMapper.selectAppEnabledList();
-                // 权限 ID - 权限 DO
-                Map<Long, PermissionDO> permissionIdDOMap = permissionDOS.stream().collect(
-                        Collectors.toMap(PermissionDO::getId, permissionDO -> permissionDO)
-                );
-
-                // 组织 角色-权限 关系
-                Map<String, List<String>> roleKeyPermissionsMap = Maps.newHashMap();
-
-                // 循环所有角色
-                roleDOS.forEach(roleDO -> {
-                    // 当前角色 ID
-                    Long roleId = roleDO.getId();
-                    // 当前角色 roleKey
-                    String roleKey = roleDO.getRoleKey();
-                    // 当前角色 ID 对应的权限 ID 集合
-                    List<Long> permissionIds = roleIdPermissionIdsMap.get(roleId);
-                    if (CollUtil.isNotEmpty(permissionIds)) {
-                        List<String> permissionKeys = Lists.newArrayList();
-                        permissionIds.forEach(permissionId -> {
-                            // 根据权限 ID 获取具体的权限 DO 对象
-                            PermissionDO permissionDO = permissionIdDOMap.get(permissionId);
-                            permissionKeys.add(permissionDO.getPermissionKey());
-                        });
-                        roleKeyPermissionsMap.put(roleKey, permissionKeys);
-                    }
-                });
-
-                // 同步至 Redis 中，方便后续网关查询 Redis, 用于鉴权
-                roleKeyPermissionsMap.forEach((roleKey, permissions) -> {
-                    String key = RedisKeyConstants.buildRolePermissionsKey(roleKey);
-                    redisTemplate.opsForValue().set(key, JsonUtils.toJsonString(permissions));
-                });
-            }
-
+            Map<Long, PermissionDO> permissionMap = loadPermissionMap();
+            Map<Long, List<Long>> rolePermissionIds = loadRolePermissionIds(roles);
+            writeRolePermissions(roles, rolePermissionIds, permissionMap);
             log.info("==> 服务启动，成功同步角色权限数据到 Redis 中...");
-        } catch (Exception e) {
-            log.error("==> 同步角色权限数据到 Redis 中失败: ", e);
+        } catch (Exception exception) {
+            log.error("==> 同步角色权限数据到 Redis 中失败: ", exception);
+        }
+    }
+
+    /**
+     * 查询全部有效 APP 权限并按权限 ID 建立索引。
+     *
+     * @return 权限 ID 与权限信息的映射
+     */
+    private Map<Long, PermissionDO> loadPermissionMap() {
+        List<PermissionDO> permissions = permissionDOMapper.selectAppEnabledList();
+        Map<Long, PermissionDO> permissionMap = new HashMap<>();
+        if (permissions == null) {
+            return permissionMap;
         }
 
+        for (PermissionDO permission : permissions) {
+            permissionMap.put(permission.getId(), permission);
+        }
+        return permissionMap;
+    }
+
+    /**
+     * 查询角色与权限 ID 的关系并按角色 ID 分组。
+     *
+     * @param roles 有效角色集合
+     * @return 角色 ID 与权限 ID 集合的映射
+     */
+    private Map<Long, List<Long>> loadRolePermissionIds(List<RoleDO> roles) {
+        List<Long> roleIds = new ArrayList<>(roles.size());
+        for (RoleDO role : roles) {
+            roleIds.add(role.getId());
+        }
+
+        List<RolePermissionDO> relations = rolePermissionDOMapper.selectByRoleIds(roleIds);
+        Map<Long, List<Long>> rolePermissionIds = new HashMap<>();
+        if (relations == null) {
+            return rolePermissionIds;
+        }
+
+        for (RolePermissionDO relation : relations) {
+            List<Long> permissionIds = rolePermissionIds.get(relation.getRoleId());
+            if (permissionIds == null) {
+                permissionIds = new ArrayList<>();
+                rolePermissionIds.put(relation.getRoleId(), permissionIds);
+            }
+            permissionIds.add(relation.getPermissionId());
+        }
+        return rolePermissionIds;
+    }
+
+    /**
+     * 将每个有效角色的权限标识写入 Redis；没有权限的角色写入空集合。
+     *
+     * @param roles 有效角色集合
+     * @param rolePermissionIds 角色与权限 ID 的映射
+     * @param permissionMap 有效权限索引
+     */
+    private void writeRolePermissions(List<RoleDO> roles,
+                                      Map<Long, List<Long>> rolePermissionIds,
+                                      Map<Long, PermissionDO> permissionMap) {
+        for (RoleDO role : roles) {
+            List<Long> permissionIds = rolePermissionIds.getOrDefault(
+                    role.getId(), Collections.emptyList());
+            List<String> permissionKeys = new ArrayList<>();
+            for (Long permissionId : permissionIds) {
+                PermissionDO permission = permissionMap.get(permissionId);
+                if (permission != null) {
+                    permissionKeys.add(permission.getPermissionKey());
+                }
+            }
+
+            String redisKey = RedisKeyConstants.buildRolePermissionsKey(role.getRoleKey());
+            redisTemplate.opsForValue().set(redisKey, JsonUtils.toJsonString(permissionKeys));
+        }
     }
 }

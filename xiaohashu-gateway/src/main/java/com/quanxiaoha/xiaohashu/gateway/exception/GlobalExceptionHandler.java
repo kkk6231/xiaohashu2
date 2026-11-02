@@ -2,7 +2,7 @@ package com.quanxiaoha.xiaohashu.gateway.exception;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
-import cn.dev33.satoken.exception.SaTokenException;
+import cn.dev33.satoken.exception.NotRoleException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quanxiaoha.framework.common.response.Response;
 import com.quanxiaoha.xiaohashu.gateway.enums.ResponseCodeEnum;
@@ -45,12 +45,13 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             // 构建响应结果
             result = Response.fail(ResponseCodeEnum.UNAUTHORIZED.getErrorCode(), ex.getMessage());
-        } else if (ex instanceof NotPermissionException) { // 无权限异常
-            // 权限认证失败时，设置 401 状态码
-            response.setStatusCode(HttpStatus.UNAUTHORIZED);
-            // 构建响应结果
-            result = Response.fail(ResponseCodeEnum.UNAUTHORIZED.getErrorCode(), ResponseCodeEnum.UNAUTHORIZED.getErrorMessage());
+        } else if (ex instanceof NotPermissionException || ex instanceof NotRoleException) { // 无权限异常
+            // 已登录但没有业务权限时返回 403
+            response.setStatusCode(HttpStatus.FORBIDDEN);
+            result = Response.fail(ResponseCodeEnum.FORBIDDEN);
         } else { // 其他异常，则统一提示 “系统繁忙” 错误
+            // 未知异常统一返回 500，避免响应体表示失败但 HTTP 状态仍为 200
+            response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
             result = Response.fail(ResponseCodeEnum.SYSTEM_ERROR);
         }
 

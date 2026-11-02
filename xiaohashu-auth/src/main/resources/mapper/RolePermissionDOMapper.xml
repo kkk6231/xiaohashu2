@@ -26,6 +26,7 @@
     <foreach collection="roleIds" item="roleId" separator="," open="(" close=")">
       #{roleId}
     </foreach>
+      and is_deleted = 0
   </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">

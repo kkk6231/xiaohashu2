@@ -16,10 +16,8 @@ import com.quanxiaoha.framework.common.util.JsonUtils;
 import com.quanxiaoha.framework.common.util.ParamUtils;
 import com.quanxiaoha.xiaohashu.user.biz.constant.RedisKeyConstants;
 import com.quanxiaoha.xiaohashu.user.biz.constant.RoleConstants;
-import com.quanxiaoha.xiaohashu.user.biz.domain.dataobject.RoleDO;
 import com.quanxiaoha.xiaohashu.user.biz.domain.dataobject.UserDO;
 import com.quanxiaoha.xiaohashu.user.biz.domain.dataobject.UserRoleDO;
-import com.quanxiaoha.xiaohashu.user.biz.domain.mapper.RoleDOMapper;
 import com.quanxiaoha.xiaohashu.user.biz.domain.mapper.UserDOMapper;
 import com.quanxiaoha.xiaohashu.user.biz.domain.mapper.UserRoleDOMapper;
 import com.quanxiaoha.xiaohashu.user.biz.enums.ResponseCodeEnum;
@@ -65,8 +63,6 @@ public class UserServiceImpl implements UserService {
     private UserDOMapper userDOMapper;
     @Resource
     private UserRoleDOMapper userRoleDOMapper;
-    @Resource
-    private RoleDOMapper roleDOMapper;
     @Resource
     private OssRpcService ossRpcService;
     @Resource
@@ -193,6 +189,7 @@ public class UserServiceImpl implements UserService {
 
         // 若已注册，则直接返回用户 ID
         if (Objects.nonNull(userDO1)) {
+            refreshUserRoleCache(userDO1.getId());
             return Response.success(userDO1.getId());
         }
 
@@ -231,14 +228,7 @@ public class UserServiceImpl implements UserService {
                 .build();
         userRoleDOMapper.insert(userRoleDO);
 
-        RoleDO roleDO = roleDOMapper.selectByPrimaryKey(RoleConstants.COMMON_USER_ROLE_ID);
-
-        // 将该用户的角色 ID 存入 Redis 中
-        List<String> roles = new ArrayList<>(1);
-        roles.add(roleDO.getRoleKey());
-
-        String userRolesKey = RedisKeyConstants.buildUserRoleKey(userId);
-        redisTemplate.opsForValue().set(userRolesKey, JsonUtils.toJsonString(roles));
+        refreshUserRoleCache(userId);
 
         return Response.success(userId);
     }
@@ -261,6 +251,8 @@ public class UserServiceImpl implements UserService {
             throw new BizException(ResponseCodeEnum.USER_NOT_FOUND);
         }
 
+        refreshUserRoleCache(userDO.getId());
+
         // 构建返参
         FindUserByPhoneRspDTO findUserByPhoneRspDTO = FindUserByPhoneRspDTO.builder()
                 .id(userDO.getId())
@@ -268,6 +260,21 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         return Response.success(findUserByPhoneRspDTO);
+    }
+
+    /**
+     * 查询用户当前有效角色，并刷新网关鉴权使用的 Redis 缓存。
+     *
+     * @param userId 用户 ID
+     */
+    private void refreshUserRoleCache(Long userId) {
+        List<String> roleKeys = userRoleDOMapper.selectRoleKeysByUserId(userId);
+        if (roleKeys == null) {
+            roleKeys = new ArrayList<>();
+        }
+
+        String userRolesKey = RedisKeyConstants.buildUserRoleKey(userId);
+        redisTemplate.opsForValue().set(userRolesKey, JsonUtils.toJsonString(roleKeys));
     }
 
     /**

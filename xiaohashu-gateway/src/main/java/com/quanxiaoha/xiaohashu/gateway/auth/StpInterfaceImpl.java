@@ -1,28 +1,25 @@
 package com.quanxiaoha.xiaohashu.gateway.auth;
 
 import cn.dev33.satoken.stp.StpInterface;
-import cn.hutool.core.collection.CollUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import com.quanxiaoha.xiaohashu.gateway.constant.RedisKeyConstants;
 import jakarta.annotation.Resource;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * @author: 犬小哈
- * @date: 2024/4/5 18:04
- * @version: v1.0.0
- * @description: 自定义权限验证接口扩展
- **/
+ * 从 Redis 中读取用户角色及角色权限，供 Sa-Token 完成 RBAC 校验。
+ */
 @Component
 @Slf4j
 public class StpInterfaceImpl implements StpInterface {
@@ -33,87 +30,105 @@ public class StpInterfaceImpl implements StpInterface {
     private ObjectMapper objectMapper;
 
     /**
-     * 获取用户权限
+     * 查询登录用户拥有的全部权限。
      *
-     * @param loginId
-     * @param loginType
-     * @return
+     * @param loginId 登录用户 ID
+     * @param loginType 登录类型
+     * @return 去重后的权限标识集合
      */
-    @SneakyThrows
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
-        log.info("## 获取用户权限列表, loginId: {}", loginId);
-
-        // 构建 用户-角色 Redis Key
-        String userRolesKey = RedisKeyConstants.buildUserRoleKey(Long.valueOf(loginId.toString()));
-
-        // 根据用户 ID ，从 Redis 中获取该用户的角色集合
-        String useRolesValue = redisTemplate.opsForValue().get(userRolesKey);
-
-        if (StringUtils.isBlank(useRolesValue)) {
-            return null;
+        Long userId = Long.valueOf(loginId.toString());
+        List<String> roleKeys = readUserRoles(userId);
+        if (roleKeys.isEmpty()) {
+            return Collections.emptyList();
         }
-
-        // 将 JSON 字符串转换为 List<String> 角色集合
-        List<String> userRoleKeys = objectMapper.readValue(useRolesValue, new TypeReference<>() {});
-
-        if (CollUtil.isNotEmpty(userRoleKeys)) {
-            // 查询这些角色对应的权限
-            // 构建 角色-权限 Redis Key 集合
-            List<String> rolePermissionsKeys = userRoleKeys.stream()
-                    .map(RedisKeyConstants::buildRolePermissionsKey)
-                    .toList();
-
-            // 通过 key 集合批量查询权限，提升查询性能。
-            List<String> rolePermissionsValues = redisTemplate.opsForValue().multiGet(rolePermissionsKeys);
-
-            if (CollUtil.isNotEmpty(rolePermissionsValues)) {
-                List<String> permissions = Lists.newArrayList();
-
-                // 遍历所有角色的权限集合，统一添加到 permissions 集合中
-                rolePermissionsValues.forEach(jsonValue -> {
-                    try {
-                        // 将 JSON 字符串转换为 List<String> 权限集合
-                        List<String> rolePermissions = objectMapper.readValue(jsonValue, new TypeReference<>() {});
-                        permissions.addAll(rolePermissions);
-                    } catch (JsonProcessingException e) {
-                        log.error("==> JSON 解析错误: ", e);
-                    }
-                });
-
-                // 返回此用户所拥有的权限
-                return permissions;
-            }
-        }
-        return null;
+        return readRolePermissions(roleKeys);
     }
 
     /**
-     * 获取用户角色
+     * 查询登录用户拥有的角色。
      *
-     * @param loginId
-     * @param loginType
-     * @return
+     * @param loginId 登录用户 ID
+     * @param loginType 登录类型
+     * @return 用户角色标识集合
      */
-    @SneakyThrows
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
-        log.info("## 获取用户角色列表, loginId: {}", loginId);
-
-        // 构建 用户-角色 Redis Key
-        String userRolesKey = RedisKeyConstants.buildUserRoleKey(Long.valueOf(loginId.toString()));
-
-        // 根据用户 ID ，从 Redis 中获取该用户的角色集合
-        String useRolesValue = redisTemplate.opsForValue().get(userRolesKey);
-
-        if (StringUtils.isBlank(useRolesValue)) {
-            return null;
-        }
-
-        // 将 JSON 字符串转换为 List<String> 集合
-        return objectMapper.readValue(useRolesValue, new TypeReference<>() {});
+        Long userId = Long.valueOf(loginId.toString());
+        return readUserRoles(userId);
     }
 
+    /**
+     * 从 Redis 中读取指定用户的角色标识。
+     *
+     * @param userId 用户 ID
+     * @return 用户角色标识集合
+     */
+    private List<String> readUserRoles(Long userId) {
+        log.info("## 获取用户角色列表, userId: {}", userId);
+        String userRolesKey = RedisKeyConstants.buildUserRoleKey(userId);
+        String userRolesValue = redisTemplate.opsForValue().get(userRolesKey);
+        if (StringUtils.isBlank(userRolesValue)) {
+            return Collections.emptyList();
+        }
+        return parseStringList(userRolesValue, userRolesKey);
+    }
+
+    /**
+     * 批量读取多个角色的权限并去重。
+     *
+     * @param roleKeys 角色标识集合
+     * @return 去重后的权限标识集合
+     */
+    private List<String> readRolePermissions(List<String> roleKeys) {
+        List<String> permissionRedisKeys = new ArrayList<>(roleKeys.size());
+        for (String roleKey : roleKeys) {
+            if (StringUtils.isNotBlank(roleKey)) {
+                permissionRedisKeys.add(RedisKeyConstants.buildRolePermissionsKey(roleKey));
+            }
+        }
+        if (permissionRedisKeys.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> permissionValues = redisTemplate.opsForValue().multiGet(permissionRedisKeys);
+        if (permissionValues == null || permissionValues.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<String> permissionSet = new LinkedHashSet<>();
+        for (int index = 0; index < permissionValues.size(); index++) {
+            String permissionValue = permissionValues.get(index);
+            if (StringUtils.isBlank(permissionValue)) {
+                continue;
+            }
+
+            String redisKey = permissionRedisKeys.get(index);
+            List<String> rolePermissions = parseStringList(permissionValue, redisKey);
+            permissionSet.addAll(rolePermissions);
+        }
+        return new ArrayList<>(permissionSet);
+    }
+
+    /**
+     * 将 Redis 中保存的 JSON 数组解析成字符串集合。
+     *
+     * @param jsonValue JSON 数组
+     * @param redisKey 数据来源 Redis Key
+     * @return 解析成功的字符串集合，解析失败时返回空集合
+     */
+    private List<String> parseStringList(String jsonValue, String redisKey) {
+        try {
+            List<String> values = objectMapper.readValue(jsonValue, new TypeReference<List<String>>() {
+            });
+            if (values == null) {
+                return Collections.emptyList();
+            }
+            return values;
+        } catch (JsonProcessingException exception) {
+            log.error("==> 角色权限缓存解析失败, redisKey: {}", redisKey, exception);
+            return Collections.emptyList();
+        }
+    }
 }
-
-
