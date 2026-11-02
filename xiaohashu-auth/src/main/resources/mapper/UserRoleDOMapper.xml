@@ -18,6 +18,23 @@
     from t_user_role_rel
     where id = #{id,jdbcType=BIGINT}
   </select>
+  <select id="selectRoleKeysByUserId" parameterType="java.lang.Long" resultType="java.lang.String">
+    select role.role_key
+    from t_user_role_rel user_role
+    inner join t_role role on role.id = user_role.role_id
+    where user_role.user_id = #{userId}
+      and user_role.is_deleted = 0
+      and role.status = 0
+      and role.is_deleted = 0
+    order by role.sort, role.id
+  </select>
+  <delete id="deleteAppUserRoles" parameterType="java.lang.Long">
+    delete from t_user_role_rel
+    where user_id = #{userId}
+      and role_id in (
+        select id from t_role where role_key in ('common_user', 'restricted_user')
+      )
+  </delete>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from t_user_role_rel
     where id = #{id,jdbcType=BIGINT}

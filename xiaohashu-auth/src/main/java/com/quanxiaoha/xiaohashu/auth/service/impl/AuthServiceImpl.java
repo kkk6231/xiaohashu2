@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
 import com.google.common.base.Preconditions;
 import com.quanxiaoha.framework.biz.context.holder.LoginUserContextHolder;
+import com.quanxiaoha.framework.common.enums.StatusEnum;
 import com.quanxiaoha.framework.common.exception.BizException;
 import com.quanxiaoha.framework.common.response.Response;
 import com.quanxiaoha.xiaohashu.auth.constant.RedisKeyConstants;
@@ -63,6 +64,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Long userId = null;
+        FindUserByPhoneRspDTO loginUser = null;
 
         // 判断登录类型
         switch (loginTypeEnum) {
@@ -96,15 +98,15 @@ public class AuthServiceImpl implements AuthService {
                 String password = userLoginReqVO.getPassword();
 
                 // RPC: 调用用户服务，通过手机号查询用户
-                FindUserByPhoneRspDTO findUserByPhoneRspDTO = userRpcService.findUserByPhone(phone);
+                loginUser = userRpcService.findUserByPhone(phone);
 
                 // 判断该手机号是否注册
-                if (Objects.isNull(findUserByPhoneRspDTO)) {
+                if (Objects.isNull(loginUser)) {
                     throw new BizException(ResponseCodeEnum.USER_NOT_FOUND);
                 }
 
                 // 拿到密文密码
-                String encodePassword = findUserByPhoneRspDTO.getPassword();
+                String encodePassword = loginUser.getPassword();
 
                 // 匹配密码是否一致
                 boolean isPasswordCorrect = passwordEncoder.matches(password, encodePassword);
@@ -114,11 +116,16 @@ public class AuthServiceImpl implements AuthService {
                     throw new BizException(ResponseCodeEnum.PHONE_OR_PASSWORD_ERROR);
                 }
 
-                userId = findUserByPhoneRspDTO.getId();
+                userId = loginUser.getId();
                 break;
             default:
                 break;
         }
+
+        if (loginUser == null) {
+            loginUser = userRpcService.findUserByPhone(phone);
+        }
+        checkUserEnabled(loginUser);
 
         // SaToken 登录用户, 入参为用户 ID
         StpUtil.login(userId);
@@ -128,6 +135,20 @@ public class AuthServiceImpl implements AuthService {
 
         // 返回 Token 令牌
         return Response.success(tokenInfo.tokenValue);
+    }
+
+    /**
+     * 校验登录用户存在且账号处于启用状态。
+     *
+     * @param loginUser 用户服务返回的登录用户
+     */
+    private void checkUserEnabled(FindUserByPhoneRspDTO loginUser) {
+        if (loginUser == null) {
+            throw new BizException(ResponseCodeEnum.USER_NOT_FOUND);
+        }
+        if (!StatusEnum.ENABLE.getValue().equals(loginUser.getStatus())) {
+            throw new BizException(ResponseCodeEnum.USER_DISABLED);
+        }
     }
 
     /**

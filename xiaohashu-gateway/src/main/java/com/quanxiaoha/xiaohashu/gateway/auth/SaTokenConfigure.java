@@ -29,6 +29,13 @@ public class SaTokenConfigure {
             "/comment/comment/child/list"
     };
 
+    private static final String[] INTERNAL_PATHS = {
+            "/user/user/register",
+            "/user/user/findByPhone",
+            "/user/user/password/update",
+            "/user/user/findByIds"
+    };
+
     /**
      * 注册 Sa-Token 网关全局过滤器。
      *
@@ -46,26 +53,52 @@ public class SaTokenConfigure {
     }
 
     /**
-     * 对公共路径以外的请求执行登录校验，并继续校验发布类接口权限。
+     * 对公共路径以外的请求执行登录校验，并继续校验内部接口与业务权限。
      */
     private void checkAuthentication() {
         SaRouter.match("/**")
                 .notMatch(PUBLIC_PATHS)
                 .check(request -> StpUtil.checkLogin());
 
-        checkPublishPermission();
+        checkInternalPath();
+        checkBusinessPermission();
     }
 
     /**
-     * 校验发布笔记、发布评论和上传文件所需的业务权限。
+     * 拒绝从网关访问只供服务间调用的内部接口。
      */
-    private void checkPublishPermission() {
-        SaRouter.match("/note/note/publish",
-                request -> StpUtil.checkPermission(PermissionConstants.NOTE_PUBLISH));
-        SaRouter.match("/comment/comment/publish",
-                request -> StpUtil.checkPermission(PermissionConstants.COMMENT_PUBLISH));
-        SaRouter.match("/oss/file/upload",
-                request -> StpUtil.checkPermission(PermissionConstants.FILE_UPLOAD));
+    private void checkInternalPath() {
+        checkPermission(PermissionConstants.INTERNAL_ACCESS, INTERNAL_PATHS);
+    }
+
+    /**
+     * 校验发布、互动、关注和管理接口所需的业务权限。
+     */
+    private void checkBusinessPermission() {
+        checkPermission(PermissionConstants.NOTE_PUBLISH,
+                "/note/note/publish", "/note/note/update");
+        checkPermission(PermissionConstants.COMMENT_PUBLISH,
+                "/comment/comment/publish");
+        checkPermission(PermissionConstants.FILE_UPLOAD,
+                "/oss/file/upload");
+        checkPermission(PermissionConstants.SOCIAL_INTERACT,
+                "/note/note/like", "/note/note/collect", "/comment/comment/like");
+        checkPermission(PermissionConstants.RELATION_WRITE,
+                "/relation/relation/follow");
+        checkPermission(PermissionConstants.USER_MANAGE,
+                "/auth/admin/**");
+    }
+
+    /**
+     * 为一组路径逐条注册相同的权限校验。
+     *
+     * @param permission 权限标识
+     * @param paths 需要校验的路径
+     */
+    private void checkPermission(String permission, String... paths) {
+        for (String path : paths) {
+            SaRouter.match(path, request -> StpUtil.checkPermission(permission));
+        }
     }
 
     /**

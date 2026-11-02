@@ -101,6 +101,7 @@ public class UserServiceImpl implements UserService {
                     // 若此用户还没有注册，系统自动注册该用户
                     userId = registerUser(phone);
                 } else {
+                    checkUserEnabled(userDO);
                     // 已注册，则获取其用户 ID
                     userId = userDO.getId();
                 }
@@ -121,6 +122,17 @@ public class UserServiceImpl implements UserService {
 
         // 返回 Token 令牌
         return Response.success(tokenInfo.tokenValue);
+    }
+
+    /**
+     * 校验本地登录流程中的用户账号状态。
+     *
+     * @param user 待登录用户
+     */
+    private void checkUserEnabled(UserDO user) {
+        if (!StatusEnum.ENABLE.getValue().equals(user.getStatus())) {
+            throw new BizException(ResponseCodeEnum.USER_DISABLED);
+        }
     }
 
     /**

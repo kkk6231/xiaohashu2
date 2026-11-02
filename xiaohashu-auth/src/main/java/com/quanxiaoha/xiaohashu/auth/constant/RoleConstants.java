@@ -14,4 +14,19 @@ public class RoleConstants {
      */
     public static final Long COMMON_USER_ROLE_ID = 1L;
 
+    /**
+     * 普通用户角色标识。
+     */
+    public static final String COMMON_USER_ROLE_KEY = "common_user";
+
+    /**
+     * 受限用户角色标识。
+     */
+    public static final String RESTRICTED_USER_ROLE_KEY = "restricted_user";
+
+    /**
+     * 平台管理员角色标识。
+     */
+    public static final String PLATFORM_ADMIN_ROLE_KEY = "platform_admin";
+
 }

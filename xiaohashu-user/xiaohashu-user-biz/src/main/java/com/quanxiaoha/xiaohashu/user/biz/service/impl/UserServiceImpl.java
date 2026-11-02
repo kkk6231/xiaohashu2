@@ -257,6 +257,7 @@ public class UserServiceImpl implements UserService {
         FindUserByPhoneRspDTO findUserByPhoneRspDTO = FindUserByPhoneRspDTO.builder()
                 .id(userDO.getId())
                 .password(userDO.getPassword())
+                .status(userDO.getStatus())
                 .build();
 
         return Response.success(findUserByPhoneRspDTO);

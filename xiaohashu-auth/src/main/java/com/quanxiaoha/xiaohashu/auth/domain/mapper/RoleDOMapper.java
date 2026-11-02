@@ -1,6 +1,7 @@
 package com.quanxiaoha.xiaohashu.auth.domain.mapper;
 
 import com.quanxiaoha.xiaohashu.auth.domain.dataobject.RoleDO;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -12,6 +13,14 @@ public interface RoleDOMapper {
     int insertSelective(RoleDO record);
 
     RoleDO selectByPrimaryKey(Long id);
+
+    /**
+     * 根据角色标识查询有效角色。
+     *
+     * @param roleKey 角色标识
+     * @return 有效角色，不存在时返回 null
+     */
+    RoleDO selectByRoleKey(@Param("roleKey") String roleKey);
 
     /**
      * 查询所有被启用的角色

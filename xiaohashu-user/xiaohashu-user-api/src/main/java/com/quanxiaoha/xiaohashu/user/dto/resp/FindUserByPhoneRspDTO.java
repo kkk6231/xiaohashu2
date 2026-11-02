@@ -21,4 +21,6 @@ public class FindUserByPhoneRspDTO {
 
     private String password;
 
+    private Integer status;
+
 }
