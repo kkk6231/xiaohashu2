@@ -19,10 +19,8 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 
@@ -38,8 +36,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
-    @Resource(name = "taskExecutor")
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
     @Resource
     private PasswordEncoder passwordEncoder;
     @Resource
