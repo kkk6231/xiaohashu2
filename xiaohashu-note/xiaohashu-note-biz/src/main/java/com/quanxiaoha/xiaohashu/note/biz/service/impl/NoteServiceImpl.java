@@ -28,7 +28,6 @@ import com.quanxiaoha.xiaohashu.note.biz.rpc.CountRpcService;
 import com.quanxiaoha.xiaohashu.note.biz.rpc.RelationRpcService;
 import com.quanxiaoha.xiaohashu.count.api.dto.NoteCountDTO;
 import java.util.function.Supplier;
-import java.util.concurrent.CompletionException;
 import com.quanxiaoha.xiaohashu.note.biz.service.NoteService;
 import com.quanxiaoha.xiaohashu.user.dto.resp.FindUserByIdRspDTO;
 import jakarta.annotation.Resource;
@@ -273,20 +272,19 @@ public class NoteServiceImpl implements NoteService {
         Integer visible = noteDO.getVisible();
         checkNoteVisible(visible, userId, noteDO.getCreatorId());
 
-        // 四个独立 RPC 同时提交，登录用户 ID 在请求线程中取得并显式传递。
-        CompletableFuture<FindUserByIdRspDTO> userResultFuture = queryDetailAsync(
-                () -> userRpcService.findById(noteDO.getCreatorId()), ResponseCodeEnum.NOTE_AUTHOR_LOAD_FAIL);
-        CompletableFuture<String> contentResultFuture = CompletableFuture.completedFuture(null);
-        if (Objects.equals(noteDO.getIsContentEmpty(), Boolean.FALSE)) {
-            contentResultFuture = queryDetailAsync(
-                    () -> keyValueRpcService.findNoteContent(noteDO.getContentUuid()), ResponseCodeEnum.NOTE_CONTENT_LOAD_FAIL);
-        }
-        CompletableFuture<NoteCountDTO> countResultFuture = queryDetailAsync(
-                () -> countRpcService.findNote(noteId), null);
-        CompletableFuture<Boolean> followingResultFuture = queryFollowingAsync(userId, noteDO.getCreatorId());
+        // 先提交四个互不依赖的下游查询，再统一等待结果，减少详情页的总等待时间。
+        CompletableFuture<FindUserByIdRspDTO> authorFuture = queryAuthorAsync(noteDO.getCreatorId());
+        CompletableFuture<String> contentFuture = queryContentAsync(noteDO);
+        CompletableFuture<NoteCountDTO> noteCountFuture = queryNoteCountAsync(noteId);
+        CompletableFuture<Boolean> followingFuture = queryFollowingAsync(userId, noteDO.getCreatorId());
 
-        FindUserByIdRspDTO author = awaitDetailResult(userResultFuture);
-        String content = awaitDetailResult(contentResultFuture);
+        FindUserByIdRspDTO author = getRequiredDetailResult(
+                authorFuture, ResponseCodeEnum.NOTE_AUTHOR_LOAD_FAIL, "作者服务");
+        String content = null;
+        if (Objects.equals(noteDO.getIsContentEmpty(), Boolean.FALSE)) {
+            content = getRequiredDetailResult(
+                    contentFuture, ResponseCodeEnum.NOTE_CONTENT_LOAD_FAIL, "正文服务");
+        }
         List<String> imgUris = null;
         if (Objects.equals(noteDO.getType(), NoteTypeEnum.IMAGE_TEXT.getCode())
                 && StringUtils.isNotBlank(noteDO.getImgUris())) {
@@ -310,11 +308,16 @@ public class NoteServiceImpl implements NoteService {
 
         // 先序列化公共详情，再补充实时计数和个人状态，避免共享缓存污染。
         String publicDetailJson = JsonUtils.toJsonString(detail);
+
+        // 数据库回源成功后立即重建当前实例的本地缓存，避免 Redis 写入完成前重复回源。
+        LOCAL_CACHE.put(noteId, publicDetailJson);
+
+        // Redis 作为多实例共享的二级缓存，异步重建以缩短当前请求的响应时间。
         threadPoolTaskExecutor.submit(() -> {
             long expireSeconds = 60 * 60 * 24 + RandomUtil.randomInt(60 * 60 * 24);
             redisTemplate.opsForValue().set(noteDetailRedisKey, publicDetailJson, expireSeconds, TimeUnit.SECONDS);
         });
-        fillDetailStatus(detail, userId, countResultFuture, followingResultFuture);
+        fillDetailStatus(detail, userId, noteCountFuture, followingFuture);
         return Response.success(detail);
     }
 
@@ -665,8 +668,7 @@ public class NoteServiceImpl implements NoteService {
         if (detail == null) {
             throw new BizException(ResponseCodeEnum.NOTE_NOT_FOUND);
         }
-        CompletableFuture<NoteCountDTO> countFuture = queryDetailAsync(
-                () -> countRpcService.findNote(detail.getId()), null);
+        CompletableFuture<NoteCountDTO> countFuture = queryNoteCountAsync(detail.getId());
         CompletableFuture<Boolean> followingFuture = queryFollowingAsync(userId, detail.getCreatorId());
         fillDetailStatus(detail, userId, countFuture, followingFuture);
         return detail;
@@ -675,54 +677,121 @@ public class NoteServiceImpl implements NoteService {
     /** 在请求线程统一组装动态字段；不可用的计数和关注状态不伪装成零或未关注。 */
     private void fillDetailStatus(FindNoteDetailRspVO detail, Long userId,
             CompletableFuture<NoteCountDTO> countFuture, CompletableFuture<Boolean> followingFuture) {
-        NoteCountDTO counts = awaitDetailResult(countFuture);
+        NoteCountDTO counts = getOptionalDetailResult(countFuture, "计数服务");
         detail.setCountsAvailable(counts != null);
         detail.setLikeTotal(counts == null ? null : counts.getLikeTotal());
         detail.setCollectTotal(counts == null ? null : counts.getCollectTotal());
-        Boolean following = awaitDetailResult(followingFuture);
+        Boolean following = getOptionalDetailResult(followingFuture, "用户关系服务");
         detail.setFollowing(following);
         detail.setFollowingAvailable(following != null);
         detail.setLiked(userId != null && noteLikeDOMapper.selectCountByUserIdAndNoteId(userId, detail.getId()) > 0);
         detail.setCollected(userId != null && noteCollectionDOMapper.selectCountByUserIdAndNoteId(userId, detail.getId()) > 0);
     }
 
-    /** 未登录和查看自己的笔记无需调用关系服务，其他情况显式传递访问者和作者 ID。 */
+    /**
+     * 异步查询笔记作者资料。
+     *
+     * @param authorId 作者 ID
+     * @return 作者资料查询任务
+     */
+    private CompletableFuture<FindUserByIdRspDTO> queryAuthorAsync(Long authorId) {
+        return submitDetailQuery(() -> userRpcService.findById(authorId));
+    }
+
+    /**
+     * 异步查询笔记正文；笔记没有正文时直接返回已完成任务。
+     *
+     * @param noteDO 笔记基础数据
+     * @return 正文查询任务
+     */
+    private CompletableFuture<String> queryContentAsync(NoteDO noteDO) {
+        if (!Objects.equals(noteDO.getIsContentEmpty(), Boolean.FALSE)) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return submitDetailQuery(() -> keyValueRpcService.findNoteContent(noteDO.getContentUuid()));
+    }
+
+    /**
+     * 异步查询笔记的点赞数和收藏数。
+     *
+     * @param noteId 笔记 ID
+     * @return 计数查询任务
+     */
+    private CompletableFuture<NoteCountDTO> queryNoteCountAsync(Long noteId) {
+        return submitDetailQuery(() -> countRpcService.findNote(noteId));
+    }
+
+    /**
+     * 异步查询当前用户是否关注作者。未登录或查看自己的笔记时不调用关系服务。
+     *
+     * @param userId 当前用户 ID
+     * @param authorId 作者 ID
+     * @return 关注状态查询任务
+     */
     private CompletableFuture<Boolean> queryFollowingAsync(Long userId, Long authorId) {
         if (userId == null || Objects.equals(userId, authorId)) {
             return CompletableFuture.completedFuture(false);
         }
-        return queryDetailAsync(() -> relationRpcService.isFollowing(userId, authorId), null);
+        return submitDetailQuery(() -> relationRpcService.isFollowing(userId, authorId));
     }
 
-    /** 提交有时限的详情查询；指定错误码的核心任务失败时报错，其余任务降级为未知。 */
-    private <T> CompletableFuture<T> queryDetailAsync(Supplier<T> query, ResponseCodeEnum requiredError) {
-        CompletableFuture<T> queryFuture;
+    /**
+     * 把一个详情查询提交到业务线程池，并统一设置超时时间。
+     *
+     * @param query 实际的下游查询
+     * @return 带超时限制的查询任务
+     */
+    private <T> CompletableFuture<T> submitDetailQuery(Supplier<T> query) {
         try {
-            queryFuture = CompletableFuture.supplyAsync(query, threadPoolTaskExecutor);
+            return CompletableFuture.supplyAsync(query, threadPoolTaskExecutor)
+                    .orTimeout(detailRpcTimeoutMillis, TimeUnit.MILLISECONDS);
         } catch (RuntimeException exception) {
-            queryFuture = CompletableFuture.failedFuture(exception);
+            return CompletableFuture.failedFuture(exception);
         }
-        return queryFuture.orTimeout(detailRpcTimeoutMillis, TimeUnit.MILLISECONDS).handle((result, exception) -> {
-            if (exception != null || result == null) {
-                log.warn("笔记详情下游查询失败，核心任务错误码：{}", requiredError, exception);
-                if (requiredError != null) {
-                    throw new BizException(requiredError);
-                }
-                return null;
+    }
+
+    /**
+     * 获取必须存在的下游结果；超时、异常或空结果都转换为明确的业务异常。
+     *
+     * @param future 查询任务
+     * @param errorCode 失败时的业务错误码
+     * @param serviceName 日志中的下游服务名称
+     * @return 下游查询结果
+     */
+    private <T> T getRequiredDetailResult(CompletableFuture<T> future,
+            ResponseCodeEnum errorCode, String serviceName) {
+        try {
+            T result = future.join();
+            if (result == null) {
+                log.warn("笔记详情查询到空结果，下游服务：{}", serviceName);
+                throw new BizException(errorCode);
             }
             return result;
-        });
+        } catch (BizException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            log.warn("笔记详情下游查询失败，下游服务：{}", serviceName, exception);
+            throw new BizException(errorCode);
+        }
     }
 
-    /** 解包异步业务异常，让全局异常处理器返回明确的正文或作者加载错误。 */
-    private <T> T awaitDetailResult(CompletableFuture<T> future) {
+    /**
+     * 获取可降级的下游结果；超时、异常或空结果时返回 null。
+     *
+     * @param future 查询任务
+     * @param serviceName 日志中的下游服务名称
+     * @return 下游查询结果，不可用时返回 null
+     */
+    private <T> T getOptionalDetailResult(CompletableFuture<T> future, String serviceName) {
         try {
-            return future.join();
-        } catch (CompletionException exception) {
-            if (exception.getCause() instanceof BizException) {
-                throw (BizException) exception.getCause();
+            T result = future.join();
+            if (result == null) {
+                log.warn("笔记详情查询到空结果，下游服务：{}", serviceName);
             }
-            throw exception;
+            return result;
+        } catch (RuntimeException exception) {
+            log.warn("笔记详情下游查询失败，下游服务：{}", serviceName, exception);
+            return null;
         }
     }
 

@@ -1,5 +1,6 @@
 package com.quanxiaoha.xiaohashu.note.biz;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.quanxiaoha.framework.biz.context.holder.LoginUserContextHolder;
 import com.quanxiaoha.framework.common.exception.BizException;
 import com.quanxiaoha.framework.common.util.JsonUtils;
@@ -33,11 +34,14 @@ class NoteDetailTest {
     private NoteDOMapper notes;
     private NoteDO note;
     private FindNoteDetailReqVO request;
+    private Cache<Long, String> localCache;
 
     /** 构建独立线程池及下游替身，不依赖真实 Redis 和微服务。 */
     @BeforeEach
+    @SuppressWarnings("unchecked")
     void setup() {
         service = new NoteServiceImpl();
+        localCache = (Cache<Long, String>) ReflectionTestUtils.getField(service, "LOCAL_CACHE");
         executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
         executor.initialize();
@@ -76,12 +80,10 @@ class NoteDetailTest {
     void close() {
         executor.shutdown();
         LoginUserContextHolder.remove();
-        com.github.benmanes.caffeine.cache.Cache<?, ?> localCache =
-                (com.github.benmanes.caffeine.cache.Cache<?, ?>) ReflectionTestUtils.getField(service, "LOCAL_CACHE");
         localCache.invalidateAll();
     }
 
-    /** 四个 RPC 均已启动才能返回，同时检查作者参数和缓存没有个人关注状态。 */
+    /** 四个 RPC 均已启动才能返回，并验证两级缓存只保存公共详情。 */
     @Test
     void startsFourCallsBeforeWaitingAndCachesOnlyPublicDetail() throws Exception {
         CountDownLatch started = new CountDownLatch(4);
@@ -117,6 +119,12 @@ class NoteDetailTest {
         FindNoteDetailRspVO cached = JsonUtils.parseObject(cachedJson.getValue(), FindNoteDetailRspVO.class);
         assertNull(cached.getFollowing());
         assertNull(cached.getLikeTotal());
+
+        FindNoteDetailRspVO localCachedDetail = JsonUtils.parseObject(
+                localCache.getIfPresent(note.getId()), FindNoteDetailRspVO.class);
+        assertNotNull(localCachedDetail);
+        assertNull(localCachedDetail.getFollowing());
+        assertNull(localCachedDetail.getLikeTotal());
     }
 
     /** 正文失败必须返回明确业务异常，不能把缺失正文作为成功详情缓存。 */
