@@ -42,7 +42,7 @@ class NoteInteractionPublisherTest {
         NoteDO note = NoteDO.builder().id(2L).creatorId(3L).status(1).visible(0).build();
         when(noteMapper.selectByPrimaryKey(2L)).thenReturn(note);
         NoteLikeDOMapper likeMapper = mock(NoteLikeDOMapper.class);
-        when(likeMapper.selectLikedByUserIdAndLimit(1L, 100)).thenReturn(Collections.emptyList());
+        when(likeMapper.selectLikedByUserIdAndLimit(1L, 200)).thenReturn(Collections.emptyList());
         when(likeMapper.selectCountByUserIdAndNoteId(1L, 2L)).thenReturn(0);
         RocketMQTemplate rocketMQ = mock(RocketMQTemplate.class);
         SendResult result = mock(SendResult.class);

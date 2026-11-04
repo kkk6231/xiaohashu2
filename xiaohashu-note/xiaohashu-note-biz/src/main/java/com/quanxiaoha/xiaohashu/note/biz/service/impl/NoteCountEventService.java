@@ -17,7 +17,7 @@ public class NoteCountEventService {
     @Resource
     private ObjectMapper objectMapper;
 
-    /** 在删除事务中登记缓存失效任务，不在事务提交前访问缓存。 */
+    /** 在笔记更新或删除事务中登记缓存失效任务，不在事务提交前访问缓存。 */
     @Transactional(rollbackFor = Exception.class)
     public void appendCacheInvalidation(long noteId) {
         NoteEventOutboxDO task = NoteEventOutboxDO.builder()

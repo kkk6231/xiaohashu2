@@ -38,7 +38,8 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class NoteInteractionPublisher {
-    private static final int CACHE_LIMIT = 100;
+    /** 每个用户在 Redis 中保留的最近点赞或收藏记录数。 */
+    static final int RECENT_INTERACTION_CACHE_LIMIT = 200;
     private static final long CACHE_SECONDS = 86400;
     private static final long PENDING_SECONDS = 60;
     @Resource
@@ -87,7 +88,7 @@ public class NoteInteractionPublisher {
                 initializeRecentList(userId, like, listKey);
                 executeCacheScript("interaction-zset-add.lua", listKey, cacheVersionKey, pendingKey,
                         String.valueOf(noteId), String.valueOf(System.currentTimeMillis()),
-                        String.valueOf(CACHE_LIMIT), String.valueOf(CACHE_SECONDS), eventId,
+                        String.valueOf(RECENT_INTERACTION_CACHE_LIMIT), String.valueOf(CACHE_SECONDS), eventId,
                         String.valueOf(PENDING_SECONDS));
             } else {
                 executeCacheScript("interaction-zset-remove.lua", listKey, cacheVersionKey, pendingKey,
@@ -187,12 +188,13 @@ public class NoteInteractionPublisher {
             return;
         }
         if (like) {
-            List<NoteLikeDO> rows = likeMapper.selectLikedByUserIdAndLimit(userId, CACHE_LIMIT);
+            List<NoteLikeDO> rows = likeMapper.selectLikedByUserIdAndLimit(userId, RECENT_INTERACTION_CACHE_LIMIT);
             for (NoteLikeDO row : rows) {
                 redisTemplate.opsForZSet().add(listKey, String.valueOf(row.getNoteId()), row.getCreateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
             }
         } else {
-            List<NoteCollectionDO> rows = collectionMapper.selectCollectedByUserIdAndLimit(userId, CACHE_LIMIT);
+            List<NoteCollectionDO> rows = collectionMapper.selectCollectedByUserIdAndLimit(userId,
+                    RECENT_INTERACTION_CACHE_LIMIT);
             for (NoteCollectionDO row : rows) {
                 redisTemplate.opsForZSet().add(listKey, String.valueOf(row.getNoteId()), row.getCreateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
             }

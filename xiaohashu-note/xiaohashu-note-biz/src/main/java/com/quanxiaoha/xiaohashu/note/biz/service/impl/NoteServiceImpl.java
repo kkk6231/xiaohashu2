@@ -323,10 +323,10 @@ public class NoteServiceImpl implements NoteService {
 
     /**
      * 更新笔记。
-     * 事务内更新元数据、更新 KV 里的正文，然后删 Redis 缓存并广播清本地缓存。
-     * 注意这里的失效动作发生在事务提交之前，属于已知的一致性问题：
-     * 并发读可能在提交前回源读到旧值并回填缓存，删除链路已经用 Outbox 修掉这个窗口，
-     * 更新链路还没改。正文更新失败会抛异常让事务回滚。
+     * 事务内更新元数据和 KV 正文，并登记缓存失效 Outbox 任务。
+     * 事务提交后由定时任务删除 Redis 缓存并广播清理各实例的本地缓存；
+     * 缓存删除或广播失败时保留任务重试，避免更新成功后长期读取旧详情。
+     * 正文更新失败会抛异常，数据库更新和 Outbox 任务一起回滚。
      *
      * @param updateNoteReqVO 笔记 ID、标题、正文、图片/视频、话题
      */
@@ -409,16 +409,6 @@ public class NoteServiceImpl implements NoteService {
 
         noteDOMapper.updateByPrimaryKey(noteDO);
 
-        // 删除 Redis 缓存
-        String noteDetailRedisKey = RedisKeyConstants.buildNoteDetailKey(noteId);
-        redisTemplate.delete(noteDetailRedisKey);
-
-        // // 删除本地缓存
-        // LOCAL_CACHE.invalidate(noteId);
-        // 同步发送广播模式 MQ，将所有实例中的本地缓存都删除掉
-        rocketMQTemplate.syncSend(MQConstants.TOPIC_DELETE_NOTE_LOCAL_CACHE, noteId);
-        log.info("====> MQ：删除笔记本地缓存发送成功...");
-
         // 笔记内容更新
         // 查询此篇笔记内容对应的 UUID
         NoteDO noteDO1 = noteDOMapper.selectByPrimaryKey(noteId);
@@ -438,6 +428,9 @@ public class NoteServiceImpl implements NoteService {
         if (!isUpdateContentSuccess) {  // TODO: 目前的事务作用有限，存在一致性问题
             throw new BizException(ResponseCodeEnum.NOTE_UPDATE_FAIL);
         }
+
+        // 与笔记更新同事务登记；提交后由投递器删除 Redis 并广播清理本地缓存。
+        noteCountEventService.appendCacheInvalidation(noteId);
 
         return Response.success();
     }
@@ -848,7 +841,7 @@ public class NoteServiceImpl implements NoteService {
         String key = like ? RedisKeyConstants.buildUserNoteLikeZSetKey(userId)
                 : RedisKeyConstants.buildUserNoteCollectZSetKey(userId);
         Long cachedSize = interactionRedisTemplate.opsForZSet().size(key);
-        long expectedCacheSize = Math.min(totalCount, 100L);
+        long expectedCacheSize = Math.min(totalCount, NoteInteractionPublisher.RECENT_INTERACTION_CACHE_LIMIT);
         if (cachedSize == null || cachedSize == 0 || cachedSize < expectedCacheSize || offset >= cachedSize
                 || (offset + pageSize > cachedSize && totalCount > cachedSize)) {
             return null;

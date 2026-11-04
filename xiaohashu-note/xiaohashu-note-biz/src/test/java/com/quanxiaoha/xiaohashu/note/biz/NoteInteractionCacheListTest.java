@@ -74,4 +74,27 @@ class NoteInteractionCacheListTest {
         verify(likeMapper).selectVisibleNotesPage(1L, 0L, 5);
         verify(zset, never()).reverseRangeWithScores(anyString(), anyLong(), anyLong());
     }
+
+    /** 总数不足 200 条时必须缓存完整；只有 150/180 条不能当作完整缓存读取。 */
+    @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void cacheBelowTwoHundredFallsBackToDatabase() {
+        NoteServiceImpl service = new NoteServiceImpl();
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+        ZSetOperations zset = mock(ZSetOperations.class);
+        when(redis.opsForZSet()).thenReturn(zset);
+        when(zset.size(anyString())).thenReturn(150L);
+        NoteLikeDOMapper likeMapper = mock(NoteLikeDOMapper.class);
+        when(likeMapper.countVisibleNotes(1L)).thenReturn(180L);
+        when(likeMapper.selectVisibleNotesPage(1L, 0L, 10)).thenReturn(List.of());
+        ReflectionTestUtils.setField(service, "interactionRedisTemplate", redis);
+        ReflectionTestUtils.setField(service, "noteLikeDOMapper", likeMapper);
+        LoginUserContextHolder.setUserId(1L);
+
+        FindInteractionNoteListReqVO request = new FindInteractionNoteListReqVO();
+        service.findLikedNotes(request);
+
+        verify(likeMapper).selectVisibleNotesPage(1L, 0L, 10);
+        verify(zset, never()).reverseRangeWithScores(anyString(), anyLong(), anyLong());
+    }
 }
