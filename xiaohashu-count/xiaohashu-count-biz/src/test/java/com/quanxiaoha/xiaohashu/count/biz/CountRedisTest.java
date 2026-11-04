@@ -11,6 +11,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CountRedisTest {
+    private static final String SEEN_BUCKET = "20261104";
     private LettuceConnectionFactory factory;
     private CountServiceImpl service;
     private StringRedisTemplate redis;
@@ -26,15 +27,18 @@ class CountRedisTest {
         service = new CountServiceImpl();
         ReflectionTestUtils.setField(service, "redisTemplate", redis);
         ReflectionTestUtils.setField(service, "objectMapper", new ObjectMapper());
-        redis.delete(List.of("counter:{note:" + id + "}", "counter:{note:" + id + "}:seen",
-                "counter:{user:" + id + "}", "counter:{user:" + id + "}:seen"));
+        redis.delete(List.of("counter:{note:" + id + "}", "counter:{note:" + id + "}:initialized",
+                "counter:{note:" + id + "}:seen:" + SEEN_BUCKET, "counter:{note:" + id + "}:seen",
+                "counter:{note:" + id + "}:seen:20261105",
+                "counter:{user:" + id + "}", "counter:{user:" + id + "}:initialized",
+                "counter:{user:" + id + "}:seen:" + SEEN_BUCKET, "counter:{user:" + id + "}:seen"));
     }
 
     @AfterEach
     void close() { if (factory != null) factory.destroy(); }
 
     private CountChangeDTO note(String event, long delta) {
-        return new CountChangeDTO(event, "note", id, Map.of("likeTotal", delta));
+        return new CountChangeDTO(event, SEEN_BUCKET, "note", id, Map.of("likeTotal", delta));
     }
 
     @Test
@@ -42,7 +46,11 @@ class CountRedisTest {
         service.apply(List.of(note("a", 1), note("a", 1), note("b", -1)));
         service.apply(List.of(note("a", 1)));
         assertEquals(0, service.findNotes(List.of(id)).get(0).getLikeTotal());
-        assertEquals(2L, redis.opsForSet().size("counter:{note:" + id + "}:seen"));
+        String dailySeenKey = "counter:{note:" + id + "}:seen:" + SEEN_BUCKET;
+        assertEquals(2L, redis.opsForSet().size(dailySeenKey));
+        assertEquals("1", redis.opsForValue().get("counter:{note:" + id + "}:initialized"));
+        assertTrue(redis.getExpire(dailySeenKey) > 0);
+        assertTrue(redis.getExpire(dailySeenKey) <= 604800);
     }
 
     @Test
@@ -57,7 +65,8 @@ class CountRedisTest {
     void partialTargetFailureResumesWithoutDoubleCounting() {
         String userKey = "counter:{user:" + id + "}";
         redis.opsForValue().set(userKey, "broken");
-        var author = new CountChangeDTO("a", "user", id, Map.of("likesReceivedTotal", 1L));
+        var author = new CountChangeDTO("a", SEEN_BUCKET,
+                "user", id, Map.of("likesReceivedTotal", 1L));
         assertThrows(Exception.class, () -> service.apply(List.of(note("a", 1), author)));
         assertEquals(1, service.findNotes(List.of(id)).get(0).getLikeTotal());
         redis.delete(userKey);
@@ -69,10 +78,12 @@ class CountRedisTest {
 
     @Test
     void deletionCanArriveBeforePendingLikes() {
-        service.apply(List.of(new CountChangeDTO("delete", "user", id,
+        service.apply(List.of(new CountChangeDTO("delete", SEEN_BUCKET, "user", id,
                 Map.of("likesReceivedTotal", -10L, "worksTotal", -1L))));
-        service.apply(List.of(new CountChangeDTO("publish", "user", id, Map.of("worksTotal", 1L)),
-                new CountChangeDTO("likes", "user", id, Map.of("likesReceivedTotal", 10L))));
+        service.apply(List.of(new CountChangeDTO("publish", SEEN_BUCKET,
+                        "user", id, Map.of("worksTotal", 1L)),
+                new CountChangeDTO("likes", SEEN_BUCKET,
+                        "user", id, Map.of("likesReceivedTotal", 10L))));
         var user = service.findUsers(List.of(id)).get(0);
         assertEquals(0, user.getLikesReceivedTotal());
         assertEquals(0, user.getWorksTotal());
@@ -92,14 +103,20 @@ class CountRedisTest {
     void uninitializedTargetReturnsZeroWithoutCreatingKeys() {
         assertEquals(0, service.findNotes(List.of(id)).get(0).getLikeTotal());
         assertFalse(redis.hasKey("counter:{note:" + id + "}"));
+        assertFalse(redis.hasKey("counter:{note:" + id + "}:initialized"));
         assertFalse(redis.hasKey("counter:{note:" + id + "}:seen"));
     }
 
     @Test
     void firstWritesAndBatchReadsCanRunConcurrently() throws Exception {
         List<Long> ids = java.util.stream.LongStream.range(id + 1, id + 65).boxed().toList();
-        List<String> keys = ids.stream().flatMap(value -> java.util.stream.Stream.of(
-                "counter:{note:" + value + "}", "counter:{note:" + value + "}:seen")).toList();
+        List<String> keys = new ArrayList<>();
+        for (Long value : ids) {
+            keys.add("counter:{note:" + value + "}");
+            keys.add("counter:{note:" + value + "}:initialized");
+            keys.add("counter:{note:" + value + "}:seen:" + SEEN_BUCKET);
+            keys.add("counter:{note:" + value + "}:seen");
+        }
         var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
         var start = new java.util.concurrent.CountDownLatch(1);
         redis.delete(keys);
@@ -107,7 +124,8 @@ class CountRedisTest {
             var writer = executor.submit(() -> {
                 start.await();
                 for (Long value : ids) {
-                    service.apply(List.of(new CountChangeDTO("first", "note", value, Map.of("likeTotal", 1L))));
+                    service.apply(List.of(new CountChangeDTO("first", SEEN_BUCKET,
+                            "note", value, Map.of("likeTotal", 1L))));
                 }
                 return null;
             });
@@ -134,10 +152,38 @@ class CountRedisTest {
     void invalidFieldDoesNotPartiallyApplyBatch() {
         String key = "counter:{note:" + id + "}";
         redis.opsForHash().put(key, "collectTotal", "broken");
-        var first = new CountChangeDTO("first", "note", id, Map.of("likeTotal", 1L));
-        var second = new CountChangeDTO("second", "note", id, Map.of("collectTotal", 1L));
+        var first = new CountChangeDTO("first", SEEN_BUCKET,
+                "note", id, Map.of("likeTotal", 1L));
+        var second = new CountChangeDTO("second", SEEN_BUCKET,
+                "note", id, Map.of("collectTotal", 1L));
         assertThrows(Exception.class, () -> service.apply(List.of(first, second)));
         assertNull(redis.opsForHash().get(key, "likeTotal"));
-        assertFalse(redis.hasKey(key + ":seen"));
+        assertFalse(redis.hasKey(key + ":initialized"));
+        assertFalse(redis.hasKey(key + ":seen:" + SEEN_BUCKET));
+    }
+
+    /** 升级前的永久 seen 仍参与去重，避免旧消息在切换后重复累计。 */
+    @Test
+    void legacySeenStillDeduplicatesDuringMigration() {
+        String targetKey = "counter:{note:" + id + "}";
+        redis.opsForHash().put(targetKey, "likeTotal", "1");
+        redis.opsForSet().add(targetKey + ":seen", "legacy-event");
+
+        service.apply(List.of(note("legacy-event", 1)));
+
+        assertEquals(1, service.findNotes(List.of(id)).get(0).getLikeTotal());
+        assertFalse(redis.hasKey(targetKey + ":seen:" + SEEN_BUCKET));
+    }
+
+    /** 不同事件日期写入不同 Set，两个分片都设置自动过期时间。 */
+    @Test
+    void differentDaysUseIndependentExpiringSets() {
+        service.apply(List.of(note("day-one", 1),
+                new CountChangeDTO("day-two", "20261105", "note", id, Map.of("likeTotal", 1L))));
+
+        assertEquals(2, service.findNotes(List.of(id)).get(0).getLikeTotal());
+        assertEquals(1L, redis.opsForSet().size("counter:{note:" + id + "}:seen:20261104"));
+        assertEquals(1L, redis.opsForSet().size("counter:{note:" + id + "}:seen:20261105"));
+        assertTrue(redis.getExpire("counter:{note:" + id + "}:seen:20261105") > 0);
     }
 }

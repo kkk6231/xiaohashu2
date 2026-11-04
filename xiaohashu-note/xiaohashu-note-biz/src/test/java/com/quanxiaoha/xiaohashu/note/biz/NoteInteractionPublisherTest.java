@@ -62,6 +62,7 @@ class NoteInteractionPublisherTest {
         assertEquals(2L, event.getNoteId());
         assertEquals(3L, event.getAuthorId());
         assertTrue(event.getTargetState());
+        assertDoesNotThrow(() -> java.time.LocalDateTime.parse(event.getOccurredAt()));
         when(result.getSendStatus()).thenReturn(SendStatus.FLUSH_DISK_TIMEOUT);
         var unknown = publisher.submit(2L, "LIKE", true);
         assertEquals("UNKNOWN", ((java.util.Map<?, ?>) unknown.getData()).get("status"));

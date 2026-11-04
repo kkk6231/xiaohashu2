@@ -105,6 +105,7 @@ public class NoteInteractionPublisher {
                 .authorId(note.getCreatorId())
                 .actionType(action)
                 .targetState(targetState)
+                .occurredAt(java.time.LocalDateTime.now().toString())
                 .build();
         event.validate();
         try {

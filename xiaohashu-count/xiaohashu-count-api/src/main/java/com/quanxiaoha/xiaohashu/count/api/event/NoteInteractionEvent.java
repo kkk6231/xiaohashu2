@@ -18,6 +18,8 @@ public class NoteInteractionEvent {
     private Long authorId;
     private String actionType;
     private Boolean targetState;
+    /** 事件首次创建时间；重投时保持不变，用于生成计数去重分片。 */
+    private String occurredAt;
 
     /** 校验事件，避免非法消息错误更新计数。 */
     public void validate() {

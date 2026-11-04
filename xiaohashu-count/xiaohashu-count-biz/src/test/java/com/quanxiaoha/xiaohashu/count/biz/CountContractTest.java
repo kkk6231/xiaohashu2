@@ -23,12 +23,28 @@ class CountContractTest {
         CountServiceImpl countService = new CountServiceImpl();
         ReflectionTestUtils.setField(countService, "redisTemplate", redisTemplate);
         ReflectionTestUtils.setField(countService, "objectMapper", new ObjectMapper());
-        CountChangeDTO change = new CountChangeDTO("event:1", "note", 10L, Map.of("likeTotal", 1L));
-        List<String> targetKeys = List.of("counter:{note:10}", "counter:{note:10}:seen");
+        CountChangeDTO change = new CountChangeDTO("event:1", "20261104",
+                "note", 10L, Map.of("likeTotal", 1L));
+        List<String> targetKeys = List.of("counter:{note:10}", "counter:{note:10}:initialized",
+                "counter:{note:10}:seen:20261104", "counter:{note:10}:seen");
         countService.apply(List.of(change));
-        verify(redisTemplate).execute(any(RedisScript.class), eq(targetKeys), anyString());
-        when(redisTemplate.execute(any(RedisScript.class), eq(targetKeys), anyString()))
+        verify(redisTemplate).execute(any(RedisScript.class), eq(targetKeys), anyString(), eq("604800"));
+        when(redisTemplate.execute(any(RedisScript.class), eq(targetKeys), anyString(), eq("604800")))
                 .thenThrow(new IllegalStateException("Redis temporarily unavailable"));
         assertThrows(IllegalStateException.class, () -> countService.apply(List.of(change)));
+    }
+
+    /** 非法日期分片在访问 Redis 前被拒绝，避免生成无法自动清理的 Key。 */
+    @Test
+    void rejectsInvalidSeenBucketBeforeRedisAccess() {
+        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
+        CountServiceImpl countService = new CountServiceImpl();
+        ReflectionTestUtils.setField(countService, "redisTemplate", redisTemplate);
+        ReflectionTestUtils.setField(countService, "objectMapper", new ObjectMapper());
+        CountChangeDTO change = new CountChangeDTO("event:1", "20261340",
+                "note", 10L, Map.of("likeTotal", 1L));
+
+        assertThrows(IllegalArgumentException.class, () -> countService.apply(List.of(change)));
+        verifyNoInteractions(redisTemplate);
     }
 }

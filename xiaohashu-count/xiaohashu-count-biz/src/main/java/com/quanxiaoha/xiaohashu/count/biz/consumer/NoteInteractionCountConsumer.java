@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.quanxiaoha.xiaohashu.count.api.dto.CountChangeDTO;
 import com.quanxiaoha.xiaohashu.count.api.event.NoteInteractionEvent;
 import com.quanxiaoha.xiaohashu.count.biz.service.CountService;
+import com.quanxiaoha.xiaohashu.count.biz.util.CountSeenBucketUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
@@ -66,7 +67,10 @@ public class NoteInteractionCountConsumer {
         String noteField = like ? "likeTotal" : "collectTotal";
         String authorField = like ? "likesReceivedTotal" : "collectsReceivedTotal";
         String eventKey = "interaction-v2:" + event.getEventId();
-        return List.of(new CountChangeDTO(eventKey, "note", event.getNoteId(), Map.of(noteField, delta)),
-                new CountChangeDTO(eventKey, "user", event.getAuthorId(), Map.of(authorField, delta)));
+        String seenBucket = CountSeenBucketUtils.from(event.getOccurredAt());
+        return List.of(new CountChangeDTO(eventKey, seenBucket, "note", event.getNoteId(),
+                        Map.of(noteField, delta)),
+                new CountChangeDTO(eventKey, seenBucket, "user", event.getAuthorId(),
+                        Map.of(authorField, delta)));
     }
 }

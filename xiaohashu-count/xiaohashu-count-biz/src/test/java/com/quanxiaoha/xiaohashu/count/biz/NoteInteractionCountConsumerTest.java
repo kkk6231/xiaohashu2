@@ -16,10 +16,12 @@ class NoteInteractionCountConsumerTest {
                 .authorId(3L)
                 .actionType("COLLECT")
                 .targetState(false)
+                .occurredAt("2026-11-04T12:30:00")
                 .build();
         var changes = NoteInteractionCountConsumer.buildChanges(event);
         assertEquals(2, changes.size());
         assertEquals(changes.get(0).getEventKey(), changes.get(1).getEventKey());
+        assertEquals("20261104", changes.get(0).getSeenBucket());
         assertEquals(-1L, changes.get(0).getDeltas().get("collectTotal"));
         assertEquals(-1L, changes.get(1).getDeltas().get("collectsReceivedTotal"));
     }
@@ -37,6 +39,7 @@ class NoteInteractionCountConsumerTest {
                 .authorId(3L)
                 .actionType("LIKE")
                 .targetState(true)
+                .occurredAt("2026-11-04T12:30:00")
                 .build();
         var invalid = new org.apache.rocketmq.common.message.MessageExt();
         invalid.setBody("not-json".getBytes(java.nio.charset.StandardCharsets.UTF_8));

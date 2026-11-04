@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quanxiaoha.xiaohashu.count.api.dto.*;
 import com.quanxiaoha.xiaohashu.count.biz.service.CountService;
+import com.quanxiaoha.xiaohashu.count.biz.util.CountSeenBucketUtils;
 import jakarta.annotation.Resource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisOperations;
@@ -23,6 +24,7 @@ public class CountServiceImpl implements CountService {
     private static final List<String> NOTE_FIELDS = List.of("likeTotal", "collectTotal");
     private static final int MAX_CHANGE_BATCH_SIZE = 200;
     private static final int MAX_QUERY_BATCH_SIZE = 100;
+    private static final long SEEN_RETENTION_SECONDS = 7L * 24 * 60 * 60;
 
     @Resource
     private StringRedisTemplate redisTemplate;
@@ -46,9 +48,9 @@ public class CountServiceImpl implements CountService {
      */
     @Override
     public void apply(List<CountChangeDTO> changes) {
-        Map<String, List<CountChangeDTO>> changesByTarget = validateAndGroupChanges(changes);
-        for (Map.Entry<String, List<CountChangeDTO>> target : changesByTarget.entrySet()) {
-            applyTargetChanges(target.getKey(), target.getValue());
+        Map<String, List<CountChangeDTO>> changesByTargetAndBucket = validateAndGroupChanges(changes);
+        for (List<CountChangeDTO> targetChanges : changesByTargetAndBucket.values()) {
+            applyTargetChanges(targetChanges);
         }
     }
 
@@ -65,26 +67,41 @@ public class CountServiceImpl implements CountService {
             List<String> fieldNames = fieldNamesFor(change.getTargetType());
             if (change.getTargetId() == null || change.getTargetId() <= 0
                     || change.getEventKey() == null || change.getEventKey().isBlank()
+                    || !CountSeenBucketUtils.isValid(change.getSeenBucket())
                     || change.getDeltas() == null || change.getDeltas().isEmpty()) {
                 throw new IllegalArgumentException("计数变更参数不完整");
             }
-            change.getDeltas().forEach((field, delta) -> {
+            for (Map.Entry<String, Long> deltaEntry : change.getDeltas().entrySet()) {
+                String field = deltaEntry.getKey();
+                Long delta = deltaEntry.getValue();
                 if (!fieldNames.contains(field) || delta == null) {
                     throw new IllegalArgumentException("计数字段或增量不合法");
                 }
-            });
+            }
             String targetKey = buildTargetKey(change.getTargetType(), change.getTargetId());
-            changesByTarget.computeIfAbsent(targetKey, ignored -> new ArrayList<>()).add(change);
+            String targetAndBucketKey = targetKey + "|" + change.getSeenBucket();
+            List<CountChangeDTO> targetChanges = changesByTarget.get(targetAndBucketKey);
+            if (targetChanges == null) {
+                targetChanges = new ArrayList<>();
+                changesByTarget.put(targetAndBucketKey, targetChanges);
+            }
+            targetChanges.add(change);
         }
         return changesByTarget;
     }
 
-    /** 对一个目标原子执行去重及计数更新。 */
-    private void applyTargetChanges(String targetKey, List<CountChangeDTO> targetChanges) {
+    /** 对一个目标的一个日期分片原子执行去重及计数更新。 */
+    private void applyTargetChanges(List<CountChangeDTO> targetChanges) {
+        CountChangeDTO firstChange = targetChanges.get(0);
+        String targetKey = buildTargetKey(firstChange.getTargetType(), firstChange.getTargetId());
+        String initializedKey = targetKey + ":initialized";
+        String dailySeenKey = targetKey + ":seen:" + firstChange.getSeenBucket();
+        String legacySeenKey = targetKey + ":seen";
         List<Map<String, Object>> scriptEvents = buildScriptEvents(targetChanges);
         try {
-            redisTemplate.execute(updateScript, List.of(targetKey, targetKey + ":seen"),
-                    objectMapper.writeValueAsString(scriptEvents));
+            redisTemplate.execute(updateScript,
+                    List.of(targetKey, initializedKey, dailySeenKey, legacySeenKey),
+                    objectMapper.writeValueAsString(scriptEvents), String.valueOf(SEEN_RETENTION_SECONDS));
         } catch (JsonProcessingException exception) {
             throw new IllegalArgumentException("计数事件序列化失败", exception);
         }
@@ -100,12 +117,12 @@ public class CountServiceImpl implements CountService {
             }
         }
         List<Map<String, Object>> scriptEvents = new ArrayList<>();
-        deltasByEvent.forEach((eventKey, deltas) -> {
+        for (Map.Entry<String, Map<String, Long>> eventEntry : deltasByEvent.entrySet()) {
             Map<String, Object> event = new LinkedHashMap<>();
-            event.put("id", eventKey);
-            event.put("deltas", deltas);
+            event.put("id", eventEntry.getKey());
+            event.put("deltas", eventEntry.getValue());
             scriptEvents.add(event);
-        });
+        }
         return scriptEvents;
     }
 
@@ -147,9 +164,13 @@ public class CountServiceImpl implements CountService {
 
     /** 直接从 Redis 批量读取计数，不查询数据库。 */
     private List<Long[]> readCounts(String type, List<Long> ids) {
-        if (ids == null || ids.isEmpty() || ids.size() > MAX_QUERY_BATCH_SIZE
-                || ids.stream().anyMatch(id -> id == null || id <= 0)) {
+        if (ids == null || ids.isEmpty() || ids.size() > MAX_QUERY_BATCH_SIZE) {
             throw new IllegalArgumentException("计数查询 ID 必须为正数，且数量在 1 到 100 之间");
+        }
+        for (Long id : ids) {
+            if (id == null || id <= 0) {
+                throw new IllegalArgumentException("计数查询 ID 必须为正数，且数量在 1 到 100 之间");
+            }
         }
         List<String> fields = fieldNamesFor(type);
         // pipeline 批量发送单目标读取脚本；首次使用返回零，已处理记录存在但数据丢失返回 null。
@@ -161,7 +182,9 @@ public class CountServiceImpl implements CountService {
                 RedisOperations<String, String> stringOperations = (RedisOperations<String, String>) operations;
                 for (Long id : ids) {
                     String targetKey = buildTargetKey(type, id);
-                    stringOperations.execute(readScript, List.of(targetKey, targetKey + ":seen"), fields.toArray());
+                    stringOperations.execute(readScript,
+                            List.of(targetKey, targetKey + ":initialized", targetKey + ":seen"),
+                            fields.toArray());
                 }
                 return null;
             }
@@ -195,7 +218,7 @@ public class CountServiceImpl implements CountService {
         return values;
     }
 
-    /** 计数 Hash 和去重 Key 共用 hash tag，支持单目标 Lua 原子操作。 */
+    /** 计数 Hash、初始化标记和去重 Key 共用 hash tag，支持单目标 Lua 原子操作。 */
     private static String buildTargetKey(String targetType, long targetId) {
         return "counter:{" + targetType + ":" + targetId + "}";
     }

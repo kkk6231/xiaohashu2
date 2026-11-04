@@ -6,7 +6,7 @@ import java.util.List;
 public interface CountService {
     /**
      * 批量应用计数增量。
-     * 调用方在整批成功后才确认消息；失败时整批重试，已处理的目标由 seen 集合跳过。
+     * 调用方在整批成功后才确认消息；失败时整批重试，已处理的目标由每日 seen 集合跳过。
      */
     void apply(List<CountChangeDTO> changes);
 

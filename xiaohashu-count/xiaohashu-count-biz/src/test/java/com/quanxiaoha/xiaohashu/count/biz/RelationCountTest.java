@@ -24,6 +24,8 @@ class RelationCountTest {
         assertEquals(-1L, changes.get(0).getDeltas().get("followingTotal"));
         assertEquals(-1L, changes.get(1).getDeltas().get("fansTotal"));
         assertEquals(changes.get(0).getEventKey(), changes.get(1).getEventKey());
+        assertEquals(event.getUpdateTime().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE),
+                changes.get(0).getSeenBucket());
         assertNotEquals(changes.get(0).getTargetId(), changes.get(1).getTargetId());
     }
 
@@ -34,6 +36,7 @@ class RelationCountTest {
                 .noteId(2L)
                 .authorId(3L)
                 .eventType("NOTE_DELETED")
+                .occurredAt("2026-11-04T12:30:00")
                 .removedLikeTotal(10)
                 .removedCollectTotal(4)
                 .build();
@@ -41,5 +44,6 @@ class RelationCountTest {
         assertEquals(1, changes.size());
         assertEquals(java.util.Map.of("worksTotal", -1L, "likesReceivedTotal", -10L,
                 "collectsReceivedTotal", -4L), changes.get(0).getDeltas());
+        assertEquals("20261104", changes.get(0).getSeenBucket());
     }
 }
