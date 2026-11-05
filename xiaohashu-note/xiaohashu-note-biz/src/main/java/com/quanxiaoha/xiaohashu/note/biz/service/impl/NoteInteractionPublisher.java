@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -53,7 +52,7 @@ public class NoteInteractionPublisher {
     @Resource
     private NoteCollectionDOMapper collectionMapper;
 
-    /** 服务端生成事件身份；发送结果未知时返回 UNKNOWN，不宣称已受理。 */
+    /** 服务端生成事件身份，并根据 MQ 发送结果决定是否恢复缓存。 */
     public Response<?> submit(long noteId, String action, boolean targetState) {
         Long userId = LoginUserContextHolder.getUserId();
         if (userId == null || userId <= 0 || noteId <= 0 || !("LIKE".equals(action) || "COLLECT".equals(action))) {
@@ -112,16 +111,18 @@ public class NoteInteractionPublisher {
             var result = rocketMQTemplate.syncSendOrderly(NoteInteractionEvent.TOPIC,
                     MessageBuilder.withPayload(JsonUtils.toJsonString(event)).build(), String.valueOf(userId));
             if (result == null || result.getSendStatus() != SendStatus.SEND_OK) {
-                log.warn("互动消息发送结果未知，eventId: {}", eventId);
-                return Response.success(Map.of("status", "UNKNOWN"));
+                // Broker 可能已经收到消息，不回滚缓存，按操作成功返回。
+                log.warn("互动消息发送结果不确定，按成功处理，eventId: {}", eventId);
+                return Response.success();
             }
         } catch (RuntimeException exception) {
             if (isDefinitelyRejected(exception)) {
                 invalidateRejectedCache(listKey, cacheVersionKey, pendingKey, eventId, previousPending);
                 throw exception;
             }
-            log.warn("互动消息发送结果未知，eventId: {}", eventId, exception);
-            return Response.success(Map.of("status", "UNKNOWN"));
+            // 超时或 ACK 丢失时无法确认 Broker 是否收到，保留缓存并按成功处理。
+            log.warn("互动消息发送结果不确定，按成功处理，eventId: {}", eventId, exception);
+            return Response.success();
         }
         return Response.success();
     }

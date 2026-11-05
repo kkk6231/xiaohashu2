@@ -64,10 +64,11 @@ class NoteInteractionPublisherTest {
         assertTrue(event.getTargetState());
         assertDoesNotThrow(() -> java.time.LocalDateTime.parse(event.getOccurredAt()));
         when(result.getSendStatus()).thenReturn(SendStatus.FLUSH_DISK_TIMEOUT);
-        var unknown = publisher.submit(2L, "LIKE", true);
-        assertEquals("UNKNOWN", ((java.util.Map<?, ?>) unknown.getData()).get("status"));
+        var uncertain = publisher.submit(2L, "LIKE", true);
+        assertTrue(uncertain.isSuccess());
+        assertNull(uncertain.getData());
     }
-    /** Broker 明确拒绝时请求条件失效；发送超时时保留未知状态。 */
+    /** Broker 明确拒绝时恢复缓存；发送超时时保留缓存并返回成功。 */
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
     void invalidatesOnlyForDefiniteBrokerRejection() {
@@ -97,8 +98,9 @@ class NoteInteractionPublisherTest {
         long scriptsAfterReject = mockingDetails(redis).getInvocations().stream()
                 .filter(invocation -> invocation.getMethod().getName().equals("execute")).count();
         assertEquals(2L, scriptsAfterReject);
-        var unknown = publisher.submit(2L, "LIKE", false);
-        assertEquals("UNKNOWN", ((java.util.Map<?, ?>) unknown.getData()).get("status"));
+        var uncertain = publisher.submit(2L, "LIKE", false);
+        assertTrue(uncertain.isSuccess());
+        assertNull(uncertain.getData());
         long scriptsAfterTimeout = mockingDetails(redis).getInvocations().stream()
                 .filter(invocation -> invocation.getMethod().getName().equals("execute")).count();
         assertEquals(3L, scriptsAfterTimeout);
